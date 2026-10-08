@@ -1,0 +1,32 @@
+# Local pilot stack: PostgreSQL (pgvector image, ready for vector search) + API.
+# Usage: cp .env.example .env && docker compose up --build
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: siteguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-siteguard-local}
+      POSTGRES_DB: siteguard
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siteguard"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: [.env]
+    environment:
+      SITEGUARD_DATABASE_URL: postgresql+psycopg://siteguard:${POSTGRES_PASSWORD:-siteguard-local}@db:5432/siteguard
+    ports: ["8000:8000"]
+    volumes: [evidence:/srv/evidence]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  evidence:

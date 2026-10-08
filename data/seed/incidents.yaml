@@ -1,0 +1,128 @@
+# Synthetic demo incidents for the Site Guard AI pilot.
+# Written to resemble common construction event types reported in public statistics (falls, struck-by,
+# excavation, lifting, plant, concrete and waterproofing defects). They are NOT real events.
+# days_ago: when the event occurred relative to seeding. stage: how far seed.py drives it through the workflow
+#   reported | investigated | in_progress | closed
+- title: Worker slipped at unprotected slab edge on level 7
+  description: >-
+    While stripping formwork on level 7, a carpenter stepped back towards the slab edge where a section of
+    guardrail had been removed for crane access and not reinstated. He lost footing and was caught by a
+    colleague. He was not wearing a harness. Near miss, no injury. Work was in a rush to meet the pour schedule.
+  domain: SAFETY
+  severity: HIGH
+  site: Tower A
+  location: Level 7, grid C/4 north edge
+  activity: Formwork stripping
+  people_involved: 1
+  immediate_actions: Area barricaded, temporary guardrail installed, work stopped on the edge.
+  days_ago: 2
+  stage: investigated
+- title: Honeycombing found on transfer beam after formwork removal
+  description: >-
+    After striking formwork on transfer beam TB-3 at podium level, honeycombing and voids about 300 mm long
+    were found at the beam soffit near congested reinforcement. Vibrator access was limited and the pour ran
+    late in the evening. Structural element; load-bearing.
+  domain: QUALITY
+  severity: HIGH
+  site: Podium & Basement
+  location: Podium level, transfer beam TB-3
+  activity: Concrete placement
+  people_involved: 0
+  immediate_actions: Area marked, photos taken, no further load to be applied until assessed.
+  days_ago: 5
+  stage: in_progress
+- title: Trench wall partially collapsed during drainage works
+  description: >-
+    A 1.8 m deep trench for the storm drain partially collapsed after overnight rain. No one was in the trench
+    at the time. The trench was not shored and spoil was stacked at the edge. The morning inspection had not
+    been done.
+  domain: SAFETY
+  severity: CRITICAL
+  site: Podium & Basement
+  location: East boundary drainage run
+  activity: Excavation
+  people_involved: 0
+  immediate_actions: Trench fenced off, access prohibited, temporary works engineer called.
+  days_ago: 9
+  stage: closed
+- title: Spanner dropped from scaffold landed near pedestrian walkway
+  description: >-
+    A spanner fell from the level 4 scaffold and landed about 1 m from a labourer on the walkway below. Tools
+    were not tethered and toe boards were missing on one bay. No exclusion zone was set up below.
+  domain: SAFETY
+  severity: MEDIUM
+  site: Tower A
+  location: South elevation scaffold, level 4
+  activity: Facade bracket installation
+  people_involved: 1
+  immediate_actions: Work paused, toe boards fitted.
+  days_ago: 14
+  stage: closed
+- title: Reduced concrete cover found on level 5 slab reinforcement
+  description: >-
+    Cover meter survey on the level 5 slab soffit shows cover of 15-20 mm against 30 mm on the drawing in two
+    bays. Spacers appear to have been displaced during the pour. The pre-pour reinforcement inspection record
+    was not signed.
+  domain: QUALITY
+  severity: MEDIUM
+  site: Tower A
+  location: Level 5 slab, bays D-E/2-3
+  activity: Post-pour inspection
+  people_involved: 0
+  immediate_actions: NCR raised; structural engineer informed.
+  days_ago: 20
+  stage: closed
+- title: Excavator reversed close to pedestrian route without banksman
+  description: >-
+    An excavator reversed across the marked pedestrian route at the basement ramp without a banksman. The
+    reversing camera was not working. A worker stepped back and was not struck. No barrier between the ramp
+    and the walkway.
+  domain: SAFETY
+  severity: HIGH
+  site: Podium & Basement
+  location: Basement ramp
+  activity: Bulk earthworks
+  people_involved: 1
+  immediate_actions: Plant stopped, camera tagged out, temporary barrier placed.
+  days_ago: 1
+  stage: reported
+- title: Water seepage through basement wall construction joint
+  description: >-
+    Water seepage observed at a construction joint in the basement retaining wall after heavy rain. Damp patch
+    about 2 m long. Waterproofing membrane laps at this location were not inspected before backfill and no
+    flood test record exists.
+  domain: QUALITY
+  severity: MEDIUM
+  site: Podium & Basement
+  location: Basement level B2, west retaining wall
+  activity: Waterproofing
+  people_involved: 0
+  immediate_actions: Photographs taken, area monitored.
+  days_ago: 3
+  stage: investigated
+- title: Tower crane lift continued in high wind with unchecked sling
+  description: >-
+    A rebar bundle lift continued when wind gusts exceeded the lift plan limit. The sling used had no current
+    inspection tag. The load swung near workers on level 9. No one was hit. Near miss.
+  domain: SAFETY
+  severity: HIGH
+  site: Tower A
+  location: Level 9 loading bay
+  activity: Lifting operations
+  people_involved: 3
+  immediate_actions: Lifting stopped for the day, sling quarantined.
+  days_ago: 6
+  stage: reported
+- title: Worker hand injury while cutting rebar without gloves
+  description: >-
+    A steel fixer cut his hand on a rebar end while cutting bars without gloves. First aid given on site; he
+    went to hospital for stitches. PPE was available in the store.
+  domain: SAFETY
+  severity: MEDIUM
+  site: Tower A
+  location: Rebar yard
+  activity: Rebar cutting
+  people_involved: 1
+  immediate_actions: First aid, toolbox talk planned.
+  days_ago: 30
+  stage: closed
