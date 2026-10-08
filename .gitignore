@@ -10,3 +10,4 @@ evidence_store/
 node_modules/
 .next/
 *.log
+*.egg-info/

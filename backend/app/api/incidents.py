@@ -98,8 +98,12 @@ def get_incident(incident_id: str, p: Principal = Depends(current_principal), db
         db.scalars(select(CapaAction).where(CapaAction.incident_id == inc.id).order_by(CapaAction.created_at))
     )
     ids = [a.id for a in actions]
-    approvals = db.scalars(select(ApprovalEvent).where(ApprovalEvent.capa_id.in_(ids))) if ids else []
-    verifs = db.scalars(select(VerificationRecord).where(VerificationRecord.capa_id.in_(ids))) if ids else []
+    approvals: list[ApprovalEvent] = (
+        list(db.scalars(select(ApprovalEvent).where(ApprovalEvent.capa_id.in_(ids)))) if ids else []
+    )
+    verifs: list[VerificationRecord] = (
+        list(db.scalars(select(VerificationRecord).where(VerificationRecord.capa_id.in_(ids)))) if ids else []
+    )
     return ok(
         {
             "incident": ser.incident(inc),

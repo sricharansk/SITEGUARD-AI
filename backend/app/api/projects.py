@@ -16,7 +16,9 @@ router = APIRouter(tags=["projects"])
 @router.get("/projects")
 def list_projects(p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     ids = p.visible_project_filter(db)
-    rows = db.scalars(select(Project).where(Project.id.in_(ids)).order_by(Project.name)) if ids else []
+    rows: list[Project] = (
+        list(db.scalars(select(Project).where(Project.id.in_(ids)).order_by(Project.name))) if ids else []
+    )
     return ok([ser.project(x) for x in rows])
 
 

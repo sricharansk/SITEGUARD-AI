@@ -33,8 +33,11 @@ def dashboard(project_id: str | None = None, p: Principal = Depends(current_prin
         for a in active_actions
         if a.due_date and a.due_date < today and a.work_status not in (WorkStatus.COMPLETED, WorkStatus.VERIFIED)
     ]
-    closed = [i for i in incidents if i.status == IncidentStatus.CLOSED and i.closed_at]
-    days = [(i.closed_at - i.reported_at).total_seconds() / 86400 for i in closed]
+    days = [
+        (i.closed_at - i.reported_at).total_seconds() / 86400
+        for i in incidents
+        if i.status == IncidentStatus.CLOSED and i.closed_at is not None
+    ]
 
     hazards: Counter[str] = Counter()
     for r in runs:

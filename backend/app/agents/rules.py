@@ -5,6 +5,7 @@ construction hazard/defect taxonomy so their output is reproducible and testable
 """
 
 import re
+from typing import Literal
 
 from app.agents.schemas import (
     CapaOutput,
@@ -167,6 +168,9 @@ NEGATION_CUES = [
     "lack",
 ]
 
+Priority = Literal["P1", "P2", "P3", "P4"]
+ActionType = Literal["CORRECTIVE", "PREVENTIVE"]
+
 SEVERITY_ORDER = [Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
 
 
@@ -243,7 +247,13 @@ def triage(pack: dict) -> TriageOutput:
         domain = Domain(inc["domain"])
     consequence = _consequence(text, inc.get("people_involved", 0), hazards)
     severity = _severity_for(consequence)
-    priority = {Severity.CRITICAL: "P1", Severity.HIGH: "P2", Severity.MEDIUM: "P3", Severity.LOW: "P4"}[severity]
+    priorities: dict[Severity, Priority] = {
+        Severity.CRITICAL: "P1",
+        Severity.HIGH: "P2",
+        Severity.MEDIUM: "P3",
+        Severity.LOW: "P4",
+    }
+    priority = priorities[severity]
 
     missing = []
     if not pack.get("evidence"):
@@ -646,7 +656,7 @@ def compliance(pack: dict) -> ComplianceOutput:
 
 # --- CAPA ---------------------------------------------------------------------------------------
 
-_CAPA_LIBRARY: dict[str, list[tuple[str, str, str, str, int, str]]] = {
+_CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
     # hazard/defect: (type, title, description, owner_role, due_days, verification)
     "Fall from height": [
         (
@@ -840,7 +850,7 @@ def capa(pack: dict) -> CapaOutput:
                     action_type=t,
                     title=title,
                     description=desc,
-                    owner_role=owner,  # type: ignore[arg-type]
+                    owner_role=owner,
                     due_in_days=due,
                     verification_criteria=verify,
                     addresses=label,
