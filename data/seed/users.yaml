@@ -1,0 +1,27 @@
+# Demo organizations, users and roles. Passwords come from SITEGUARD_DEMO_PASSWORD (default "siteguard-demo").
+# For local and demo use only; seeding is disabled when SITEGUARD_SEED_DEMO_DATA=false.
+organizations:
+  - name: Demo Construction Co
+    project:
+      code: RMT-01
+      name: Riverside Mixed-Use Tower
+      client: Riverside Developments (fictional)
+      location: Demo City
+      sites: [Tower A, Podium & Basement]
+    users:
+      - {email: hse@demo.siteguard.local, name: Hana Safety (HSE Manager), role: HSE_MANAGER}
+      - {email: pm@demo.siteguard.local, name: Priya Manager (Project Manager), role: PROJECT_MANAGER}
+      - {email: safety@demo.siteguard.local, name: Sam Engineer (Safety Engineer), role: SAFETY_ENGINEER}
+      - {email: qa@demo.siteguard.local, name: Quinn Quality (QA/QC Engineer), role: QA_QC_ENGINEER}
+      - {email: site@demo.siteguard.local, name: Sid Site (Site Engineer), role: SITE_ENGINEER}
+      - {email: auditor@demo.siteguard.local, name: Ari Auditor (Auditor), role: AUDITOR}
+      - {email: admin@demo.siteguard.local, name: Ada Admin (Org Admin), role: ORG_ADMIN}
+  - name: Other Builders Ltd
+    project:
+      code: OTH-01
+      name: Other Builders Warehouse
+      client: Fictional
+      location: Elsewhere
+      sites: [Main]
+    users:
+      - {email: other@demo.siteguard.local, name: Olly Other (HSE Manager), role: HSE_MANAGER}
