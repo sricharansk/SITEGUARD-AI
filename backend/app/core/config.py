@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     vision_max_side: int = Field(default=1568, ge=256, le=4096)
     vision_timeout_seconds: int = Field(default=30, ge=5, le=300)
     vision_memory_mb: int = Field(default=1024, ge=256, le=8192)
+    vision_rate_limit_per_minute: int = Field(default=30, ge=1, le=1000)  # analyses per user
 
     # Notifications (docs/AGENTS.md#notifications). External delivery is off unless an adapter is chosen; "smtp" is
     # refused when SITEGUARD_ENV is local or test so development never emails real people.

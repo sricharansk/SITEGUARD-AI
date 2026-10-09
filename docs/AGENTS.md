@@ -102,11 +102,15 @@ Playbook Prompts 25–27; code in `services/vision.py` (pipeline, taxonomy, thre
    threshold is 0.5 unless a project or site calibration sets another (site beats project beats default); the
    snapshot of thresholds and their source is stored with the analysis. Below-threshold observations are kept and
    marked, so a later calibration can be checked against them.
-6. **Human validation.** People with `RUN_AGENTS` confirm or reject each observation with a note. Agents receive
-   above-threshold, non-rejected observations from completed analyses through `list_vision_observations` (without
-   the analyzer's free text): the rules provider adds the mapped hazard or defect and cites `vision:<id>` only for
-   CONFIRMED observations, and turns UNREVIEWED ones into open questions. Quality detections therefore count as
-   findings only after engineer validation.
+6. **Human validation.** People with `RUN_AGENTS` confirm or reject each observation with a note (not on a
+   closed incident). Agents get observations from completed analyses through `list_vision_observations`, without
+   the analyzer's free text, in two lists: `vision` holds the observations a person CONFIRMED (also below threshold),
+   the only ones with a citable `vision:<id>` ref; `vision_unreviewed` holds above-threshold observations nobody has
+   checked, with no ref. A model citing anything else has the citation removed and the run flagged, like any unknown
+   ref. The rules provider adds the mapped hazard or defect for confirmed observations and turns unreviewed ones into
+   open questions. Quality detections therefore count as findings only after engineer validation.
+7. **Limits.** Each user may start `SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE` analyses a minute (429 `RATE_LIMITED`),
+   and at most four decoder or parser child processes run at once per API process.
 
 Every response carries the disclaimer that observations are machine output for human review, not proof, and that no
 observation does not mean no hazard or defect.

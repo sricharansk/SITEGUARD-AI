@@ -27,6 +27,7 @@ from app.models import (
     Evidence,
     Incident,
     IncidentEvent,
+    ObservationReview,
     Project,
     RiskAssessment,
     Site,
@@ -328,13 +329,15 @@ def _summary(agent: str, out: dict) -> str:
 def _vision_blocks(db: Session, inc: Incident, evidence: list[Evidence], who) -> list[Block]:
     """Above-threshold vision observations with their review state. Machine output, labelled as such."""
     names = {e.id: e.filename for e in evidence}
-    rows = db.execute(
+    every = db.execute(
         select(VisionObservation, VisionAnalysis)
         .join(VisionAnalysis, VisionAnalysis.id == VisionObservation.analysis_id)
-        .where(VisionObservation.incident_id == inc.id, VisionObservation.above_threshold)
+        .where(VisionObservation.incident_id == inc.id)
         .order_by(VisionAnalysis.created_at, VisionObservation.ordinal)
     ).all()
-    if not rows:
+    rows = [(o, a) for o, a in every if o.above_threshold or o.review_status == ObservationReview.CONFIRMED]
+    hidden = len(every) - len(rows)
+    if not every:
         return []
     table = []
     for obs, analysis in rows:
@@ -349,10 +352,16 @@ def _vision_blocks(db: Session, inc: Incident, evidence: list[Evidence], who) ->
                 f"{analysis.analyzer} {analysis.model_version}, taxonomy {analysis.taxonomy_version}",
             )
         )
-    return [
-        Block("note", f"Vision observations (machine-generated). {VISION_DISCLAIMER}"),
-        Block("table", headers=("File", "Observation", "Confidence", "Review", "Analyzer"), rows=tuple(table)),
-    ]
+    blocks = [Block("note", f"Vision observations (machine-generated). {VISION_DISCLAIMER}")]
+    if table:
+        blocks.append(
+            Block("table", headers=("File", "Observation", "Confidence", "Review", "Analyzer"), rows=tuple(table))
+        )
+    if hidden:
+        blocks.append(
+            Block("p", f"{hidden} unconfirmed observation(s) below their detection threshold are not listed.")
+        )
+    return blocks
 
 
 def _citations(db: Session, inc: Incident, refs: list[str]) -> list[Block]:

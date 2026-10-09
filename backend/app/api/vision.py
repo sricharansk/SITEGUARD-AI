@@ -7,13 +7,17 @@ from sqlalchemy.orm import Session
 from app.api import serializers as ser
 from app.api.deps import load_incident, load_project, ok
 from app.api.schemas import CalibrationIn, ObservationReviewIn, VisionRunIn
+from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import AppError, NotFound
+from app.core.ratelimit import RateLimiter
 from app.core.security import Permission, Principal, current_principal
 from app.models import Evidence, ObservationReview, Site, VisionAnalysis, VisionCalibration, VisionObservation
 from app.services import vision
 
 router = APIRouter(tags=["vision"])
+# Each analysis starts an image decoder process and may call a paid model, so it is limited per user.
+analysis_limiter = RateLimiter(get_settings().vision_rate_limit_per_minute)
 
 
 @router.get("/vision/taxonomy")
@@ -52,6 +56,7 @@ def analyze(
     if ev is None:
         raise NotFound("Evidence not found")
     inc = load_incident(db, p, ev.incident_id, Permission.RUN_AGENTS)
+    analysis_limiter.check(p.id)
     analysis = vision.analyze_evidence(db, ev, inc, body.task, p.id)
     db.commit()
     return ok(ser.vision_analysis(analysis))

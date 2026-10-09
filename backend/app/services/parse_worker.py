@@ -1,13 +1,17 @@
 """Child process for parsing untrusted binary documents (see parsing.parse_document).
 
 Reads the file from stdin, writes {"ok": true, "parser", "pages": [[number, text], ...], "metadata"} or
-{"ok": false, "error"} to stdout. Runs under CPU and memory limits set by the parent.
+{"ok": false, "error"} to stdout. Runs under the CPU and memory limits the parent passes in its environment.
 """
 
 import json
 import sys
 
-from app.services.parsing import PARSERS, ParseError
+from app.services.isolation import apply_limits
+
+apply_limits()  # before the parsers are imported and before any untrusted byte is read
+
+from app.services.parsing import PARSERS, ParseError  # noqa: E402
 
 
 def main() -> None:

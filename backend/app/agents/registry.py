@@ -24,12 +24,14 @@ def _gather_investigation(domain: Domain):
         inc = ctx.call("get_incident")
         prior = ctx.call("get_prior_outputs")
         hazards = prior.get("triage", {}).get("hazards", [])
+        vision = ctx.call("list_vision_observations")
         return {
             "incident": inc,
             "evidence": ctx.call("list_evidence"),
             "knowledge": ctx.call("search_knowledge", query=_incident_query(inc, hazards), domain=domain, limit=5),
             "similar_incidents": ctx.call("similar_incidents"),
-            "vision": ctx.call("list_vision_observations"),
+            "vision": vision["confirmed"],  # citable: confirmed by a person
+            "vision_unreviewed": vision["unreviewed"],  # leads only: no ref, cannot be cited
             "prior": prior,
         }
 

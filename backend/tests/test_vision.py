@@ -210,7 +210,7 @@ def test_analyzer_failure_is_a_visible_state_not_an_empty_result(client, project
     assert a["error"].startswith("TimeoutError")
     assert a["limitations"] == ["The analyzer failed; nothing can be concluded from this image."]
     assert _audit(db, "vision.analyze.failed", ev["id"])
-    assert vision.for_agents(db, inc["id"]) == []
+    assert vision.for_agents(db, inc["id"]) == {"confirmed": [], "unreviewed": []}
 
 
 def test_tampered_evidence_is_refused_and_audited(client, project_id, db):
@@ -277,7 +277,10 @@ def test_defect_review_records_who_and_why(client, project_id, db, use_analyzer)
     assert r.json()["data"]["review_status"] == "REJECTED"
     trail = [(e.details["before"], e.details["after"]) for e in _audit(db, "vision.review", obs["id"])]
     assert sorted(trail) == sorted([("UNREVIEWED", "CONFIRMED"), ("CONFIRMED", "REJECTED")])
-    assert vision.for_agents(db, inc["id"]) == []  # rejected observations never reach the agents
+    assert vision.for_agents(db, inc["id"]) == {
+        "confirmed": [],
+        "unreviewed": [],
+    }  # rejected observations never reach the agents
 
 
 def test_calibration_validation_and_authz(client, project_id):
@@ -328,8 +331,10 @@ def test_agents_cite_confirmed_observations_and_question_unreviewed_ones(client,
         headers=auth(client, "qa"),
     )
     pack_view = vision.for_agents(db, inc["id"])
-    assert {v["label"] for v in pack_view} == {"crack", "spalling"}  # efflorescence is below threshold
-    assert all("note" not in v for v in pack_view)  # analyzer free text never reaches the agents
+    assert [v["label"] for v in pack_view["confirmed"]] == ["crack"]
+    assert [v["label"] for v in pack_view["unreviewed"]] == ["spalling"]  # efflorescence is below threshold
+    assert all("ref" not in v for v in pack_view["unreviewed"])  # unreviewed observations cannot be cited
+    assert all("note" not in v for v in pack_view["confirmed"] + pack_view["unreviewed"])  # no analyzer free text
 
     r = client.post(f"/incidents/{inc['id']}/investigate", headers=auth(client, "qa"))
     assert r.status_code == 200, r.text
@@ -337,8 +342,8 @@ def test_agents_cite_confirmed_observations_and_question_unreviewed_ones(client,
     out = quality["output"]
     assert "Cracking" in out["defects"]
     assert f"vision:{obs['crack']['id']}" in out["evidence_refs"]
-    assert f"vision:{obs['spalling']['id']}" not in out["evidence_refs"]
-    assert any(f"vision:{obs['spalling']['id']}" in q for q in out["open_questions"])
+    assert not any(obs["spalling"]["id"] in ref for ref in out["evidence_refs"])
+    assert any(f"observation {obs['spalling']['id']}" in q for q in out["open_questions"])
     assert any("confirmed by an engineer" in line for line in out["requirement_vs_observed"])
     assert db.get(Incident, inc["id"]).status == IncidentStatus.PENDING_APPROVAL  # never closed by an agent
 
@@ -363,9 +368,9 @@ def test_safety_rules_without_vision_are_unchanged():
     with_unreviewed = rules.safety(
         {
             **pack,
-            "vision": [
+            "vision_unreviewed": [
                 {
-                    "ref": "vision:o1",
+                    "observation_id": "o1",
                     "evidence_id": "e1",
                     "category": "HAZARD",
                     "label": "unprotected_edge",
@@ -378,8 +383,8 @@ def test_safety_rules_without_vision_are_unchanged():
         }
     )
     assert with_unreviewed.hazards == base.hazards  # an unreviewed machine observation adds no hazard
-    assert "vision:o1" not in with_unreviewed.evidence_refs
-    assert any("vision:o1" in q for q in with_unreviewed.open_questions)
+    assert not any("o1" in ref for ref in with_unreviewed.evidence_refs)
+    assert any("observation o1" in q for q in with_unreviewed.open_questions)
 
 
 # --- Claude vision adapter (no live calls) -------------------------------------------------------------------------
@@ -418,3 +423,81 @@ def test_anthropic_vision_adapter_sends_the_image_and_allowed_labels_only():
     )
     with pytest.raises(RuntimeError):
         refusing.analyze(image, labels)
+
+
+def test_confirmed_low_confidence_observation_is_kept_and_closed_incidents_are_frozen(
+    client, project_id, db, use_analyzer
+):
+    use_analyzer(FakeAnalyzer([Detection("unprotected_edge", 0.4), Detection("no_hi_vis", 0.3)]))
+    inc = _new_incident(client, project_id)
+    ev = _upload(client, inc["id"], images.site_photo())
+    obs = {o["label"]: o for o in _analyze(client, ev["id"]).json()["data"]["observations"]}
+    assert obs["unprotected_edge"]["above_threshold"] is False
+    url = f"/vision/observations/{obs['unprotected_edge']['id']}/review"
+    body = {"decision": "CONFIRMED", "note": "Edge open on level 5, seen on site"}
+    assert client.post(url, json=body, headers=auth(client, "safety")).status_code == 200
+    pack_view = vision.for_agents(db, inc["id"])
+    assert [v["label"] for v in pack_view["confirmed"]] == ["unprotected_edge"]  # a person's decision wins
+    assert pack_view["unreviewed"] == []  # below threshold and unreviewed: not a lead
+    report = client.get(f"/incidents/{inc['id']}/report?format=md", headers=auth(client, "auditor")).text
+    assert "Unprotected edge" in report and "CONFIRMED" in report
+    assert "1 unconfirmed observation(s) below their detection threshold are not listed." in report
+
+    row = db.get(Incident, inc["id"])
+    row.status = IncidentStatus.CLOSED
+    db.commit()
+    r = client.post(url, json={"decision": "REJECTED", "note": "Changing history"}, headers=auth(client, "safety"))
+    assert r.status_code == 409 and r.json()["error"]["code"] == "INVALID_STATE"
+
+
+def test_analyses_are_rate_limited_per_user(client, project_id, monkeypatch):
+    from app.api import vision as vision_api
+    from app.core.ratelimit import RateLimiter
+
+    monkeypatch.setattr(vision_api, "analysis_limiter", RateLimiter(1))
+    inc = _new_incident(client, project_id)
+    ev = _upload(client, inc["id"], images.site_photo())
+    assert _analyze(client, ev["id"], who="hse").status_code == 201
+    r = _analyze(client, ev["id"], who="hse")
+    assert r.status_code == 429 and r.json()["error"]["code"] == "RATE_LIMITED"
+    assert _analyze(client, ev["id"], who="pm").status_code == 201  # per user
+
+
+def test_model_cannot_cite_unreviewed_observations():
+    """The LLM path: only confirmed observations are citable; anything else is removed and flagged."""
+    from app.agents.framework import Provider, run_agent
+    from app.agents.registry import AGENTS
+    from app.agents.schemas import SafetyInvestigationOutput
+
+    class CitesEverything(Provider):
+        name = "fake-llm"
+
+        def decide(self, spec, pack):
+            return SafetyInvestigationOutput(
+                hazards=["Lifting operation / crane"],
+                unsafe_acts=[],
+                unsafe_conditions=[],
+                failed_or_missing_controls=[],
+                likelihood=3,
+                consequence=5,
+                summary="Load over people",
+                confidence=0.8,
+                evidence_refs=["incident:i1", "vision:confirmed-1", "vision:unreviewed-1"],
+            )
+
+    vision_items = {
+        "confirmed": [{"ref": "vision:confirmed-1", "category": "HAZARD", "label": "unprotected_edge"}],
+        "unreviewed": [{"observation_id": "unreviewed-1", "category": "HAZARD", "label": "suspended_load_over_people"}],
+    }
+    tools = {
+        "get_incident": lambda: {"id": "i1", "title": "t", "description": "d", "activity": None},
+        "get_prior_outputs": lambda: {},
+        "list_evidence": lambda: [],
+        "search_knowledge": lambda **kw: [],
+        "similar_incidents": lambda: [],
+        "list_vision_observations": lambda: vision_items,
+    }
+    result = run_agent(AGENTS["safety"], tools, CitesEverything())
+    assert result.output.evidence_refs == ["incident:i1", "vision:confirmed-1"]
+    assert result.needs_human_review
+    assert any(t["type"] == "evidence_refs_removed" and t["refs"] == ["vision:unreviewed-1"] for t in result.trace)

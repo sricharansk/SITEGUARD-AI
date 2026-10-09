@@ -103,7 +103,7 @@ def build_tools(db: Session, inc: Incident, state: dict) -> dict:
     def get_prior_outputs() -> dict:
         return dict(state)
 
-    def list_vision_observations() -> list[dict]:
+    def list_vision_observations() -> dict:
         return vision.for_agents(db, inc.id)
 
     return {

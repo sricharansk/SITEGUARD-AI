@@ -201,15 +201,14 @@ def _base_refs(pack: dict, k: int = 3) -> list[str]:
 
 def _vision(pack: dict, categories: set[str]) -> tuple[list[dict], list[dict]]:
     """Vision observations for these categories: (CONFIRMED by an engineer, UNREVIEWED machine observations)."""
-    obs = [v for v in pack.get("vision", []) if v["category"] in categories]
-    confirmed = [v for v in obs if v["review_status"] == "CONFIRMED"]
-    return confirmed, [v for v in obs if v["review_status"] == "UNREVIEWED"]
+    confirmed = [v for v in pack.get("vision", []) if v["category"] in categories]
+    return confirmed, [v for v in pack.get("vision_unreviewed", []) if v["category"] in categories]
 
 
 def _vision_questions(unreviewed: list[dict]) -> list[str]:
     return [
-        f"Check the unreviewed vision observation '{v['name']}' ({v['ref']}, confidence {v['confidence']:.0%}) "
-        "against the photo; it is a machine observation, not a finding."
+        f"Check the unreviewed vision observation '{v['name']}' (observation {v['observation_id']}, confidence "
+        f"{v['confidence']:.0%}) against the photo; it is a machine observation, not a finding."
         for v in unreviewed[:5]
     ]
 

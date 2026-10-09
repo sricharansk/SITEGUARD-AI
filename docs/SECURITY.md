@@ -106,6 +106,8 @@ refused and audited), then decodes JPEG/PNG only in a child process with CPU, me
 `SITEGUARD_VISION_MAX_PIXELS` are refused as decompression bombs. Analyzers only see a re-encoded copy without
 EXIF/GPS metadata; the original evidence is never modified. Text written in an image is untrusted content for the
 vision model, and the analyzer's free-text notes are stored as labelled machine text and never passed to the agents.
+Analyses are rate limited per user (`SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE`). Child processes set their own memory
+and CPU limits at startup (no `preexec_fn` in the threaded server), and at most four run at once per API process.
 
 A file that cannot be parsed is kept as a `FAILED` document with a generic reason; a request that fails for any
 other reason removes the stored file. Downloads are sent as attachments with the stored type and `nosniff`.

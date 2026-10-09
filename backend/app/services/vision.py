@@ -14,7 +14,7 @@ import hashlib
 import time
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.agents.vision import AnalyzerOutput, LabelSpec, PreparedImage, VisionAnalyzer, get_analyzer
@@ -402,6 +402,8 @@ def review(
     db: Session, obs: VisionObservation, inc: Incident, decision: ObservationReview, note: str, user_id: str
 ) -> VisionObservation:
     """A person confirms or rejects an observation. Earlier decisions stay in the audit trail."""
+    if inc.status.value == "CLOSED":
+        raise Conflict("Observations on a closed incident cannot be re-reviewed", "INVALID_STATE")
     before = obs.review_status.value
     obs.review_status = decision
     obs.reviewed_by = user_id
@@ -471,34 +473,45 @@ def calibrate(
     return row
 
 
-def for_agents(db: Session, incident_id: str) -> list[dict]:
-    """Above-threshold observations that nobody rejected, from completed analyses, for the agents' evidence pack."""
+def for_agents(db: Session, incident_id: str) -> dict:
+    """Observations for the agents' evidence pack, from completed analyses, without the analyzer's free text.
+
+    `confirmed`: observations a person CONFIRMED (also below threshold); the only ones with a citable `vision:` ref.
+    `unreviewed`: above-threshold observations nobody has reviewed yet; label only, no ref, so an agent cannot cite
+    them as support. Rejected observations are left out.
+    """
     rows = db.execute(
         select(VisionObservation, VisionAnalysis)
         .join(VisionAnalysis, VisionAnalysis.id == VisionObservation.analysis_id)
         .where(
             VisionObservation.incident_id == incident_id,
-            VisionObservation.above_threshold,
-            VisionObservation.review_status != ObservationReview.REJECTED,
             VisionAnalysis.status == "COMPLETED",
+            or_(
+                VisionObservation.review_status == ObservationReview.CONFIRMED,
+                and_(
+                    VisionObservation.review_status == ObservationReview.UNREVIEWED,
+                    VisionObservation.above_threshold,
+                ),
+            ),
         )
         .order_by(VisionAnalysis.created_at, VisionObservation.ordinal)
     ).all()
-    out = []
+    confirmed, unreviewed = [], []
     for obs, analysis in rows:
         cls = BY_LABEL.get(obs.label)
-        out.append(
-            {
-                "ref": f"vision:{obs.id}",
-                "evidence_id": obs.evidence_id,
-                "category": obs.category,
-                "label": obs.label,
-                "name": cls.name if cls else obs.label,
-                "maps_to": cls.maps_to if cls else None,
-                "confidence": obs.confidence,
-                "review_status": obs.review_status.value,
-                "analyzer": analysis.analyzer,
-                "model_version": analysis.model_version,
-            }
-        )
-    return out
+        item = {
+            "evidence_id": obs.evidence_id,
+            "category": obs.category,
+            "label": obs.label,
+            "name": cls.name if cls else obs.label,
+            "maps_to": cls.maps_to if cls else None,
+            "confidence": obs.confidence,
+            "review_status": obs.review_status.value,
+            "analyzer": analysis.analyzer,
+            "model_version": analysis.model_version,
+        }
+        if obs.review_status == ObservationReview.CONFIRMED:
+            confirmed.append({"ref": f"vision:{obs.id}", **item})
+        else:
+            unreviewed.append({"observation_id": obs.id, **item})
+    return {"confirmed": confirmed, "unreviewed": unreviewed}

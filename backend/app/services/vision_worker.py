@@ -1,8 +1,8 @@
 """Child process that decodes an untrusted image (see vision.prepare_image).
 
 Reads the file from stdin and writes {"ok": true, ...} with the oriented size, image-quality measurements and a
-re-encoded JPEG without metadata (base64), or {"ok": false, "error"}. Runs under CPU and memory limits set by the
-parent. argv: <expected format JPEG|PNG> <max pixels> <max side>.
+re-encoded JPEG without metadata (base64), or {"ok": false, "error"}. Runs under the CPU and memory limits the parent
+passes in its environment. argv: <expected format JPEG|PNG> <max pixels> <max side>.
 """
 
 import base64
@@ -68,6 +68,9 @@ def prepare(content: bytes, expected: str, max_pixels: int, max_side: int) -> di
 
 
 def main() -> None:
+    from app.services.isolation import apply_limits
+
+    apply_limits()
     expected, max_pixels, max_side = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
     content = sys.stdin.buffer.read()
     try:
