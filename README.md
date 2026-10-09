@@ -50,7 +50,7 @@ cd SITEGUARD-AI
 
 # Option A: Python only (SQLite)
 make install
-make test            # 50 tests
+make test            # backend test suite
 make run             # open http://localhost:8000/docs
 
 # Option B: PostgreSQL + API in Docker
@@ -62,6 +62,8 @@ make demo            # regenerates docs/RESULTS.md from a live run
 Demo logins (password `siteguard-demo`, change with `SITEGUARD_DEMO_PASSWORD`):
 `hse@`, `pm@`, `safety@`, `qa@`, `site@`, `auditor@`, `admin@demo.siteguard.local`.
 A second tenant, `other@demo.siteguard.local`, is used to prove isolation.
+Demo data seeds only when `SITEGUARD_ENV` is `local`, `test` or `demo`; production refuses to start with it on.
+Database migrations run automatically on startup (`make migrate` runs them by hand).
 
 ## Repository layout
 
@@ -70,17 +72,21 @@ backend/app/
   agents/      framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/         FastAPI routes
   services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit
-  core/        config, database, security/RBAC, errors, observability
-backend/tests/ unit, agent and end-to-end API tests
+  core/        config, database and migrations runner, security/RBAC, rate limit, errors, observability
+  migrations/  Alembic revisions
+backend/tests/ unit, agent, migration and end-to-end API tests
 data/seed/     synthetic incidents, demo users, synthetic site procedures and ITPs
+data/dataset_registry.yaml  public datasets with licence and commercial-use status (none downloaded yet)
 docs/          PRD, architecture, agents, API, database, security, testing, datasets, results, decisions
+docs/PROJECT_STATUS.md  what is done, partial and missing against the 52 implementation gates
+.claude/       Claude Code rules, reviewer agents and permission settings
 docs/planning/ the original implementation blueprint, playbook and strategy documents
 scripts/       demo_walkthrough.py
 ```
 
 ## Tech stack
 
-Python 3.12, FastAPI, Pydantic, SQLAlchemy, PostgreSQL (pgvector image), Anthropic SDK, Docker, GitHub Actions.
+Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK, Docker, GitHub Actions.
 Planned: Next.js + TypeScript + Tailwind, Azure Container Apps, pgvector hybrid search, Neo4j, vision models.
 
 ## Data and datasets

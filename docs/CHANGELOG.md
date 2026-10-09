@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Alembic migrations (`backend/app/migrations/`), applied on startup and with `make migrate`; pilot databases are
+  stamped at the baseline instead of recreated. Model/migration parity test.
+- Login rate limiting (429 `RATE_LIMITED`) and security headers on every response.
+- `backend/requirements.lock`; pinned dev tools.
+- `docs/PROJECT_STATUS.md`, `.claude/` rules, reviewer agents and settings, `data/dataset_registry.yaml`.
+
+### Changed
+
+- Demo data seeds by default only when `SITEGUARD_ENV` is local, test or demo; production refuses to start with
+  seeding on, and non-local environments refuse a weak JWT secret.
+
 ## 0.1.0 — Backend pilot
 
 ### Added

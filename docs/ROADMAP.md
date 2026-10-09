@@ -3,11 +3,12 @@
 ## DONE (0.1.0)
 
 Incident management; evidence; retrieval; triage; safety/quality investigation; risk; RCA; compliance mapping;
-CAPA; human approval; workflow; dashboard API; audit; Docker; CI.
+CAPA; human approval; workflow; dashboard API; audit; Docker; CI. Since then: Alembic migrations, login rate
+limiting, security headers, safe seeding defaults, locked dependencies.
 
 ## NOW
 
-Next.js web app (dashboard, incident list, incident workspace, review queue); Alembic migrations; Azure staging.
+Next.js web app (dashboard, incident list, incident workspace, review queue); Azure staging.
 
 ## NEXT
 

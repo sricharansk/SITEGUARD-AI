@@ -3,8 +3,16 @@
 ## Engine
 
 PostgreSQL (`pgvector/pgvector:pg16` image) for deployed environments; SQLite for local runs and tests. Models in
-`backend/app/models.py`. Tables are created at startup with `create_all` in the pilot; Alembic migrations are the
-next step before any shared environment holds data that must survive schema changes (see DECISIONS 006).
+`backend/app/models.py`.
+
+## Migrations
+
+Alembic owns the schema (`backend/app/migrations/`, config `backend/alembic.ini`). The API runs `upgrade head` on
+startup (`app.core.db.run_migrations`); `make migrate` does the same from the command line. A database created by
+the 0.1.0 pilot with `create_all` (tables present, no `alembic_version`) is stamped at the baseline revision `0001`
+and then upgraded, so pilot data is kept. After changing `models.py`, run `make revision m="what changed"`, review
+the generated file and commit it; `tests/test_migrations.py` fails if models and migrations drift apart, and checks
+downgrade to base and back.
 
 ## Tables (implemented)
 

@@ -20,7 +20,7 @@ Reason: AI is decision support and cannot replace accountable personnel.
 
 Reason: avoid vendor lock-in and preserve enterprise deployment flexibility.
 
-## Decision 006 — create_all for the pilot, Alembic before shared data
+## Decision 006 — create_all for the pilot, Alembic before shared data (superseded by 011)
 
 Reason: the 4–5 hour pilot needs a schema that can change freely. Before a shared staging environment keeps
 data across releases, add Alembic and an initial migration generated from `models.py`.
@@ -45,3 +45,22 @@ stays the same when vector and hybrid retrieval are added.
 
 Reason: the sandbox used to build the pilot cannot download the public datasets in DATASETS.md, and incident data
 from real companies cannot be published. Seed incidents carry `is_synthetic = true`.
+
+## Decision 011 — Alembic owns the schema; the API migrates on startup
+
+Reason: staging and demo environments must keep data across releases. Migrations live inside the `app` package so
+the installed image carries them. Startup runs `upgrade head`; pilot databases without `alembic_version` are
+stamped at `0001` (identical to the pilot schema) instead of being recreated. A parity test keeps models and
+migrations in step.
+
+## Decision 012 — Demo seeding is opt-in outside local, test and demo
+
+Reason: demo users share one known password. `SITEGUARD_SEED_DEMO_DATA` now defaults to on only when
+`SITEGUARD_ENV` is `local`, `test` or `demo`, and the API refuses to start with seeding on when
+`SITEGUARD_ENV=production`. Outside local/test the API also refuses the default or a short JWT secret.
+
+## Decision 013 — Pinned dependencies
+
+Reason: CI found type errors that an unpinned local toolchain did not. Runtime dependencies are locked in
+`backend/requirements.lock` (used by the Docker image and CI) and dev tools are pinned in `pyproject.toml`.
+

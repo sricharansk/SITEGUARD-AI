@@ -256,3 +256,38 @@ def test_dashboard_and_search(client, project_id):
     assert hits and "Height" in hits[0]["document_title"]
     agents = client.get("/agents").json()["data"]
     assert {a["name"] for a in agents} == {"triage", "safety", "quality", "rca", "compliance", "capa"}
+
+
+def test_login_rate_limited(client):
+    from app.api.auth import login_limiter
+
+    login_limiter.reset()
+    codes = [
+        client.post("/auth/login", json={"email": "nobody@demo.siteguard.local", "password": "x"}).status_code
+        for _ in range(12)
+    ]
+    login_limiter.reset()
+    assert codes[0] == 401 and codes[-1] == 429
+
+
+def test_security_headers(client):
+    r = client.get("/health")
+    assert r.headers["X-Content-Type-Options"] == "nosniff" and r.headers["X-Frame-Options"] == "DENY"
+
+
+def test_unsafe_settings_refused():
+    import pytest
+
+    from app.core.config import Settings
+    from app.main import validate_settings
+
+    def settings(**kw) -> Settings:
+        return Settings(_env_file=None, **kw)  # ignore any developer .env
+
+    assert settings(env="staging", jwt_secret="x" * 40).seed_demo_data is False
+    assert settings(env="local").seed_demo_data is True
+    with pytest.raises(RuntimeError):
+        validate_settings(settings(env="staging", jwt_secret="short"))
+    with pytest.raises(RuntimeError):
+        validate_settings(settings(env="production", jwt_secret="x" * 40, seed_demo_data=True))
+    validate_settings(settings(env="production", jwt_secret="x" * 40))

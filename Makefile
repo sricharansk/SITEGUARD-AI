@@ -1,7 +1,7 @@
-.PHONY: install test lint run up down demo
+.PHONY: install test lint run up down demo migrate revision
 
 install:
-	cd backend && pip install -e ".[dev]"
+	cd backend && pip install -r requirements.lock -e ".[dev]"
 
 lint:
 	cd backend && ruff check app tests && ruff format --check app tests && mypy app --ignore-missing-imports
@@ -20,3 +20,9 @@ down:
 
 demo:  ## Drive one incident end to end and regenerate docs/RESULTS.md
 	python scripts/demo_walkthrough.py --base-url http://localhost:8000 --out docs/RESULTS.md
+
+migrate:  ## Apply database migrations (the API also does this on startup)
+	cd backend && alembic upgrade head
+
+revision:  ## Create a migration from model changes: make revision m="add reports table"
+	cd backend && alembic revision --autogenerate -m "$(m)"
