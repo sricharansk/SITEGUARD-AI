@@ -14,13 +14,33 @@ and then upgraded, so pilot data is kept. After changing `models.py`, run `make 
 the generated file and commit it; `tests/test_migrations.py` fails if models and migrations drift apart, and checks
 downgrade to base and back.
 
-## Tables (implemented)
+## Tables
 
-organizations, users, memberships, projects, sites, incidents, incident_events, evidence, documents,
-document_chunks, agent_runs, risk_assessments, capa_actions, approval_events, verification_records, audit_events.
+Blueprint Part 7 lists the target entities. Status today:
 
-RCA and compliance outputs are stored as structured JSON in `agent_runs.output` for the pilot rather than in
-separate rca_cases / compliance_findings tables. Embeddings are not stored yet (retrieval is BM25).
+| Entity | Status |
+|---|---|
+| organizations, users, memberships, projects, sites | Implemented |
+| project_members | Covered by `memberships.project_id` (a membership scoped to one project) |
+| incidents, incident_events, evidence | Implemented |
+| documents, document_chunks | Implemented; `documents.version` holds the version (no separate document_versions table) |
+| embeddings | Not yet (retrieval is BM25; Prompt 11) |
+| agent_runs | Implemented; each run stores its typed output, trace and review reasons |
+| agent_outputs, rca_cases, rca_hypotheses, requirements, compliance_findings | Stored as validated JSON in `agent_runs.output` (schemas in `app/agents/schemas.py`) rather than separate tables |
+| risk_assessments, capa_actions, approval_events, verification_records, audit_events | Implemented |
+| notifications | Not yet (Prompt 24) |
+
+## Incident data
+
+Every incident has the Blueprint's minimum fields: id, organization_id, project_id, site_id, title, description,
+category, domain (safety / quality / both), severity, status, occurred_at, reported_at, location, reporter_id,
+immediate_actions, created_at, updated_at, plus a human-readable `reference` (SG-YYYY-####), activity,
+people_involved, closed_at and `is_synthetic`.
+
+## Migration rule
+
+Every schema change: (1) update this file; (2) create an Alembic revision; (3) test upgrade and downgrade
+(`tests/test_migrations.py`); (4) test the affected flows.
 
 ## Scoping
 

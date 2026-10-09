@@ -54,8 +54,8 @@ prompts that need them rather than as empty folders.
 ### Conflicts with the playbook
 
 1. The playbook and blueprint expect themselves at the repository root; they are in `docs/planning/`.
-2. Several docs (ARCHITECTURE, SECURITY, OBSERVABILITY) describe the target system (OIDC, Neo4j, object storage,
-   metrics); the table below says what exists.
+2. The Blueprint describes the target system (OIDC, Neo4j, object storage, metrics). Since Prompt 01 each document
+   marks what is implemented and what is target.
 3. The playbook asks for "LangGraph-style" orchestration; the code uses a bounded sequential workflow
    (DECISIONS 007).
 4. All demo incidents and procedures are synthetic. The public datasets in `docs/DATASETS.md` are registered but
@@ -70,7 +70,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | Prompt | Milestone | Status | Notes |
 |---|---|---|---|
 | 00 | Repository baseline | Done | This report; `.gitignore`, `.env.example`, `docs/AGENTS.md` refreshed |
-| 01 | Source-of-truth documentation | Partial | Docs in place; ARCHITECTURE, SECURITY and OBSERVABILITY describe the target without marking what exists |
+| 01 | Source-of-truth documentation | Done | All 16 docs follow the Blueprint and mark implemented vs target; open decisions O1–O12; `tests/test_docs.py` |
 | 02 | Application scaffold | Partial | Backend done; no `frontend/` yet |
 | 03 | Local development environment | Done | Makefile, Compose (PostgreSQL + API), `.env.example` |
 | 04 | PostgreSQL foundation | Done | Alembic migrations, applied on startup; parity test |
@@ -121,8 +121,8 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 ## Next gate
 
-Prompt 01 (documentation source of truth): check every document in `docs/` against the code and mark target-state
-sections clearly.
+Prompt 02 (application scaffold): add the `frontend/` web app shell (Next.js, TypeScript, Tailwind) with lint,
+type check, tests and build in CI.
 
 ## Verification commands
 

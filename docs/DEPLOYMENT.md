@@ -28,6 +28,8 @@ Test → Build → Scan → Push → Staging → Migrate → Smoke test → Appr
 
 Use versioned container image and database migration strategy. Never perform destructive rollback blindly.
 
+Production deployment needs the project owner's explicit approval (open decision O12 in `docs/DECISIONS.md`).
+
 ## What exists today (0.1.0)
 
 - `backend/Dockerfile`: non-root image installed from `requirements.lock`, health check, migrations applied on

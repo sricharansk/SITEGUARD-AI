@@ -70,3 +70,22 @@ Reason: several registered datasets forbid redistribution or commercial use, and
 `data/raw/`, `data/interim/` and `data/processed/` are git-ignored; each dataset is recorded in
 `data/dataset_registry.yaml` with its source, version, checksum and licence so it can be fetched again.
 
+## Open decisions
+
+These are unresolved. Each lists the behaviour that stays in place until someone decides.
+
+| # | Question | Until decided |
+|---|---|---|
+| O1 | Which identity provider and tenant for SSO (Entra ID is the documented preference)? | Email + password with JWT |
+| O2 | How do contractors and clients get access? There is no dedicated role. | Project-scoped memberships with an existing role (AUDITOR or VIEWER for clients) |
+| O3 | Should triage run automatically when an incident is saved (Blueprint Flow 2) instead of on request? | Runs on request (`/triage`, `/investigate`); needs a background job runner first |
+| O4 | Keep the bounded sequential orchestrator or adopt a graph framework with persisted checkpoints? | Bounded sequential workflow (Decision 007) |
+| O5 | Which embedding model/provider for vector search, given data-residency needs? | BM25 only (Decision 009) |
+| O6 | Evidence storage container, retention and malware scanning in Azure Blob Storage? | Local disk / mounted volume |
+| O7 | Which notification channels for reminders and escalation (email, Teams, SMS)? | Dashboard overdue counts only |
+| O8 | Which vision models, and can any non-commercial dataset be used beyond evaluation? | No vision features; datasets registered only |
+| O9 | Is Neo4j needed for the MVP or deferred? (Blueprint lists the knowledge graph as "should have".) | Deferred |
+| O10 | Shared store for rate limiting when running more than one replica? | In-process limiter, single replica |
+| O11 | Commercial-use rights for public datasets before any production use | `commercial_use` flags in `data/dataset_registry.yaml` |
+| O12 | Production environment and go-live approval | No production deployment without the owner's explicit approval |
+

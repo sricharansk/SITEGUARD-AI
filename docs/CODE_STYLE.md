@@ -1,17 +1,27 @@
 # Code Style & Conventions
 
+Source: Blueprint Part 10.
+
 ## General
 
-Readable, focused, consistent code. Prefer existing patterns.
+Small focused modules; typed request/response structures; descriptive names; domain-oriented folders; centralized
+configuration (`app/core/config.py`); reusable services; explicit error classes (`app/core/errors.py`); structured
+logs. Prefer existing patterns.
 
-## Python
+## Python (backend/)
 
-Type hints, small service functions, structured exceptions, tests close to domain modules.
+- One toolchain: ruff (lint + format, line length 120), mypy, pytest. `make lint` and `make test`.
+- Type hints everywhere; Pydantic models for every request body and agent output.
+- Routes in `app/api/` stay thin; business rules in `app/services/`; agents in `app/agents/`.
+- Raise `AppError` / `NotFound` / `Forbidden` / `Conflict` with a stable code; never return ad hoc error shapes.
+- Responses use `ok(data)` so every endpoint returns the envelope.
+- Schema changes ship with an Alembic revision.
 
-## TypeScript
+## TypeScript (frontend/, when added)
 
-Strict typing, reusable components, feature-oriented structure.
+ESLint and a formatter; strict TypeScript; component tests; feature-oriented structure.
 
-## Rules
+## Never
 
-No duplicate utilities, no unnecessary dependencies, no unrelated rewrites, no hard-coded secrets.
+Duplicate helpers; silently change API contracts; hard-code secrets; introduce unused dependencies; make unrelated
+rewrites.

@@ -13,6 +13,11 @@
   `.gitignore` now covers all `.env.*` files, keys, local databases and downloaded datasets; `.env.example`
   lists every setting.
 
+- Prompt 01 source of truth: PRD, UX flows, design system, architecture, database, API, security, error handling,
+  observability, code style and testing docs now follow the Blueprint and mark what is implemented versus target;
+  open decisions are listed in `docs/DECISIONS.md`; `tests/test_docs.py` fails when a route, role or error code
+  is missing from the docs.
+
 ### Changed
 
 - Demo data seeds by default only when `SITEGUARD_ENV` is local, test or demo; production refuses to start with
