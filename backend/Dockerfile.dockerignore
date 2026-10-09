@@ -1,0 +1,9 @@
+# Build context for backend/Dockerfile (context = repository root). Allowlist: only what the image needs is sent
+# to the builder, so .env files, databases, evidence, .git and node_modules never reach it.
+*
+!backend/requirements.lock
+!backend/alembic.ini
+!backend/app/
+!data/seed/
+**/__pycache__
+**/*.pyc

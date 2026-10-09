@@ -1,5 +1,6 @@
 # Local pilot stack: PostgreSQL (pgvector image, ready for vector search) + API + web app.
 # Usage: cp .env.example .env && docker compose up --build   (web app: http://localhost:3000)
+# The staging stack is deployment/staging/docker-compose.staging.yml (docs/DEPLOYMENT.md).
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -15,9 +16,11 @@ services:
       retries: 10
 
   api:
+    image: siteguard-api:local
     build:
       context: .
       dockerfile: backend/Dockerfile
+    # .env sets SITEGUARD_ENV (local or demo); the image itself defaults to production and refuses unsafe settings.
     env_file: [.env]
     environment:
       SITEGUARD_DATABASE_URL: postgresql+psycopg://siteguard:${POSTGRES_PASSWORD:-siteguard-local}@db:5432/siteguard
@@ -28,6 +31,7 @@ services:
         condition: service_healthy
 
   web:
+    image: siteguard-web:local
     build:
       context: ./frontend
     environment:
@@ -35,7 +39,8 @@ services:
       SITEGUARD_API_URL: http://api:8000
     ports: ["3000:3000"]
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:
