@@ -76,12 +76,13 @@ Database migrations run automatically on startup (`make migrate` runs them by ha
 backend/app/
   agents/      framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/         FastAPI routes
-  services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit
+  services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit, analytics
   core/        config, database and migrations runner, security/RBAC, rate limit, errors, observability
   migrations/  Alembic revisions
 backend/tests/ unit, agent, knowledge, migration, PostgreSQL and end-to-end API tests
-frontend/      Next.js web app (BFF session proxy, dashboard, incident command center, review board, knowledge,
-               audit), Vitest tests and the Playwright browser E2E
+frontend/      Next.js web app (BFF session proxy, filtered dashboard with trends, incident command center with report
+               download, review board, knowledge with grounded answers and upload, notifications, audit), Vitest
+               tests and the Playwright browser E2E
 evals/         labelled retrieval queries
 data/seed/     synthetic incidents, demo users, synthetic site procedures and ITPs
 data/dataset_registry.yaml  public datasets with licence and commercial-use status (none downloaded yet)
