@@ -18,6 +18,8 @@ from app.core.security import Principal, hash_password
 from app.models import (
     CapaAction,
     Domain,
+    Incident,
+    IncidentEvent,
     Membership,
     Organization,
     Project,
@@ -111,6 +113,7 @@ def _seed_incidents(db: Session, project: Project) -> None:
         "QUALITY": _principal(db, "qa@demo.siteguard.local"),
     }
     reporter = site_eng
+    seeded: list[Incident] = []
     for row in sorted(rows, key=lambda r: -r["days_ago"]):
         occurred = utcnow() - timedelta(days=row["days_ago"], hours=3)
         inc = incidents.create(
@@ -133,6 +136,7 @@ def _seed_incidents(db: Session, project: Project) -> None:
             },
         )
         inc.reported_at = occurred + timedelta(hours=2)
+        seeded.append(inc)
         stage = row["stage"]
         if stage == "reported":
             continue
@@ -159,3 +163,34 @@ def _seed_incidents(db: Session, project: Project) -> None:
             capa.verify(db, verifier, inc, a, True, "Checked on site; control in place and working.", None)
         capa.close_incident(db, hse, inc, "All actions verified effective. Lessons shared at toolbox talk.")
         inc.closed_at = inc.reported_at + timedelta(days=max(1, row["days_ago"] // 2))
+    db.flush()
+    for inc in seeded:
+        _backdate_history(db, inc)
+
+
+# Time to the first response on seeded incidents; more severe incidents are picked up sooner.
+_SEED_RESPONSE = {Severity.CRITICAL: 0.5, Severity.HIGH: 2.0, Severity.MEDIUM: 6.0, Severity.LOW: 20.0}
+
+
+def _backdate_history(db: Session, inc: Incident) -> None:
+    """Seeding drives each synthetic incident through the workflow in milliseconds. Spread its lifecycle events
+    between the backdated report and closure times, so the dashboard's response and closure metrics look like a
+    real project instead of measuring the seeding run."""
+    events = list(
+        db.scalars(
+            select(IncidentEvent)
+            .where(IncidentEvent.incident_id == inc.id)
+            .order_by(IncidentEvent.from_status.is_not(None), IncidentEvent.created_at, IncidentEvent.id)
+        )
+    )
+    if not events:
+        return
+    events[0].created_at = inc.reported_at
+    later = events[1:]
+    if not later:
+        return
+    first = inc.reported_at + timedelta(hours=_SEED_RESPONSE[inc.severity])
+    last = inc.closed_at or first + (utcnow() - first) / 2
+    step = (last - first) / max(1, len(later) - 1)
+    for i, event in enumerate(later):
+        event.created_at = first + step * i
