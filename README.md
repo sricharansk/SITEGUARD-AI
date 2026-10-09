@@ -6,8 +6,9 @@ Site Guard AI helps construction teams investigate incidents, understand risk, r
 corrective and preventive actions, and manage resolution through verified closure. AI agents do the first pass;
 qualified people approve every action and close every incident.
 
-> Status: **0.1.0 backend pilot.** API, agents, workflow, tests, Docker and CI are working. The web UI, Azure
-> deployment, vision and knowledge graph are the next milestones ([ROADMAP](docs/ROADMAP.md)).
+> Status: **in development after the 0.1.0 pilot.** API, agents, workflow, document parsing, hybrid retrieval with
+> grounded answers, the web app, tests, Docker and CI are working. Progress against every implementation gate is in
+> [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
 
 ## What it does
 
@@ -53,9 +54,13 @@ make install
 make test            # backend test suite
 make run             # open http://localhost:8000/docs
 
-# Option B: PostgreSQL + API in Docker
+# Web app (Node 22.12+), with the API from option A running
+make web-install
+make web-dev         # open http://localhost:3000
+
+# Option B: PostgreSQL + API + web app in Docker
 cp .env.example .env # then edit the CHANGE values
-make up
+make up              # web app on http://localhost:3000, API on http://localhost:8000
 make demo            # regenerates docs/RESULTS.md from a live run
 ```
 
@@ -74,7 +79,10 @@ backend/app/
   services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit
   core/        config, database and migrations runner, security/RBAC, rate limit, errors, observability
   migrations/  Alembic revisions
-backend/tests/ unit, agent, migration and end-to-end API tests
+backend/tests/ unit, agent, knowledge, migration, PostgreSQL and end-to-end API tests
+frontend/      Next.js web app (BFF session proxy, dashboard, incident command center, review board, knowledge,
+               audit), Vitest tests and the Playwright browser E2E
+evals/         labelled retrieval queries
 data/seed/     synthetic incidents, demo users, synthetic site procedures and ITPs
 data/dataset_registry.yaml  public datasets with licence and commercial-use status (none downloaded yet)
 docs/          PRD, architecture, agents, API, database, security, testing, datasets, results, decisions
@@ -86,8 +94,9 @@ scripts/       demo_walkthrough.py
 
 ## Tech stack
 
-Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK, Docker, GitHub Actions.
-Planned: Next.js + TypeScript + Tailwind, Azure Container Apps, pgvector hybrid search, Neo4j, vision models.
+Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL with pgvector, pypdf, python-docx, Anthropic SDK;
+Next.js 16, React 19, TypeScript, Tailwind CSS 4; Docker, GitHub Actions.
+Planned: Azure Container Apps, Neo4j, vision models.
 
 ## Data and datasets
 

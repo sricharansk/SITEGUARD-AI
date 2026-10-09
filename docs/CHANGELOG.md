@@ -26,6 +26,9 @@
   conflicting evidence statuses and unsupported claims removed. `GET /documents/{id}` and
   `GET /documents/{id}/download`. Migration `0002`. Labelled retrieval queries in `evals/retrieval/`.
 - CI job running PostgreSQL + pgvector integration tests.
+- Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project
+  dashboard, incident list and intake, incident command center, CAPA review board, knowledge search and audit log;
+  Vitest unit and component tests, Playwright browser E2E, Docker image, compose service and CI jobs.
 - Upload hardening: PDF/DOCX parsed in a resource-limited child process, zip-bomb checks, declared MIME type
   checked against the extension, size enforced while reading, no stored file left behind by a failed request,
   organization-wide documents and reindex limited to organization-wide roles, injection flagging covers headings

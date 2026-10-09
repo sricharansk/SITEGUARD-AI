@@ -97,6 +97,14 @@ app.services.parse_worker` with an address-space limit, a CPU-time limit and a w
 pre-checks (zip expansion, page count). Text and Markdown stay in process. The cost is a process start per binary
 upload, which is small next to parsing and embedding.
 
+## Decision 018 — The web app reaches the API through a same-origin BFF
+
+Reason: keep the API token out of browser JavaScript and avoid cross-origin calls. The Next.js server signs in on
+the user's behalf (`/api/session`), stores the JWT in an httpOnly, SameSite=Lax cookie (Secure in production) and
+forwards browser calls under `/api/backend/*` to the API with `Authorization: Bearer`. Writes must carry an
+`Origin` matching the host (CSRF), only the API roots the app uses are forwarded, and a 401 from the API clears the
+cookie. The API still authorizes every call; the UI only hides controls using the `permissions` the API returns.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.

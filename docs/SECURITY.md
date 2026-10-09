@@ -65,6 +65,15 @@ the API refuses to start with seeding on in `production`.
 Every response carries `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`
 and `Cache-Control: no-store` (API responses can hold incident data).
 
+## Web app session
+
+The browser never holds the API token. The Next.js server (`frontend/`) stores it in the `sg_session` cookie
+(httpOnly, SameSite=Lax, Secure in production, 8 hours) and attaches it when it forwards calls to the API
+(DECISIONS 018). POST/PATCH/DELETE to the web app's server need an `Origin` that matches the host, or one listed in
+`SITEGUARD_ALLOWED_ORIGINS`; other requests get 403 before the API is called. Only the API roots the app uses are
+forwarded. Pages carry a Content-Security-Policy (`default-src 'self'`, `frame-ancestors 'none'`,
+`object-src 'none'`), `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff`. Serve the web app over HTTPS.
+
 ## Agent security
 
 Retrieved documents and uploaded files are untrusted content. A construction document must never be able to

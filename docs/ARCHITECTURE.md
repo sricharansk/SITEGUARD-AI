@@ -57,7 +57,7 @@ flowchart TD
 
 | Component | Today | Target / gap |
 |---|---|---|
-| Web app | None | Next.js app (Prompts 02, 31–33) |
+| Web app | Next.js 16 app in `frontend/`: same-origin BFF with an httpOnly session cookie (DECISIONS 018); dashboard, incident command center, CAPA review board, knowledge search, audit log | SSO sign-in (O1) |
 | API | FastAPI, typed schemas, error envelope, correlation IDs | Same |
 | Authentication | Email + password, HS256 JWT, login rate limit | OIDC / Microsoft Entra ID |
 | Authorization | Server-side RBAC, 9 roles, organization/project scoping | Same |

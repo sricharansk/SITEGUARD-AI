@@ -20,6 +20,14 @@ rules provider; they never call a live model or external service.
 | tests/test_docs.py | Source-of-truth documents exist; every API route, role and error code in the code is documented |
 | tests/test_api.py | Login rate limit, security headers, unsafe production settings refused, error envelope, login, validation, tenant isolation, RBAC, evidence validation, invalid transitions, full E2E incident -> investigation -> review -> work -> failed and passed verification -> closure -> audit, critical closure permission, agent failure with manual continuation, dashboard and search |
 
+## Web app
+
+Run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test` (Vitest + Testing Library: API client,
+BFF proxy and session routes, permissions, formatting, form validation and screen components) and `npm run build`.
+`npm run e2e` (Playwright) needs the API and the web app running and `E2E_WEB_URL`; it signs in, reports an
+incident, runs the AI investigation, approves an action as the HSE manager and checks the auditor is read-only.
+CI runs the web checks in the `frontend` job and the browser test in the `e2e` job.
+
 ## Blueprint test plan (Part 11) and status
 
 | Area | Status |
@@ -29,7 +37,7 @@ rules provider; they never call a live model or external service.
 | Integration: API + database, authentication, RAG, agent orchestration, CAPA | Implemented |
 | Integration: PostgreSQL + pgvector | Implemented (`tests/test_postgres.py`, CI `postgres` job) |
 | Integration: object storage | Not yet (local disk only) |
-| E2E: login → project → incident → evidence → AI analysis → approval → CAPA → verification → closure | API-level (`test_end_to_end_incident_to_verified_closure`, walkthrough script); browser E2E when the web app exists |
+| E2E: login → project → incident → evidence → AI analysis → approval → CAPA → verification → closure | API-level (`test_end_to_end_incident_to_verified_closure`, walkthrough script); browser E2E for login → incident → AI analysis → approval (`frontend/e2e/`) |
 
 ## AI evaluation (not yet, Prompt 40)
 

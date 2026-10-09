@@ -71,7 +71,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 |---|---|---|---|
 | 00 | Repository baseline | Done | This report; `.gitignore`, `.env.example`, `docs/AGENTS.md` refreshed |
 | 01 | Source-of-truth documentation | Done | All 16 docs follow the Blueprint and mark implemented vs target; open decisions O1–O12; `tests/test_docs.py` |
-| 02 | Application scaffold | Partial | Backend done; no `frontend/` yet |
+| 02 | Application scaffold | Done | Backend plus `frontend/` (Next.js 16, TypeScript, Tailwind) with lint, type check, tests and build in CI |
 | 03 | Local development environment | Done | Makefile, Compose (PostgreSQL + API), `.env.example` |
 | 04 | PostgreSQL foundation | Done | Alembic migrations, applied on startup; parity test |
 | 05 | Authentication / RBAC | Partial | Password + JWT, 9 roles, server-side RBAC, login rate limit; no OIDC yet |
@@ -93,9 +93,9 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 28 | Neo4j knowledge graph | Missing | |
 | 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
 | 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags; knowledge answers report conflicting sources |
-| 31 | Incident command center UI | Missing | |
-| 32 | Dashboard / analytics | Partial | Dashboard API only |
-| 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; web screen comes with the web app |
+| 31 | Incident command center UI | Done | One workspace: summary, risk, evidence, AI triage and investigation, citations, RCA, compliance, CAPA, approvals, verification, timeline; AI output labelled |
+| 32 | Dashboard / analytics | Partial | Dashboard API and screen; no date filters or response-time trend yet |
+| 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; the web screen shows search results, not yet grounded answers or uploads |
 | 34 | Reports | Missing | |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
@@ -108,7 +108,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 44 | GitHub Actions | Done | Lint, types, tests, PostgreSQL + pgvector tests, image build, end-to-end smoke run |
 | 45–46 | Staging, Azure | Missing | No live deployment without the owner's explicit approval |
 | 47 | Governance gate | Missing | |
-| 48 | End-to-end acceptance | Partial | API-level E2E test and walkthrough; no browser E2E |
+| 48 | End-to-end acceptance | Partial | API-level E2E test, walkthrough and a Playwright browser E2E (incident → investigation → approval; auditor read-only) |
 | 49–50 | Final review, release | Missing | |
 | 51 | Claude Code control plane | Partial | `CLAUDE.md`, `.claude/rules`, `.claude/agents`, `.claude/settings.json` exist; the verification itself runs as the last gate |
 
@@ -121,8 +121,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 ## Next gate
 
-Prompt 02 (application scaffold): add the `frontend/` web app shell (Next.js, TypeScript, Tailwind) with lint,
-type check, tests and build in CI.
+Prompt 24 (notifications and escalation), then the remaining gates in order.
 
 ## Verification commands
 
