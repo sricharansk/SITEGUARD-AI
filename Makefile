@@ -24,6 +24,9 @@ demo:  ## Drive one incident end to end and regenerate docs/RESULTS.md
 migrate:  ## Apply database migrations (the API also does this on startup)
 	cd backend && alembic upgrade head
 
+jobs:  ## Run the scheduled jobs once: escalation rules, then due notification deliveries
+	cd backend && python -m app.jobs all
+
 revision:  ## Create a migration from model changes: make revision m="add reports table"
 	cd backend && alembic revision --autogenerate -m "$(m)"
 

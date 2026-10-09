@@ -92,6 +92,37 @@ A bounded RAG answer, separate from the incident workflow (`services/answer.py`)
 `needs_human_review` is true unless the status is `ANSWERED`, nothing was unsupported and confidence ≥ 0.5. Every
 answer carries the decision-support disclaimer and is audited as `knowledge.answer`.
 
+## Notifications
+
+`services/notifications.py`. `audit.record` hands every audit event to `on_audit_event`, which maps workflow events
+to in-app notifications in the same transaction. Building a notification never raises: on any error it is logged
+and the workflow change still commits.
+
+| Event | Notifies | Kind |
+|---|---|---|
+| HIGH or CRITICAL incident reported | approvers (`APPROVE_CAPA`; `APPROVE_CRITICAL` for CRITICAL), not the reporter | `INCIDENT_REPORTED` |
+| Investigation finished, actions await review | `APPROVE_CAPA` holders | `REVIEW_REQUIRED` |
+| Human action proposed | approvers for its criticality | `REVIEW_REQUIRED` |
+| Action approved or modified | assignee | `CAPA_ASSIGNED` |
+| Action completed | `VERIFY_CAPA` holders except the assignee | `VERIFICATION_REQUIRED` |
+| Verification failed | assignee | `VERIFICATION_FAILED` |
+| An agent failed | the person who ran it | `AGENT_FAILED` |
+
+Escalation rules (`escalate`, run by `python -m app.jobs escalate` or `POST /notifications/run`):
+
+| Rule | Notifies | Once per |
+|---|---|---|
+| Approved action past its due date and not done | assignee, or approvers when unassigned | action and due date |
+| Overdue by `SITEGUARD_ESCALATION_OVERDUE_DAYS` (7) | `APPROVE_CRITICAL` holders | action and due date |
+| HIGH/CRITICAL incident still REPORTED or TRIAGED after `SITEGUARD_ESCALATION_UNREVIEWED_HOURS` (24) | `APPROVE_CRITICAL` holders | incident |
+| Critical action awaiting review for `SITEGUARD_ESCALATION_REVIEW_HOURS` (48) | `APPROVE_CRITICAL` holders | action |
+
+Escalation only notifies; it never changes an action, an incident or an approval. Every notification also gets an
+email outbox row. `dispatch` sends due rows through the configured adapter (`disabled` by default, `log`, `smtp`)
+with retries after 1, 5 and 25 minutes; after `SITEGUARD_NOTIFICATION_MAX_ATTEMPTS` the row is `FAILED` and an
+administrator can re-queue it. With the `disabled` adapter rows are marked `SKIPPED`. `smtp` is refused when
+`SITEGUARD_ENV` is local or test.
+
 ## Risk engine
 
 `services/risk.py`, matrix version `5x5-v1`: score = likelihood x consequence; LOW <= 4, MEDIUM <= 9,

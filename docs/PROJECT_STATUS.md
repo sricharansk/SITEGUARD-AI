@@ -88,7 +88,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 16–21 | Triage, safety, quality, RCA, compliance, CAPA agents | Done | Rules provider default; Claude provider with fallback |
 | 22 | Human approval | Done | Approve / modify / reject; critical needs HSE manager |
 | 23 | CAPA workflow | Done | Progress, independent verification, gated closure |
-| 24 | Notifications / escalation | Missing | Overdue actions are only counted on the dashboard |
+| 24 | Notifications / escalation | Done | In-app notifications from workflow events, four escalation rules, email outbox with retries and dead letters, idempotent; external delivery off by default. Web screen pending |
 | 25–27 | Vision foundation, PPE, defects | Missing | |
 | 28 | Neo4j knowledge graph | Missing | |
 | 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
@@ -121,7 +121,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 ## Next gate
 
-Prompt 24 (notifications and escalation), then the remaining gates in order.
+Prompt 25 (vision foundation), then the remaining gates in order.
 
 ## Verification commands
 

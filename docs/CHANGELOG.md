@@ -26,6 +26,10 @@
   conflicting evidence statuses and unsupported claims removed. `GET /documents/{id}` and
   `GET /documents/{id}/download`. Migration `0002`. Labelled retrieval queries in `evals/retrieval/`.
 - CI job running PostgreSQL + pgvector integration tests.
+- Prompt 24 notifications: in-app notifications for workflow events, escalation rules for overdue actions,
+  unreviewed severe incidents and waiting critical reviews, an email outbox with retries, backoff and dead letters,
+  `python -m app.jobs` / `make jobs`, `/notifications` endpoints and migration `0003`. Notification failures never
+  undo a workflow change; real email is refused in local and test environments.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project
   dashboard, incident list and intake, incident command center, CAPA review board, knowledge search and audit log;
   Vitest unit and component tests, Playwright browser E2E, Docker image, compose service and CI jobs.

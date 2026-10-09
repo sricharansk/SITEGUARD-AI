@@ -56,6 +56,12 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /documents/reindex | MANAGE_DOCUMENTS (organization-wide membership) | `?organization_id=`; embeds chunks that lack a current vector; idempotent; returns `embedded`, `skipped`, `failed` |
 | GET | /search | READ | Hybrid search (BM25 + vector, fused and reranked) over org-wide and project documents; `mode=hybrid` or `lexical` (BM25 only), default `SITEGUARD_RETRIEVAL_MODE`; each hit carries document, version, effective date, page, section, tags, scope and scores |
 | POST | /knowledge/answer | READ | Grounded answer: `project_id`, `question`, optional `incident_id`, `domain`. Status `ANSWERED`, `INSUFFICIENT_EVIDENCE` or `CONFLICTING_EVIDENCE`; cited statements, `unsupported_claims`, `conflicts`, `excluded_sources`, `needs_human_review`, disclaimer. Audited |
+| GET | /notifications | any | The caller's in-app notifications, newest first, with `unread`; `unread_only`, `limit` (1–200) |
+| POST | /notifications/{id}/read | recipient only | Others get 404 |
+| POST | /notifications/read-all | any | Marks the caller's notifications read |
+| POST | /notifications/run | MANAGE_PROJECTS (organization-wide) | `?organization_id=`; runs the escalation rules and sends due deliveries (normally `python -m app.jobs all` on a schedule) |
+| GET | /notifications/deliveries | VIEW_AUDIT (organization-wide) | `?organization_id=&status=`; the email outbox, including `FAILED` dead letters |
+| POST | /notifications/deliveries/{id}/retry | MANAGE_PROJECTS (organization-wide) | Re-queues a `FAILED` or `SKIPPED` delivery (409 otherwise) |
 | GET | /dashboard | READ | Totals, status/severity/domain/month breakdowns, top hazards, CAPA and agent stats |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
 | GET | /health | - | |

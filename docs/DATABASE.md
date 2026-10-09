@@ -28,7 +28,7 @@ Blueprint Part 7 lists the target entities. Status today:
 | agent_runs | Implemented; each run stores its typed output, trace and review reasons |
 | agent_outputs, rca_cases, rca_hypotheses, requirements, compliance_findings | Stored as validated JSON in `agent_runs.output` (schemas in `app/agents/schemas.py`) rather than separate tables |
 | risk_assessments, capa_actions, approval_events, verification_records, audit_events | Implemented |
-| notifications | Not yet (Prompt 24) |
+| notifications, notification_deliveries | Implemented (revision `0003`): one in-app row per recipient with a unique `dedupe_key`; one email outbox row per notification with status, attempts, last error and next attempt |
 
 ## Incident data
 

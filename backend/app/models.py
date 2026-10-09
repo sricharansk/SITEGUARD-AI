@@ -343,3 +343,52 @@ class AuditEvent(Base):
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class DeliveryStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"  # dead letter: every attempt failed; an administrator can retry it
+    SKIPPED = "SKIPPED"  # external delivery disabled in this environment
+
+
+class Notification(Base):
+    """An in-app notification for one person. `dedupe_key` makes event handling and escalation idempotent."""
+
+    __tablename__ = "notifications"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"), nullable=True)
+    incident_id: Mapped[str | None] = mapped_column(ForeignKey("incidents.id"), nullable=True)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    priority: Mapped[str] = mapped_column(String(10))  # INFO | HIGH | CRITICAL
+    title: Mapped[str] = mapped_column(String(300))
+    body: Mapped[str] = mapped_column(Text)
+    entity_type: Mapped[str] = mapped_column(String(40))
+    entity_id: Mapped[str] = mapped_column(String(36), index=True)
+    dedupe_key: Mapped[str] = mapped_column(String(200), unique=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    deliveries: Mapped[list["NotificationDelivery"]] = relationship(
+        back_populates="notification", cascade="all, delete-orphan"
+    )
+
+
+class NotificationDelivery(Base):
+    """External delivery (email) of a notification: an outbox row with bounded retries."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (UniqueConstraint("notification_id", "channel"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    notification_id: Mapped[str] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))  # EMAIL
+    status: Mapped[DeliveryStatus] = mapped_column(
+        Enum(DeliveryStatus, native_enum=False), default=DeliveryStatus.PENDING, index=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    notification: Mapped[Notification] = relationship(back_populates="deliveries")

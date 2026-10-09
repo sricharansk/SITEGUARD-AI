@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -37,6 +37,21 @@ class Settings(BaseSettings):
     # PDF and DOCX are parsed in a child process with these limits (hostile files must not stall the API).
     parser_timeout_seconds: int = Field(default=60, ge=5, le=600)
     parser_memory_mb: int = Field(default=1024, ge=256, le=8192)
+
+    # Notifications (docs/AGENTS.md#notifications). External delivery is off unless an adapter is chosen; "smtp" is
+    # refused when SITEGUARD_ENV is local or test so development never emails real people.
+    notification_email_adapter: Literal["disabled", "log", "smtp"] = "disabled"
+    notification_max_attempts: int = Field(default=3, ge=1, le=10)
+    smtp_host: str = "localhost"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from: str = "siteguard@localhost"
+    smtp_starttls: bool = True
+    public_web_url: str = "http://localhost:3000"
+    escalation_overdue_days: int = Field(default=7, ge=1)
+    escalation_unreviewed_hours: int = Field(default=24, ge=1)
+    escalation_review_hours: int = Field(default=48, ge=1)
 
     @model_validator(mode="after")
     def _resolve_seed_default(self) -> "Settings":

@@ -105,6 +105,14 @@ forwards browser calls under `/api/backend/*` to the API with `Authorization: Be
 `Origin` matching the host (CSRF), only the API roots the app uses are forwarded, and a 401 from the API clears the
 cookie. The API still authorizes every call; the UI only hides controls using the `permissions` the API returns.
 
+## Decision 019 — Notifications hang off the audit trail as an outbox
+
+Reason: every workflow change is already audited in its own transaction, so mapping audit events to notifications
+covers all routes without each one remembering to notify, and the notification commits atomically with the change.
+Mapping errors are swallowed and logged so a notification problem can never undo safety work (Prompt 24 gate).
+External delivery is a separate outbox row sent by a job with bounded retries, so a mail outage only changes the
+outbox. Escalation keys (`capa-overdue:<id>:<due date>`, `incident-unreviewed:<id>`) make the job idempotent.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.

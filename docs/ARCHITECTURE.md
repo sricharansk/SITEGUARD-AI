@@ -70,7 +70,7 @@ flowchart TD
 | AI providers | Rules (default, offline) and Claude behind one `Provider` interface, with fallback | Same abstraction; VLM adapters for vision |
 | Risk | Deterministic 5x5 matrix, versioned | Same |
 | Workflow | Transactional incident and CAPA state machines | Same; reminders and escalation (Prompt 24) |
-| Notifications | None (overdue counts on the dashboard) | Notification adapter |
+| Notifications | In-app notifications from workflow events (via the audit trail), escalation rules for overdue actions, unreviewed severe incidents and waiting critical reviews, email outbox with retries and dead letters (`python -m app.jobs`); external delivery off by default | Teams/SMS channels (O7) |
 | Vision | None | PPE/hazard and defect detection (Prompts 25–27) |
 | Observability | JSON logs, correlation IDs, audit events, agent traces | Metrics, OpenTelemetry, App Insights |
 | Deployment | Docker image, Compose, GitHub Actions | Azure (Prompts 45–46) |
