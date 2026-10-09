@@ -13,6 +13,20 @@ export function meCan(me: Me | undefined | null, permission: Permission): boolea
   return Boolean(me?.memberships.some((m) => m.permissions.includes(permission)));
 }
 
+/**
+ * An organization-wide membership (not limited to one project) in this organization grants the permission. Mirrors
+ * Principal.require_org_wide in backend/app/core/security.py: the delivery outbox (VIEW_AUDIT), retrying a delivery
+ * (MANAGE_PROJECTS) and organization-wide documents (MANAGE_DOCUMENTS) need it.
+ */
+export function meOrgWideCan(me: Me | undefined | null, permission: Permission, organizationId: string | undefined): boolean {
+  if (!organizationId) return false;
+  return Boolean(
+    me?.memberships.some(
+      (m) => m.organization_id === organizationId && m.project_id === null && m.permissions.includes(permission),
+    ),
+  );
+}
+
 /** Critical actions (HIGH/CRITICAL risk) need APPROVE_CRITICAL; others APPROVE_CAPA. */
 export function reviewPermissionFor(action: Pick<CapaAction, "critical">): Permission {
   return action.critical ? "APPROVE_CRITICAL" : "APPROVE_CAPA";

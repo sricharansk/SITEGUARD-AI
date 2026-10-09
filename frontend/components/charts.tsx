@@ -90,17 +90,42 @@ export function BarList({
   );
 }
 
+/** A column; `value: null` means "no data for this period" and draws no column (never a zero). */
+export interface ColumnItem extends Omit<BarItem, "value"> {
+  value: number | null;
+}
+
 /** Columns over time (one series). Values are printed above each column. */
-export function ColumnChart({ items, caption }: { items: BarItem[]; caption: string }) {
-  const max = Math.max(1, ...items.map((i) => i.value));
-  if (items.length === 0) return <p className="px-1 py-2 text-slate-600">No data yet.</p>;
+export function ColumnChart({
+  items,
+  caption,
+  format = String,
+  emptyText = "No data yet.",
+}: {
+  items: ColumnItem[];
+  caption: string;
+  /** Printed value and table cell, e.g. hours as "2.0 h". */
+  format?: (value: number) => string;
+  emptyText?: string;
+}) {
+  const max = Math.max(1, ...items.map((i) => i.value ?? 0));
+  if (items.length === 0 || items.every((i) => i.value === null)) {
+    return <p className="px-1 py-2 text-slate-600">{emptyText}</p>;
+  }
+  const shown = (value: number | null) => (value === null ? "—" : format(value));
   return (
-    <figure>
+    <figure className="overflow-x-auto">
       <div className="flex h-36 items-end gap-2 border-b border-slate-300 px-1" aria-hidden="true">
         {items.map((item) => (
-          <div key={item.key} className="flex h-full min-w-8 flex-1 flex-col items-center justify-end" title={`${item.text}: ${item.value}`}>
-            <span className="text-xs font-semibold tabular-nums">{item.value}</span>
-            <div className="w-full max-w-10 rounded-t bg-slate-600" style={{ height: `${(item.value / max) * 85}%` }} />
+          <div
+            key={item.key}
+            className="flex h-full min-w-8 flex-1 flex-col items-center justify-end"
+            title={`${item.text}: ${item.value === null ? "no data" : shown(item.value)}`}
+          >
+            <span className="text-xs font-semibold whitespace-nowrap tabular-nums">{shown(item.value)}</span>
+            {item.value === null ? null : (
+              <div className="w-full max-w-10 rounded-t bg-slate-600" style={{ height: `${(item.value / max) * 85}%` }} />
+            )}
           </div>
         ))}
       </div>
@@ -117,7 +142,7 @@ export function ColumnChart({ items, caption }: { items: BarItem[]; caption: str
           {items.map((item) => (
             <tr key={item.key}>
               <th scope="row">{item.text}</th>
-              <td>{item.value}</td>
+              <td>{item.value === null ? "No data" : shown(item.value)}</td>
             </tr>
           ))}
         </tbody>

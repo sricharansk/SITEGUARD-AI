@@ -9,6 +9,7 @@ import {
   canVerify,
   manualTransitionTargets,
   meCan,
+  meOrgWideCan,
   reviewPermissionFor,
 } from "@/lib/permissions";
 import type { Me, Permission } from "@/lib/types";
@@ -51,6 +52,23 @@ describe("can / meCan", () => {
     expect(meCan(me, "VIEW_AUDIT")).toBe(true);
     expect(meCan(me, "APPROVE_CAPA")).toBe(false);
     expect(meCan(undefined, "READ")).toBe(false);
+  });
+
+  it("meOrgWideCan needs an organization-wide membership in that organization", () => {
+    const me: Me = {
+      id: "u",
+      email: "a@b.c",
+      full_name: "A",
+      memberships: [
+        { organization_id: "o1", organization: "Org 1", project_id: "p1", role: "ADMIN", permissions: ["VIEW_AUDIT", "MANAGE_PROJECTS"] },
+        { organization_id: "o2", organization: "Org 2", project_id: null, role: "AUDITOR", permissions: AUDITOR },
+      ],
+    };
+    expect(meOrgWideCan(me, "VIEW_AUDIT", "o1")).toBe(false); // project-limited grant does not count
+    expect(meOrgWideCan(me, "VIEW_AUDIT", "o2")).toBe(true);
+    expect(meOrgWideCan(me, "MANAGE_PROJECTS", "o2")).toBe(false);
+    expect(meOrgWideCan(me, "VIEW_AUDIT", undefined)).toBe(false);
+    expect(meOrgWideCan(undefined, "VIEW_AUDIT", "o2")).toBe(false);
   });
 });
 

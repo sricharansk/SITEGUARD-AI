@@ -167,6 +167,63 @@ describe("BFF proxy", () => {
     expect(res.headers.get("x-correlation-id")).toBe("cid-nf");
   });
 
+  it("passes a binary report through byte for byte with its file name and audited SHA-256", async () => {
+    // Every byte value, after a PDF header: anything that decoded or re-encoded the body as text would change it.
+    const bytes = new Uint8Array([...new TextEncoder().encode("%PDF-1.7\n"), ...Array.from({ length: 256 }, (_, i) => i)]);
+    const sha = "f".repeat(64);
+    fetchMock.mockResolvedValue(
+      new Response(bytes, {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": 'attachment; filename="SG-2026-0001-report.pdf"',
+          "x-report-sha256": sha,
+          "x-correlation-id": "cid-report-1",
+          "set-cookie": "upstream=1",
+          server: "uvicorn",
+        },
+      }),
+    );
+    const path = "incidents/i1/report";
+    const res = await GET(request(`${path}?format=pdf&include_ai=false`), params(path));
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe(`${API}/incidents/i1/report?format=pdf&include_ai=false`);
+    expect(res.status).toBe(200);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+    expect(res.headers.get("content-disposition")).toBe('attachment; filename="SG-2026-0001-report.pdf"');
+    expect(res.headers.get("x-report-sha256")).toBe(sha);
+    expect(res.headers.get("x-correlation-id")).toBe("cid-report-1");
+    expect(res.headers.get("set-cookie")).toBeNull();
+    expect(res.headers.get("server")).toBeNull();
+  });
+
+  it.each([
+    ["POST", "knowledge/answer"],
+    ["GET", "notifications"],
+    ["POST", "notifications/read-all"],
+    ["POST", "notifications/n1/read"],
+    ["GET", "notifications/deliveries"],
+    ["POST", "notifications/deliveries/d1/retry"],
+  ])("forwards %s %s (the API decides who may use it)", async (method, path) => {
+    const handler = method === "GET" ? GET : POST;
+    const init = method === "GET" ? {} : { method, headers: { origin: WEB, "content-type": "application/json" }, body: "{}" };
+    const res = await handler(request(path, init), params(path));
+    expect(res.status).toBe(200);
+    const [url, sent] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${API}/${path}`);
+    expect(sent.method).toBe(method);
+  });
+
+  it("still refuses a cross-site POST to the new roots", async () => {
+    const res = await POST(
+      request("notifications/read-all", { method: "POST", headers: { origin: "https://evil.example" }, body: "{}" }),
+      params("notifications/read-all"),
+    );
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("maps an unreachable API to 502 and a timeout to 504", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
     expect((await GET(request("me"), params("me"))).status).toBe(502);

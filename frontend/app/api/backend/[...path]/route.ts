@@ -18,12 +18,16 @@ const ALLOWED_ROOTS = new Set([
   "agents",
   "documents",
   "search",
+  "knowledge",
   "dashboard",
+  "notifications",
   "audit",
   "health",
 ]);
 
-const PASSTHROUGH_RESPONSE_HEADERS = ["content-type", "content-disposition", "x-correlation-id"];
+// The body is streamed through byte for byte (reports and evidence are binary). X-Report-SHA256 is the digest the API
+// recorded in the audit log for a generated report, so the browser can show what was audited.
+const PASSTHROUGH_RESPONSE_HEADERS = ["content-type", "content-disposition", "x-correlation-id", "x-report-sha256"];
 
 type RouteParams = { params: Promise<{ path: string[] }> };
 

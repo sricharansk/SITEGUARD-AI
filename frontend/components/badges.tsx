@@ -1,7 +1,16 @@
 // Status, severity and risk badges. Each one shows text plus a shape icon so meaning never depends on color.
 import type { ReactNode } from "react";
 import { humanize } from "@/lib/format";
-import type { ApprovalStatus, IncidentStatus, RiskBand, Severity, WorkStatus } from "@/lib/types";
+import type {
+  ApprovalStatus,
+  DeliveryStatus,
+  DocumentStatus,
+  IncidentStatus,
+  NotificationPriority,
+  RiskBand,
+  Severity,
+  WorkStatus,
+} from "@/lib/types";
 import {
   CheckIcon,
   CircleShape,
@@ -154,6 +163,55 @@ export function WorkBadge({ status }: { status: WorkStatus | string }) {
   const text = status === "COMPLETED" ? "Completed, awaiting verification" : humanize(status);
   return (
     <Badge tone={tone} icon={icon} label="Work">
+      {text}
+    </Badge>
+  );
+}
+
+/** Knowledge document processing: PENDING -> PROCESSING -> READY | FAILED. */
+export function DocumentStatusBadge({ status }: { status: DocumentStatus | string }) {
+  const map: Record<string, [Tone, ReactNode, string]> = {
+    PENDING: ["slate", <RingIcon key="i" size={12} />, "Pending"],
+    PROCESSING: ["sky", <ClockIcon key="i" size={12} />, "Processing"],
+    READY: ["emerald", <CheckIcon key="i" size={12} />, "Ready"],
+    FAILED: ["red", <CrossIcon key="i" size={12} />, "Failed"],
+  };
+  const [tone, icon, text] = map[status] ?? ["slate", null, humanize(status)];
+  return (
+    <Badge tone={tone} icon={icon} label="Processing status">
+      {text}
+    </Badge>
+  );
+}
+
+/** Notification priority: shape and text, as for severity (INFO circle, HIGH triangle, CRITICAL octagon). */
+export function PriorityBadge({ priority }: { priority: NotificationPriority | string }) {
+  const map: Record<string, [Tone, ReactNode, string]> = {
+    INFO: ["slate", <CircleShape key="i" size={12} />, "circle"],
+    HIGH: ["orange", <TriangleShape key="i" size={12} />, "triangle"],
+    CRITICAL: ["solidRed", <OctagonShape key="i" size={12} />, "octagon"],
+  };
+  const [tone, icon, shape] = map[priority] ?? ["slate", <DashIcon key="i" size={12} />, "dash"];
+  return (
+    <span data-shape={shape} className="inline-flex">
+      <Badge tone={tone} icon={icon} label="Priority">
+        {humanize(priority)}
+      </Badge>
+    </span>
+  );
+}
+
+/** Email outbox delivery: PENDING, SENT, FAILED (dead letter) or SKIPPED (external delivery off). */
+export function DeliveryStatusBadge({ status }: { status: DeliveryStatus | string }) {
+  const map: Record<string, [Tone, ReactNode, string]> = {
+    PENDING: ["amber", <ClockIcon key="i" size={12} />, "Pending"],
+    SENT: ["emerald", <CheckIcon key="i" size={12} />, "Sent"],
+    FAILED: ["red", <CrossIcon key="i" size={12} />, "Failed (dead letter)"],
+    SKIPPED: ["slate", <DashIcon key="i" size={12} />, "Skipped (delivery off)"],
+  };
+  const [tone, icon, text] = map[status] ?? ["slate", null, humanize(status)];
+  return (
+    <Badge tone={tone} icon={icon} label="Delivery">
       {text}
     </Badge>
   );
