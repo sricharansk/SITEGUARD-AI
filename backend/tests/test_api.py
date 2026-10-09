@@ -291,3 +291,33 @@ def test_unsafe_settings_refused():
     with pytest.raises(RuntimeError):
         validate_settings(settings(env="production", jwt_secret="x" * 40, seed_demo_data=True))
     validate_settings(settings(env="production", jwt_secret="x" * 40))
+
+
+def test_project_permissions_members_and_capa_board(client, project_id):
+    projects = client.get("/projects", headers=auth(client, "auditor")).json()["data"]
+    perms = next(p["permissions"] for p in projects if p["id"] == project_id)
+    assert "READ" in perms and "CREATE_INCIDENT" not in perms
+
+    members = client.get(f"/projects/{project_id}/members", headers=auth(client, "site")).json()["data"]
+    emails = {m["email"] for m in members}
+    assert "hse@demo.siteguard.local" in emails and "other@demo.siteguard.local" not in emails
+
+    inc = _new_incident(client, project_id)
+    client.post(f"/incidents/{inc['id']}/investigate", headers=auth(client, "safety"))
+    board = client.get(f"/projects/{project_id}/capa", headers=auth(client, "auditor")).json()["data"]
+    mine = [a for a in board if a["incident"]["id"] == inc["id"]]
+    assert mine and all(a["approval_status"] == "PENDING_REVIEW" for a in mine)
+    queue = client.get(
+        f"/projects/{project_id}/capa", params={"approval_status": "APPROVED"}, headers=auth(client, "auditor")
+    ).json()["data"]
+    assert all(a["approval_status"] == "APPROVED" for a in queue)
+    assert (
+        client.get(
+            f"/projects/{project_id}/capa", params={"approval_status": "NOPE"}, headers=auth(client, "hse")
+        ).status_code
+        == 400
+    )
+
+    other = auth(client, "other")
+    assert client.get(f"/projects/{project_id}/members", headers=other).status_code == 404
+    assert client.get(f"/projects/{project_id}/capa", headers=other).status_code == 404

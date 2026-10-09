@@ -28,7 +28,9 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /auth/login | - | Returns a bearer token (pilot; OIDC/Entra ID planned) |
 | GET | /me | any | User, memberships, effective permissions |
 | GET/POST | /projects | READ / MANAGE_PROJECTS | Project with sites |
-| GET | /projects/{id} | READ | |
+| GET | /projects/{id} | READ | Includes the caller's effective `permissions` on the project (also in the list) |
+| GET | /projects/{id}/members | READ | Active people with a role on the project, for assignment |
+| GET | /projects/{id}/capa | READ | CAPA board / review queue; filters `approval_status`, `work_status`; each row carries its incident |
 | GET/POST | /projects/{id}/incidents | READ / CREATE_INCIDENT | Filters: status, severity, domain, q |
 | GET | /incidents/{id} | READ | Workspace: incident, history, evidence, latest agent runs, risk, CAPA, approvals, verifications, close blockers |
 | PATCH | /incidents/{id} | EDIT_INCIDENT | Audited before/after |

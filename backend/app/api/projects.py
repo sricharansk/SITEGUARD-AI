@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api import serializers as ser
@@ -7,7 +7,7 @@ from app.api.deps import load_project, ok
 from app.api.schemas import ProjectIn
 from app.core.db import get_db
 from app.core.security import Permission, Principal, current_principal
-from app.models import Project, Site
+from app.models import Membership, Project, Site, User
 from app.services import audit
 
 router = APIRouter(tags=["projects"])
@@ -19,7 +19,12 @@ def list_projects(p: Principal = Depends(current_principal), db: Session = Depen
     rows: list[Project] = (
         list(db.scalars(select(Project).where(Project.id.in_(ids)).order_by(Project.name))) if ids else []
     )
-    return ok([ser.project(x) for x in rows])
+    return ok([_with_permissions(p, x) for x in rows])
+
+
+def _with_permissions(p: Principal, project: Project) -> dict:
+    """The caller's effective permissions, so clients can hide actions the server would refuse anyway."""
+    return {**ser.project(project), "permissions": sorted(p.permissions(project.organization_id, project.id))}
 
 
 @router.post("/projects", status_code=201)
@@ -52,4 +57,32 @@ def create_project(body: ProjectIn, p: Principal = Depends(current_principal), d
 
 @router.get("/projects/{project_id}")
 def get_project(project_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    return ok(ser.project(load_project(db, p, project_id)))
+    return ok(_with_permissions(p, load_project(db, p, project_id)))
+
+
+@router.get("/projects/{project_id}/members")
+def list_members(project_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+    """Active people with a role on this project (organization-wide or project-specific), for assignment."""
+    project = load_project(db, p, project_id)
+    rows = db.execute(
+        select(Membership, User)
+        .join(User, User.id == Membership.user_id)
+        .where(
+            Membership.organization_id == project.organization_id,
+            or_(Membership.project_id.is_(None), Membership.project_id == project.id),
+            User.is_active.is_(True),
+        )
+        .order_by(User.full_name)
+    )
+    return ok(
+        [
+            {
+                "user_id": u.id,
+                "full_name": u.full_name,
+                "email": u.email,
+                "role": m.role,
+                "scope": "organization" if m.project_id is None else "project",
+            }
+            for m, u in rows
+        ]
+    )
