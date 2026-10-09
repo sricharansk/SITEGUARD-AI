@@ -1,4 +1,4 @@
-.PHONY: install test lint run up down demo
+.PHONY: install test lint run web web-check up down demo
 
 install:
 	cd backend && pip install -e ".[dev]"
@@ -11,6 +11,12 @@ test:
 
 run:  ## API on SQLite with demo data at http://localhost:8000/docs
 	cd backend && uvicorn app.main:app --reload
+
+web:  ## Next.js web app at http://localhost:3000 (needs `make run` for the API)
+	cd frontend && npm install && npm run dev
+
+web-check:  ## Typecheck, lint and build the web app
+	cd frontend && npm ci && npm run typecheck && npm run lint && npm run build
 
 up:  ## PostgreSQL + API in Docker
 	docker compose up -d --build

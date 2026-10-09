@@ -5,9 +5,15 @@
 Incident management; evidence; retrieval; triage; safety/quality investigation; risk; RCA; compliance mapping;
 CAPA; human approval; workflow; dashboard API; audit; Docker; CI.
 
+## IN PROGRESS
+
+Next.js web app: first slice done (login, dashboard, incident list, incident workspace with agent output, risk and
+CAPA approve/reject, review queue). Still to build: new-incident form, evidence upload/viewer, modify decision,
+progress/verification/closure screens, audit view, knowledge search.
+
 ## NOW
 
-Next.js web app (dashboard, incident list, incident workspace, review queue); Alembic migrations; Azure staging.
+Alembic migrations; Azure staging.
 
 ## NEXT
 
