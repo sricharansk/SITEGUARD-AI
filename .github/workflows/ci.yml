@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Weekly, so newly published advisories fail the dependency audit even when nothing is pushed.
+  schedule:
+    - cron: "17 5 * * 1"
 
 permissions:
   contents: read
@@ -23,13 +26,19 @@ jobs:
         run: pip install -r requirements.lock -e ".[dev]"
       - name: Lint
         run: ruff check app tests && ruff format --check app tests
+      - name: Lint operations scripts
+        run: |
+          ruff check ../scripts
+          ruff format --check ../scripts/backup.py ../scripts/smoke_test.py ../scripts/dependency_audit.py
+          mypy ../scripts/backup.py ../scripts/smoke_test.py ../scripts/dependency_audit.py --ignore-missing-imports
       - name: Type check
         run: mypy app --ignore-missing-imports
       - name: Tests
         run: pytest -q
 
   postgres:
-    # Migrations, the pgvector column and the vector distance query on the same image as docker-compose.
+    # Migrations, the pgvector column and the vector distance query on the same image as docker-compose, and the
+    # backup and restore drill (scripts/backup.py into a fresh database; docs/GOVERNANCE.md#backup-and-restore).
     runs-on: ubuntu-latest
     services:
       db:
@@ -51,28 +60,140 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: pip install -r requirements.lock -e ".[dev]"
-      - name: PostgreSQL integration tests
+      - name: PostgreSQL 16 client tools
+        # pg_dump must not be older than the server.
+        run: |
+          if [ ! -x /usr/lib/postgresql/16/bin/pg_dump ]; then
+            sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-16
+          fi
+          /usr/lib/postgresql/16/bin/pg_dump --version
+      - name: PostgreSQL integration tests and restore drill
         env:
           SITEGUARD_TEST_POSTGRES_URL: postgresql+psycopg://siteguard:ci-only@localhost:5432/siteguard_test
-        run: pytest -q tests/test_postgres.py -rs
+          SITEGUARD_TEST_PG_BIN: /usr/lib/postgresql/16/bin
+        run: pytest -q tests/test_postgres.py tests/test_backup_restore.py -rs
 
-  docker:
+  dependency-audit:
+    # Known vulnerabilities in the locked Python packages and the web app's production dependencies fail the build
+    # unless .github/dependency-audit-exceptions.toml holds a reviewed, unexpired exception (docs/SECURITY.md).
     runs-on: ubuntu-latest
-    needs: backend
     steps:
       - uses: actions/checkout@v4
-      - name: Build API image
-        run: docker build -f backend/Dockerfile -t siteguard-api:ci .
-      - name: Smoke test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pip-audit
+        run: pip install pip-audit==2.10.1
+      - name: Python dependencies (backend/requirements.lock)
+        run: python scripts/dependency_audit.py pypi --requirements backend/requirements.lock
+      - name: Web app production dependencies (npm audit --omit=dev --audit-level=high)
+        run: python scripts/dependency_audit.py npm --project frontend
+
+  docker:
+    # Production images, then the local compose stack and the staging stack, each checked with scripts/smoke_test.py.
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build images
         run: |
-          docker run -d --name api -p 8000:8000 \
-            -e SITEGUARD_DATABASE_URL=sqlite:////tmp/siteguard.db \
-            -e SITEGUARD_JWT_SECRET=ci-only-secret-0123456789abcdef siteguard-api:ci
-          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 2; done
-          curl -sf localhost:8000/health
-          pip install httpx
-          python scripts/demo_walkthrough.py --base-url http://localhost:8000 --out /tmp/RESULTS.md
-          docker logs api | tail -5
+          docker build -f backend/Dockerfile -t siteguard-api:local .
+          docker build -t siteguard-web:local frontend
+          docker images --format '{{.Repository}}:{{.Tag}} {{.Size}}' | grep siteguard-
+      - name: Images run as non-root and refuse unsafe configuration
+        run: |
+          test "$(docker image inspect -f '{{.Config.User}}' siteguard-api:local)" = siteguard
+          test "$(docker image inspect -f '{{.Config.User}}' siteguard-web:local)" = siteguard
+          # SITEGUARD_ENV defaults to production in the image: no configuration must mean no start.
+          if docker run --rm siteguard-api:local python -c "import app.main" > "$RUNNER_TEMP/unsafe.log" 2>&1; then
+            echo "an unconfigured API container started"; exit 1
+          fi
+          grep "Unsafe configuration" "$RUNNER_TEMP/unsafe.log"
+          # The untouched staging template must be refused too.
+          if docker run --rm --env-file deployment/staging/staging.env.example -e SITEGUARD_ENV=staging \
+              -e SITEGUARD_DATABASE_URL=postgresql+psycopg://siteguard:CHANGE@db:5432/siteguard_staging \
+              siteguard-api:local python -c "import app.main" > "$RUNNER_TEMP/template.log" 2>&1; then
+            echo "the staging template's placeholders were accepted"; exit 1
+          fi
+          grep "Unsafe configuration" "$RUNNER_TEMP/template.log"
+      - name: Install smoke test client
+        run: pip install httpx==0.28.1
+      - name: Compose stack (demo data)
+        run: |
+          umask 077
+          sed -e "s|^SITEGUARD_ENV=.*|SITEGUARD_ENV=demo|" \
+              -e "s|^SITEGUARD_JWT_SECRET=.*|SITEGUARD_JWT_SECRET=$(openssl rand -hex 32)|" \
+              -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" \
+              .env.example > .env
+          docker compose up -d --no-build --wait --wait-timeout 300
+          docker compose ps
+      - name: Smoke test (compose)
+        env:
+          SITEGUARD_SMOKE_EMAIL: auditor@demo.siteguard.local
+          SITEGUARD_SMOKE_PASSWORD: siteguard-demo
+        run: python scripts/smoke_test.py --api-url http://127.0.0.1:8000 --web-url http://localhost:3000 --require-login
+      - name: Walkthrough (compose)
+        run: python scripts/demo_walkthrough.py --base-url http://127.0.0.1:8000 --out "$RUNNER_TEMP/RESULTS.md"
+      - name: Compose logs
+        if: failure()
+        run: docker compose logs --tail 100
+      - name: Stop compose stack
+        if: always()
+        run: docker compose down -v
+      - name: Staging stack (no demo data, placeholders replaced)
+        run: |
+          umask 077
+          sed -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" \
+              -e "s|^SITEGUARD_JWT_SECRET=.*|SITEGUARD_JWT_SECRET=$(openssl rand -hex 32)|" \
+              -e "s|^SITEGUARD_PUBLIC_WEB_URL=.*|SITEGUARD_PUBLIC_WEB_URL=https://staging.siteguard.test|" \
+              deployment/staging/staging.env.example > "$RUNNER_TEMP/staging.env"
+          if grep -n '^[^#]*CHANGE' "$RUNNER_TEMP/staging.env"; then echo "placeholder left in staging.env"; exit 1; fi
+          docker compose -f deployment/staging/docker-compose.staging.yml --env-file "$RUNNER_TEMP/staging.env" \
+            up -d --no-build --wait --wait-timeout 300
+      - name: Smoke test (staging, anonymous checks; no accounts exist without seeding)
+        run: python scripts/smoke_test.py --api-url http://127.0.0.1:8000 --web-url http://localhost:3000
+      - name: Scheduled jobs (staging)
+        run: |
+          docker compose -f deployment/staging/docker-compose.staging.yml --env-file "$RUNNER_TEMP/staging.env" \
+            run --rm jobs
+      - name: Staging logs
+        if: failure()
+        run: |
+          docker compose -f deployment/staging/docker-compose.staging.yml --env-file "$RUNNER_TEMP/staging.env" \
+            logs --tail 100
+      - name: Stop staging stack
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/staging.env" ]; then
+            docker compose -f deployment/staging/docker-compose.staging.yml --env-file "$RUNNER_TEMP/staging.env" \
+              down -v
+          fi
+
+  infrastructure:
+    # Offline checks only: workflow syntax and the Azure Bicep templates. Nothing is deployed from CI.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: actionlint
+        run: |
+          pip install actionlint-py==1.7.12.25
+          actionlint -color
+      - name: Bicep build and lint
+        run: |
+          az bicep install
+          az bicep build --file deployment/azure/main.bicep --stdout > /dev/null
+          for f in deployment/azure/main.bicep deployment/azure/modules/*.bicep; do az bicep lint --file "$f"; done
+          SITEGUARD_POSTGRES_ADMIN_PASSWORD=offline-validation-only \
+            az bicep build-params --file deployment/azure/main.example.bicepparam --stdout > /dev/null
 
   frontend:
     runs-on: ubuntu-latest
@@ -123,7 +244,7 @@ jobs:
           SITEGUARD_EVIDENCE_DIR: /tmp/e2e-evidence
         run: |
           nohup uvicorn app.main:app --port 8000 > /tmp/api.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 2; done
+          for _ in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 2; done
           curl -sf localhost:8000/health
       - name: Install web app
         working-directory: frontend
@@ -136,7 +257,7 @@ jobs:
         run: |
           npm run build
           nohup npm start > /tmp/web.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf localhost:3000/api/health && break; sleep 2; done
+          for _ in $(seq 1 30); do curl -sf localhost:3000/api/health && break; sleep 2; done
           curl -sf localhost:3000/api/health
       - name: Install Chromium
         working-directory: frontend
