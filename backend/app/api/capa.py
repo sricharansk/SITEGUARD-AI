@@ -1,16 +1,54 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api import serializers as ser
-from app.api.deps import load_capa, load_incident, ok
+from app.api.deps import load_capa, load_incident, load_project, ok
 from app.api.schemas import ApproveIn, CapaIn, ProgressIn, ReviewIn, VerifyIn
 from app.core.db import get_db
 from app.core.errors import AppError, Conflict
 from app.core.security import Permission, Principal, current_principal
-from app.models import ApprovalStatus, CapaAction, Evidence, IncidentStatus
+from app.models import ApprovalStatus, CapaAction, Evidence, Incident, IncidentStatus, WorkStatus
 from app.services import audit, capa, lifecycle
 
 router = APIRouter(tags=["capa"])
+
+
+@router.get("/projects/{project_id}/capa")
+def list_project_capa(
+    project_id: str,
+    approval_status: ApprovalStatus | None = None,
+    work_status: WorkStatus | None = None,
+    p: Principal = Depends(current_principal),
+    db: Session = Depends(get_db),
+):
+    """CAPA board and review queue: every action on the project's incidents, newest first."""
+    load_project(db, p, project_id)
+    stmt = (
+        select(CapaAction, Incident)
+        .join(Incident, Incident.id == CapaAction.incident_id)
+        .where(Incident.project_id == project_id)
+    )
+    if approval_status:
+        stmt = stmt.where(CapaAction.approval_status == approval_status)
+    if work_status:
+        stmt = stmt.where(CapaAction.work_status == work_status)
+    rows = db.execute(stmt.order_by(desc(CapaAction.created_at)))
+    return ok(
+        [
+            {
+                **ser.capa(a),
+                "incident": {
+                    "id": i.id,
+                    "reference": i.reference,
+                    "title": i.title,
+                    "severity": i.severity,
+                    "status": i.status,
+                },
+            }
+            for a, i in rows
+        ]
+    )
 
 
 @router.post("/incidents/{incident_id}/capa", status_code=201)

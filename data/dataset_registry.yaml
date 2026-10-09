@@ -1,0 +1,313 @@
+# Site Guard AI dataset registry (machine-readable form of docs/DATASETS.md).
+# Rule: nothing enters the pipeline until its entry has source_url, access_date, version, checksum_sha256, license
+# and commercial_use filled in and status is "downloaded". Values marked null are not yet known; fill them when the
+# file is actually downloaded. Public does not mean commercially usable.
+# commercial_use: allowed | review-required | not-allowed-unless-permission
+- id: siteguard_synthetic_incidents
+  name: Site Guard synthetic demo incidents
+  publisher: Site Guard AI project
+  source_url: null
+  release_date: '2026'
+  access_date: 08 October 2026
+  version: repo
+  checksum_sha256: null
+  status: in-repository
+  modality: structured text
+  license: project-owned
+  commercial_use: allowed
+  purpose:
+  - demo
+  - tests
+  raw_location: data/seed/incidents.yaml
+  processed_location: null
+  extraction_method: loaded by backend/app/seed.py through the real services
+  limitations: Synthetic. Not real incidents; not evidence of real-world performance.
+- id: siteguard_synthetic_procedures
+  name: Site Guard synthetic site procedures and ITPs
+  publisher: Site Guard AI project
+  source_url: null
+  release_date: '2026'
+  access_date: 08 October 2026
+  version: repo
+  checksum_sha256: null
+  status: in-repository
+  modality: markdown
+  license: project-owned
+  commercial_use: allowed
+  purpose:
+  - rag-demo
+  - tests
+  raw_location: data/seed/knowledge/
+  processed_location: null
+  extraction_method: heading-aware chunking in backend/app/services/rag.py
+  limitations: Synthetic procedures. regulatory-pointers.md names regulations by section only and contains no regulation
+    text.
+- id: osha_ita_2025
+  name: OSHA Injury Tracking Application 2025
+  publisher: OSHA
+  source_url: https://www.osha.gov/itadata
+  release_date: '2026'
+  observation_period: '2025'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: tabular
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - analytics
+  - evaluation
+  - taxonomy
+  raw_location: data/raw/government/osha/
+  processed_location: data/processed/government/osha/
+  extraction_method: official CSV/XLSX -> schema validation -> normalization
+  limitations: Not fully representative of all employers; submitted data can contain unresolved errors. Do not infer individual
+    liability from rates.
+- id: bls_cfoi_2024
+  name: BLS Census of Fatal Occupational Injuries 2024
+  publisher: BLS
+  source_url: null
+  release_date: '2026'
+  observation_period: '2024'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: tabular
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - benchmark
+  - taxonomy
+  - evaluation
+  raw_location: data/raw/government/bls/
+  processed_location: data/processed/government/bls/
+  extraction_method: XLSX/HTML tables -> preserve table name/year -> normalized aggregate metrics
+  limitations: Aggregate statistics; never turn counts into incident facts.
+- id: hse_fatal_injuries_2025_26
+  name: HSE work-related fatal injuries 2025/26 (provisional)
+  publisher: HSE (UK)
+  source_url: null
+  release_date: '2026'
+  observation_period: 2025/26
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: tabular
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - benchmark
+  - taxonomy
+  raw_location: data/raw/government/hse/
+  processed_location: data/processed/government/hse/
+  extraction_method: supporting XLSX tables -> preserve provisional/revised status -> accident-kind taxonomy
+  limitations: Provisional figures; do not treat as final.
+- id: hse_construction_statistics_2024_25
+  name: HSE construction statistics 2024/25
+  publisher: HSE (UK)
+  source_url: null
+  release_date: 2025/26 release cycle
+  observation_period: 2024/25
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: pdf+tabular
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - benchmark
+  raw_location: data/raw/government/hse/
+  processed_location: data/processed/government/hse/
+  extraction_method: PDF/XLSX -> page-aware extraction -> preserve release status
+  limitations: Provisional release; reference and benchmark use.
+- id: niosh_face
+  name: NIOSH Fatality Assessment and Control Evaluation reports
+  publisher: NIOSH
+  source_url: null
+  release_date: current in 2026
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: pdf/text
+  license: see publisher terms
+  commercial_use: review-required
+  purpose:
+  - rca-examples
+  - rag-knowledge
+  - evaluation
+  raw_location: data/raw/government/niosh/
+  processed_location: data/processed/government/niosh/
+  extraction_method: approved reports -> page-aware extraction -> chunks with title/date/page
+  limitations: Case narratives; do not claim universal applicability.
+- id: dgfasli_srn_2024
+  name: DGFASLI Standard Reference Note 2024
+  publisher: DGFASLI (India)
+  source_url: null
+  release_date: '2024'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: pdf
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - taxonomy
+  - context
+  raw_location: data/raw/government/dgfasli/
+  processed_location: data/processed/government/dgfasli/
+  extraction_method: official PDF -> page/table extraction with section provenance
+  limitations: Government reference; use within applicable terms.
+- id: mospi_plfs_2025
+  name: MoSPI PLFS 2025 Annual Report
+  publisher: MoSPI (India)
+  source_url: null
+  release_date: '2026'
+  observation_period: '2025'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: pdf
+  license: see source terms
+  commercial_use: review-required
+  purpose:
+  - context
+  raw_location: data/raw/government/mospi/
+  processed_location: data/processed/government/mospi/
+  extraction_method: official PDF -> construction classification (NIC-2008) and approved aggregates
+  limitations: Workforce context only; not incident ground truth.
+- id: constructionsite_10k
+  name: ConstructionSite 10k
+  publisher: Chen/Zou
+  source_url: https://huggingface.co/datasets/LouisChen15/ConstructionSite
+  release_date: '2026'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+text
+  license: CC BY-NC 4.0 (dataset card)
+  commercial_use: not-allowed-unless-permission
+  purpose:
+  - vision-evaluation
+  - VLM-research
+  raw_location: data/raw/vision/constructionsite_10k/
+  processed_location: data/processed/vision/constructionsite_10k/
+  extraction_method: Hugging Face datasets -> schema validation -> split-preserving export
+  limitations: Research dataset; not sufficient to establish real-world safety compliance. Keep the test split untouched.
+- id: consynth_x
+  name: ConSynth-X
+  publisher: see dataset card
+  source_url: null
+  release_date: '2026'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image (synthetic)
+  license: non-commercial / gated (per register)
+  commercial_use: not-allowed-unless-permission
+  purpose:
+  - red-team
+  - vision-robustness
+  raw_location: data/raw/vision/consynth_x/
+  processed_location: data/processed/vision/consynth_x/
+  extraction_method: documented reconstruction/provenance flow only; keep condition labels
+  limitations: Synthetic images; research and red-team use.
+- id: sh17
+  name: SH17 PPE dataset
+  publisher: see repository
+  source_url: null
+  release_date: '2024'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+annotations
+  license: CC BY-NC-SA 4.0 (repository)
+  commercial_use: not-allowed-unless-permission
+  purpose:
+  - ppe-detection-baseline
+  - evaluation
+  raw_location: data/raw/vision/sh17/
+  processed_location: data/processed/vision/sh17/
+  extraction_method: repository instructions -> YOLO/COCO labels -> preserve splits
+  limitations: Research and evaluation only.
+- id: cubit_det_seg
+  name: CUBIT-Det / CUBIT-Seg
+  publisher: see repository
+  source_url: null
+  release_date: '2024'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+annotations
+  license: CC BY 4.0 for CUBIT-Det (repository); verify each component
+  commercial_use: review-required
+  purpose:
+  - quality-vision-baseline
+  raw_location: data/raw/vision/cubit/
+  processed_location: data/processed/vision/cubit/
+  extraction_method: source annotations -> preserve split -> versioned conversion scripts
+  limitations: Verify terms per component before commercial use.
+- id: concrete_crack_2025
+  name: 2025 concrete-crack dataset (beam/column, five failure classes)
+  publisher: see article
+  source_url: null
+  release_date: '2025'
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+labels
+  license: verify repository license
+  commercial_use: review-required
+  purpose:
+  - quality-defect-classification
+  raw_location: data/raw/vision/concrete_crack_2025/
+  processed_location: data/processed/vision/concrete_crack_2025/
+  extraction_method: image/label pairs -> parse .txt labels and boxes -> record laboratory provenance
+  limitations: Laboratory images; verify rights before commercial use.
+- id: pagg_net_crack
+  name: PAGG-Net concrete crack dataset
+  publisher: see record
+  source_url: null
+  release_date: Dec 2025
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+masks
+  license: copyright (no blanket commercial license)
+  commercial_use: not-allowed-unless-permission
+  purpose:
+  - crack-segmentation-research
+  raw_location: data/raw/vision/pagg_net/
+  processed_location: data/processed/vision/pagg_net/
+  extraction_method: preserve image/mask pairing, image-level splits and MD5 hashes
+  limitations: Research unless permission obtained.
+- id: soda_baseline
+  name: SODA construction object detection
+  publisher: see source
+  source_url: null
+  release_date: older baseline
+  access_date: null
+  version: null
+  checksum_sha256: null
+  status: registered-not-downloaded
+  modality: image+annotations
+  license: verify terms
+  commercial_use: review-required
+  purpose:
+  - baseline-comparison
+  raw_location: data/raw/vision/soda/
+  processed_location: data/processed/vision/soda/
+  extraction_method: published split and format; cite source
+  limitations: Older dataset; do not present as 2024-2026 data.

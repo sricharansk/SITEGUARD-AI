@@ -1,3 +1,4 @@
+import uuid
 from contextvars import ContextVar
 
 from sqlalchemy.orm import Session
@@ -20,6 +21,7 @@ def record(
 ) -> AuditEvent:
     """Append an audit event. Callers commit as part of their own transaction."""
     event = AuditEvent(
+        id=str(uuid.uuid4()),  # set now: notifications use it as their dedupe key before the flush
         organization_id=organization_id,
         actor_id=actor_id,
         actor_type=actor_type,
@@ -30,4 +32,7 @@ def record(
         correlation_id=current_correlation_id.get(),
     )
     db.add(event)
+    from app.services import notifications  # late import: notifications reads models that import this module
+
+    notifications.on_audit_event(db, event)
     return event

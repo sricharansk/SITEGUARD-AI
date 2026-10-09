@@ -10,6 +10,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -19,6 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.core.vector import VectorType
 
 
 def _uuid() -> str:
@@ -185,6 +187,13 @@ class Evidence(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class DocumentStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    READY = "READY"
+    FAILED = "FAILED"
+
+
 class Document(Timestamped, Base):
     """Knowledge document for retrieval (procedure, ITP, spec, guidance). Content is untrusted."""
 
@@ -198,7 +207,24 @@ class Document(Timestamped, Base):
     version: Mapped[str] = mapped_column(String(40), default="1")
     domain: Mapped[Domain] = mapped_column(Enum(Domain, native_enum=False), default=Domain.BOTH)
     sha256: Mapped[str] = mapped_column(String(64))
-    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", lazy="selectin")
+    # Processing state: PENDING -> PROCESSING -> READY | FAILED (docs/DATABASE.md).
+    status: Mapped[DocumentStatus] = mapped_column(
+        Enum(DocumentStatus, native_enum=False), default=DocumentStatus.READY, server_default="READY"
+    )
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    storage_key: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parser: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
+    uploaded_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        back_populates="document", lazy="selectin", order_by="DocumentChunk.ordinal"
+    )
 
 
 class DocumentChunk(Base):
@@ -207,9 +233,26 @@ class DocumentChunk(Base):
     document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), index=True)
     ordinal: Mapped[int] = mapped_column(Integer)
     section: Mapped[str] = mapped_column(String(300))
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)
     text: Mapped[str] = mapped_column(Text)
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     suspicious: Mapped[bool] = mapped_column(Boolean, default=False)
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+class ChunkEmbedding(Base):
+    """One vector per chunk and embedding model version. Re-embedding the same content is a no-op."""
+
+    __tablename__ = "chunk_embeddings"
+    __table_args__ = (UniqueConstraint("chunk_id", "model", "model_version"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("document_chunks.id", ondelete="CASCADE"), index=True)
+    model: Mapped[str] = mapped_column(String(80))
+    model_version: Mapped[str] = mapped_column(String(40))
+    dim: Mapped[int] = mapped_column(Integer)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    vector: Mapped[list] = mapped_column(VectorType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class AgentRun(Base):
@@ -301,3 +344,137 @@ class AuditEvent(Base):
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class DeliveryStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"  # dead letter: every attempt failed; an administrator can retry it
+    SKIPPED = "SKIPPED"  # external delivery disabled in this environment
+
+
+class Notification(Base):
+    """An in-app notification for one person. `dedupe_key` makes event handling and escalation idempotent."""
+
+    __tablename__ = "notifications"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"), nullable=True)
+    incident_id: Mapped[str | None] = mapped_column(ForeignKey("incidents.id"), nullable=True)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    priority: Mapped[str] = mapped_column(String(10))  # INFO | HIGH | CRITICAL
+    title: Mapped[str] = mapped_column(String(300))
+    body: Mapped[str] = mapped_column(Text)
+    entity_type: Mapped[str] = mapped_column(String(40))
+    entity_id: Mapped[str] = mapped_column(String(36), index=True)
+    dedupe_key: Mapped[str] = mapped_column(String(200), unique=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    deliveries: Mapped[list["NotificationDelivery"]] = relationship(
+        back_populates="notification", cascade="all, delete-orphan"
+    )
+
+
+class NotificationDelivery(Base):
+    """External delivery (email) of a notification: an outbox row with bounded retries."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (UniqueConstraint("notification_id", "channel"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    notification_id: Mapped[str] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))  # EMAIL
+    status: Mapped[DeliveryStatus] = mapped_column(
+        Enum(DeliveryStatus, native_enum=False), default=DeliveryStatus.PENDING, index=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    notification: Mapped[Notification] = relationship(back_populates="deliveries")
+
+
+class VisionTask(enum.StrEnum):
+    PPE_HAZARD = "PPE_HAZARD"
+    DEFECT = "DEFECT"
+
+
+class ObservationReview(enum.StrEnum):
+    UNREVIEWED = "UNREVIEWED"
+    CONFIRMED = "CONFIRMED"
+    REJECTED = "REJECTED"
+
+
+class VisionAnalysis(Base):
+    """One run of a vision analyzer over one image of evidence (docs/AGENTS.md#vision).
+
+    Records exactly which file (SHA-256), analyzer, model, taxonomy and thresholds produced the observations, so every
+    observation can be traced and reproduced. Observations are machine output for human review, never proof.
+    """
+
+    __tablename__ = "vision_analyses"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), index=True)
+    evidence_sha256: Mapped[str] = mapped_column(String(64))
+    task: Mapped[VisionTask] = mapped_column(Enum(VisionTask, native_enum=False))
+    analyzer: Mapped[str] = mapped_column(String(60))
+    model: Mapped[str] = mapped_column(String(100))
+    model_version: Mapped[str] = mapped_column(String(60))
+    taxonomy_version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20))  # COMPLETED | FAILED
+    error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    preprocessing: Mapped[dict] = mapped_column(JSON, default=dict)
+    image_quality: Mapped[dict] = mapped_column(JSON, default=dict)
+    thresholds: Mapped[dict] = mapped_column(JSON, default=dict)
+    limitations: Mapped[list] = mapped_column(JSON, default=list)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    requested_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    observations: Mapped[list["VisionObservation"]] = relationship(
+        back_populates="analysis", lazy="selectin", order_by="VisionObservation.ordinal"
+    )
+
+
+class VisionObservation(Base):
+    """A labelled region (or whole-image finding) reported by an analyzer. Kept even below threshold, for review."""
+
+    __tablename__ = "vision_observations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("vision_analyses.id"), index=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"))
+    ordinal: Mapped[int] = mapped_column(Integer)
+    category: Mapped[str] = mapped_column(String(20))  # PPE | HAZARD | DEFECT
+    label: Mapped[str] = mapped_column(String(60))
+    confidence: Mapped[float] = mapped_column(Float)
+    threshold: Mapped[float] = mapped_column(Float)
+    above_threshold: Mapped[bool] = mapped_column(Boolean)
+    box: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # normalized {x, y, w, h} on the oriented image
+    polygon: Mapped[list | None] = mapped_column(JSON, nullable=True)  # normalized [[x, y], ...] where supported
+    note: Mapped[str | None] = mapped_column(String(300), nullable=True)  # analyzer's own words: untrusted
+    review_status: Mapped[ObservationReview] = mapped_column(
+        Enum(ObservationReview, native_enum=False), default=ObservationReview.UNREVIEWED
+    )
+    reviewed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    analysis: Mapped[VisionAnalysis] = relationship(back_populates="observations")
+
+
+class VisionCalibration(Timestamped, Base):
+    """A project- or site-level detection threshold for one taxonomy label (Playbook Prompt 26)."""
+
+    __tablename__ = "vision_calibrations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    site_id: Mapped[str | None] = mapped_column(ForeignKey("sites.id"), nullable=True)
+    label: Mapped[str] = mapped_column(String(60))
+    threshold: Mapped[float] = mapped_column(Float)
+    reason: Mapped[str] = mapped_column(Text)
+    updated_by: Mapped[str] = mapped_column(ForeignKey("users.id"))

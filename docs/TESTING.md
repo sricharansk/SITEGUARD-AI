@@ -1,7 +1,9 @@
 # Testing
 
-Run: `make test` (or `cd backend && pytest -q`). Lint and types: `make lint`. CI runs both plus a Docker build and
-an end-to-end smoke run of `scripts/demo_walkthrough.py` (`.github/workflows/ci.yml`).
+Run: `make test` (or `cd backend && pytest -q`). Lint and types: `make lint`. CI runs both, the PostgreSQL +
+pgvector integration tests, a Docker build and an end-to-end smoke run of `scripts/demo_walkthrough.py`
+(`.github/workflows/ci.yml`). Tests use SQLite and the
+rules provider; they never call a live model or external service.
 
 ## Implemented
 
@@ -10,13 +12,51 @@ an end-to-end smoke run of `scripts/demo_walkthrough.py` (`.github/workflows/ci.
 | tests/test_risk.py | Every matrix cell, band boundaries, invalid inputs, determinism |
 | tests/test_lifecycle.py | Allowed path, rejected shortcuts, CLOSED only from PENDING_VERIFICATION |
 | tests/test_rag.py | Chunking, injection detection, ranking, tenant and project scoping |
+| tests/test_knowledge.py | PDF and DOCX upload with page/section provenance, FAILED documents, parser selection, chunk strategies (tables never split), hit citation metadata, project isolation, every chunk embedded, duplicate uploads, idempotent and changed-content re-embedding, embedding retries and dimension checks, labelled-query hit rate (hybrid ≥ 0.85 and ≥ lexical), grounded answers, insufficient and conflicting evidence, unsupported and invented claims removed, provider fallback with poisoned source excluded, endpoint validation and authorization |
+| tests/test_notifications.py | Event mapping (critical incident, review, assignment, verification, failed verification), no cross-tenant or self notifications, per-recipient read state, mapping failure leaves the workflow intact, retries with backoff then dead letter, admin retry, no duplicate sends, external delivery disabled by default, escalation rules idempotent and non-mutating, endpoint authorization, SMTP refused locally |
+| tests/test_reports.py | Report content matches the records (incident fields, history, evidence, approval, failed and passed verification, labelled AI, cited chunk and evidence), normalised snapshot (`tests/snapshots/incident_report.md`, refresh with `UPDATE_SNAPSHOTS=1`), Word and PDF text, audit event with the same SHA-256, format validation and tenant isolation |
+| tests/test_vision.py | Synthetic image fixtures (`tests/fixtures/images.py`): orientation and metadata removal, downscaling, image-quality flags (dark, blurred, flat, low resolution), decompression bomb and mismatched/garbage images refused; taxonomy maps to agent labels; versioned, traceable baseline analysis; thresholds with project and site calibration; out-of-taxonomy labels and out-of-image boxes discarded; analyzer failure stored as FAILED; tampered evidence refused and audited; validation, closed incidents, authorization and tenant isolation; engineer review with audit trail; rejected observations never reach agents; agents cite only CONFIRMED observations and question UNREVIEWED ones; analyzer notes with injection text never reach agents; Claude vision adapter request shape and refusal (mocked) |
+| tests/test_postgres.py | PostgreSQL + pgvector: migrations match models, extension enabled, vector distance search. Runs when `SITEGUARD_TEST_POSTGRES_URL` is set (CI `postgres` job), skipped otherwise |
 | tests/test_agents.py | Triage fixtures (obvious, mixed, insufficient evidence, near miss), tool allowlist, budget, provider failure and invalid output fallback, invented citations removed, poisoned document not cited, Claude provider request shape and refusal fallback (mocked) |
-| tests/test_api.py | Error envelope, login, validation, tenant isolation, RBAC, evidence validation, invalid transitions, full E2E incident -> investigation -> review -> work -> failed and passed verification -> closure -> audit, critical closure permission, agent failure with manual continuation, dashboard and search |
+| tests/test_migrations.py | Migrations produce exactly the model schema, pilot databases are stamped without data loss, downgrade to base and back |
+| tests/test_dataset_registry.py | Every registered dataset has licence and commercial-use fields; non-commercial licences are marked as such; downloaded entries need a checksum |
+| tests/test_docs.py | Source-of-truth documents exist; every API route, role and error code in the code is documented |
+| tests/test_api.py | Login rate limit, security headers, unsafe production settings refused, error envelope, login, validation, tenant isolation, RBAC, evidence validation, invalid transitions, full E2E incident -> investigation -> review -> work -> failed and passed verification -> closure -> audit, critical closure permission, agent failure with manual continuation, dashboard and search |
 
-## Not yet implemented
+## Web app
 
-Retrieval relevance and citation-coverage evaluation sets, LLM red-team suite against a live model, load tests,
-frontend and browser E2E tests.
+Run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test` (Vitest + Testing Library: API client,
+BFF proxy and session routes, permissions, formatting, form validation and screen components) and `npm run build`.
+`npm run e2e` (Playwright) needs the API and the web app running and `E2E_WEB_URL`; it signs in, reports an
+incident, runs the AI investigation, approves an action as the HSE manager and checks the auditor is read-only.
+CI runs the web checks in the `frontend` job and the browser test in the `e2e` job.
+
+## Blueprint test plan (Part 11) and status
+
+| Area | Status |
+|---|---|
+| Unit: risk matrix, state transitions, permission checks, validation, chunkers, agent schemas | Implemented |
+| Unit: parsers (PDF/DOCX), embedding retry and idempotency | Implemented (`tests/test_knowledge.py`); API idempotency keys not yet (Prompt 37) |
+| Integration: API + database, authentication, RAG, agent orchestration, CAPA | Implemented |
+| Integration: PostgreSQL + pgvector | Implemented (`tests/test_postgres.py`, CI `postgres` job) |
+| Integration: object storage | Not yet (local disk only) |
+| E2E: login → project → incident → evidence → AI analysis → approval → CAPA → verification → closure | API-level (`test_end_to_end_incident_to_verified_closure`, walkthrough script); browser E2E for login → incident → AI analysis → approval (`frontend/e2e/`) |
+
+## AI evaluation (not yet, Prompt 40)
+
+Metrics: retrieval precision/recall; citation coverage; structured-output validity; unsupported-claim rate;
+expert-rated RCA quality; risk agreement; actionability; agent task completion; latency; cost.
+
+## Red-team cases
+
+| Case | Status |
+|---|---|
+| Prompt injection | Unit-tested (poisoned document flagged and not cited) |
+| Insufficient evidence | Unit-tested (triage fixture) |
+| Model/provider timeout | Unit-tested (provider failure fallback) |
+| Conflicting documents | Unit-tested (`test_conflicting_sources_are_reported`) |
+| Invented citations and unsupported claims in answers | Unit-tested |
+| False compliance request, severe incident, false-negative PPE detection, duplicate tool invocation | Not yet (Prompt 41) |
 
 ## Definition of Done
 

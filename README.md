@@ -6,8 +6,9 @@ Site Guard AI helps construction teams investigate incidents, understand risk, r
 corrective and preventive actions, and manage resolution through verified closure. AI agents do the first pass;
 qualified people approve every action and close every incident.
 
-> Status: **0.1.0 backend pilot.** API, agents, workflow, tests, Docker and CI are working. The web UI, Azure
-> deployment, vision and knowledge graph are the next milestones ([ROADMAP](docs/ROADMAP.md)).
+> Status: **in development after the 0.1.0 pilot.** API, agents, workflow, document parsing, hybrid retrieval with
+> grounded answers, the web app, tests, Docker and CI are working. Progress against every implementation gate is in
+> [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
 
 ## What it does
 
@@ -25,6 +26,9 @@ flowchart LR
 
 - **Six bounded agents** with declared tools, budgets, typed outputs, evidence citations and a full trace
   ([docs/AGENTS.md](docs/AGENTS.md)).
+- **Photo evidence analysis:** PPE, hazard and defect observations against a versioned taxonomy, with project and
+  site thresholds and engineer confirmation before the agents use them. Offline it runs image-quality checks only,
+  until a detection model is chosen; Claude vision is an option.
 - **Runs offline by default** with a deterministic rules engine; set `SITEGUARD_AI_PROVIDER=anthropic` to use
   Claude, with automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the
@@ -50,18 +54,24 @@ cd SITEGUARD-AI
 
 # Option A: Python only (SQLite)
 make install
-make test            # 50 tests
+make test            # backend test suite
 make run             # open http://localhost:8000/docs
 
-# Option B: PostgreSQL + API in Docker
+# Web app (Node 22.12+), with the API from option A running
+make web-install
+make web-dev         # open http://localhost:3000
+
+# Option B: PostgreSQL + API + web app in Docker
 cp .env.example .env # then edit the CHANGE values
-make up
+make up              # web app on http://localhost:3000, API on http://localhost:8000
 make demo            # regenerates docs/RESULTS.md from a live run
 ```
 
 Demo logins (password `siteguard-demo`, change with `SITEGUARD_DEMO_PASSWORD`):
 `hse@`, `pm@`, `safety@`, `qa@`, `site@`, `auditor@`, `admin@demo.siteguard.local`.
 A second tenant, `other@demo.siteguard.local`, is used to prove isolation.
+Demo data seeds only when `SITEGUARD_ENV` is `local`, `test` or `demo`; production refuses to start with it on.
+Database migrations run automatically on startup (`make migrate` runs them by hand).
 
 ## Repository layout
 
@@ -70,18 +80,26 @@ backend/app/
   agents/      framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/         FastAPI routes
   services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit
-  core/        config, database, security/RBAC, errors, observability
-backend/tests/ unit, agent and end-to-end API tests
+  core/        config, database and migrations runner, security/RBAC, rate limit, errors, observability
+  migrations/  Alembic revisions
+backend/tests/ unit, agent, knowledge, migration, PostgreSQL and end-to-end API tests
+frontend/      Next.js web app (BFF session proxy, dashboard, incident command center, review board, knowledge,
+               audit), Vitest tests and the Playwright browser E2E
+evals/         labelled retrieval queries
 data/seed/     synthetic incidents, demo users, synthetic site procedures and ITPs
+data/dataset_registry.yaml  public datasets with licence and commercial-use status (none downloaded yet)
 docs/          PRD, architecture, agents, API, database, security, testing, datasets, results, decisions
+docs/PROJECT_STATUS.md  what is done, partial and missing against the 52 implementation gates
+.claude/       Claude Code rules, reviewer agents and permission settings
 docs/planning/ the original implementation blueprint, playbook and strategy documents
 scripts/       demo_walkthrough.py
 ```
 
 ## Tech stack
 
-Python 3.12, FastAPI, Pydantic, SQLAlchemy, PostgreSQL (pgvector image), Anthropic SDK, Docker, GitHub Actions.
-Planned: Next.js + TypeScript + Tailwind, Azure Container Apps, pgvector hybrid search, Neo4j, vision models.
+Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL with pgvector, pypdf, python-docx, Anthropic SDK;
+Next.js 16, React 19, TypeScript, Tailwind CSS 4; Docker, GitHub Actions.
+Planned: Azure Container Apps, Neo4j, a trained vision detection model.
 
 ## Data and datasets
 

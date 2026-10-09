@@ -27,7 +27,7 @@ from app.models import (
     RiskAssessment,
     utcnow,
 )
-from app.services import audit, lifecycle, rag, risk
+from app.services import audit, lifecycle, rag, risk, vision
 
 RUNNABLE_FROM = {
     IncidentStatus.REPORTED,
@@ -103,12 +103,16 @@ def build_tools(db: Session, inc: Incident, state: dict) -> dict:
     def get_prior_outputs() -> dict:
         return dict(state)
 
+    def list_vision_observations() -> dict:
+        return vision.for_agents(db, inc.id)
+
     return {
         "get_incident": get_incident,
         "list_evidence": list_evidence,
         "search_knowledge": search_knowledge,
         "similar_incidents": similar_incidents,
         "get_prior_outputs": get_prior_outputs,
+        "list_vision_observations": list_vision_observations,
     }
 
 

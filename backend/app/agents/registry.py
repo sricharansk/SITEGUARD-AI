@@ -24,11 +24,14 @@ def _gather_investigation(domain: Domain):
         inc = ctx.call("get_incident")
         prior = ctx.call("get_prior_outputs")
         hazards = prior.get("triage", {}).get("hazards", [])
+        vision = ctx.call("list_vision_observations")
         return {
             "incident": inc,
             "evidence": ctx.call("list_evidence"),
             "knowledge": ctx.call("search_knowledge", query=_incident_query(inc, hazards), domain=domain, limit=5),
             "similar_incidents": ctx.call("similar_incidents"),
+            "vision": vision["confirmed"],  # citable: confirmed by a person
+            "vision_unreviewed": vision["unreviewed"],  # leads only: no ref, cannot be cited
             "prior": prior,
         }
 
@@ -70,7 +73,7 @@ AGENTS: dict[str, AgentSpec] = {
     "safety": AgentSpec(
         name="safety",
         description="Hazards, unsafe acts/conditions, failed controls, suggested likelihood/consequence.",
-        tools=_COMMON | {"get_prior_outputs"},
+        tools=_COMMON | {"get_prior_outputs", "list_vision_observations"},
         max_tool_calls=6,
         gather=_gather_investigation(Domain.SAFETY),
         rules=rules.safety,
@@ -83,7 +86,7 @@ AGENTS: dict[str, AgentSpec] = {
     "quality": AgentSpec(
         name="quality",
         description="Defects, requirement vs observed, probable stage, recommended tests.",
-        tools=_COMMON | {"get_prior_outputs"},
+        tools=_COMMON | {"get_prior_outputs", "list_vision_observations"},
         max_tool_calls=6,
         gather=_gather_investigation(Domain.QUALITY),
         rules=rules.quality,

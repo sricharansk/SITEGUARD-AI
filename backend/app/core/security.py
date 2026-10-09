@@ -123,6 +123,14 @@ class Principal:
         if not self.can(perm, organization_id, project_id):
             raise Forbidden(f"Missing permission {perm.value}")
 
+    def require_org_wide(self, perm: Permission, organization_id: str) -> None:
+        """For changes that affect every project (organization documents, jobs); project-limited roles do not count."""
+        org_roles = {m.role for m in self.memberships if m.organization_id == organization_id and m.project_id is None}
+        if not any(m.organization_id == organization_id for m in self.memberships):
+            raise NotFound("Resource not found")
+        if not any(perm in ROLE_PERMISSIONS[r] for r in org_roles):
+            raise Forbidden(f"Missing organization-wide permission {perm.value}")
+
     def visible_project_filter(self, db: Session) -> list[str]:
         ids: set[str] = set()
         for m in self.memberships:

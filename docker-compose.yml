@@ -1,5 +1,5 @@
-# Local pilot stack: PostgreSQL (pgvector image, ready for vector search) + API.
-# Usage: cp .env.example .env && docker compose up --build
+# Local pilot stack: PostgreSQL (pgvector image, ready for vector search) + API + web app.
+# Usage: cp .env.example .env && docker compose up --build   (web app: http://localhost:3000)
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -26,6 +26,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+    environment:
+      # Server-side only: the browser talks to the web app, which calls the API with the session token.
+      SITEGUARD_API_URL: http://api:8000
+    ports: ["3000:3000"]
+    depends_on:
+      - api
 
 volumes:
   pgdata:

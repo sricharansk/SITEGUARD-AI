@@ -1,6 +1,7 @@
 from collections.abc import Iterator
+from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine, inspect
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import get_settings
@@ -24,6 +25,29 @@ def configure(url: str) -> None:
     global engine
     engine = _make_engine(url)
     SessionLocal.configure(bind=engine)
+
+
+MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
+# Revision that matches the schema the pilot created with metadata.create_all before Alembic was added.
+BASELINE_REVISION = "0001"
+
+
+def run_migrations(target: Engine | None = None) -> None:
+    """Upgrade the database to the latest Alembic revision.
+
+    Databases created by the pilot (tables present, no alembic_version) are stamped at the baseline first.
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    cfg = Config()
+    cfg.set_main_option("script_location", str(MIGRATIONS_DIR))
+    with (target or engine).begin() as conn:
+        cfg.attributes["connection"] = conn
+        tables = set(inspect(conn).get_table_names())
+        if "organizations" in tables and "alembic_version" not in tables:
+            command.stamp(cfg, BASELINE_REVISION)
+        command.upgrade(cfg, "head")
 
 
 def get_db() -> Iterator[Session]:

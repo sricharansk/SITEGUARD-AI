@@ -199,6 +199,28 @@ def _base_refs(pack: dict, k: int = 3) -> list[str]:
     return refs
 
 
+def _vision(pack: dict, categories: set[str]) -> tuple[list[dict], list[dict]]:
+    """Vision observations for these categories: (CONFIRMED by an engineer, UNREVIEWED machine observations)."""
+    confirmed = [v for v in pack.get("vision", []) if v["category"] in categories]
+    return confirmed, [v for v in pack.get("vision_unreviewed", []) if v["category"] in categories]
+
+
+def _vision_questions(unreviewed: list[dict]) -> list[str]:
+    return [
+        f"Check the unreviewed vision observation '{v['name']}' (observation {v['observation_id']}, confidence "
+        f"{v['confidence']:.0%}) against the photo; it is a machine observation, not a finding."
+        for v in unreviewed[:5]
+    ]
+
+
+def _add_mapped(labels: list[str], confirmed: list[dict], unclassified: str) -> list[str]:
+    out = [label for label in labels if label != unclassified]
+    for v in confirmed:
+        if v.get("maps_to") and v["maps_to"] not in out:
+            out.append(v["maps_to"])
+    return out or [unclassified]
+
+
 HIGH_ENERGY = {
     "Fall from height",
     "Excavation collapse / caught-in",
@@ -380,7 +402,8 @@ def _likelihood(text: str, similar: int) -> int:
 def safety(pack: dict) -> SafetyInvestigationOutput:
     inc = pack["incident"]
     text = _text(pack)
-    hazards = _match(text, SAFETY_HAZARDS) or ["Unclassified safety hazard"]
+    seen, unreviewed = _vision(pack, {"PPE", "HAZARD"})
+    hazards = _add_mapped(_match(text, SAFETY_HAZARDS), seen, "Unclassified safety hazard")
     acts, conds, controls = [], [], []
     for h in hazards:
         d = _SAFETY_DETAIL.get(h)
@@ -396,6 +419,7 @@ def safety(pack: dict) -> SafetyInvestigationOutput:
     ]
     if not pack.get("evidence"):
         questions.append("Collect photos of the scene and equipment.")
+    questions += _vision_questions(unreviewed)
     return SafetyInvestigationOutput(
         hazards=hazards,
         unsafe_acts=acts or ["To be determined by interview"],
@@ -408,7 +432,7 @@ def safety(pack: dict) -> SafetyInvestigationOutput:
             "these inputs go to the deterministic risk matrix and must be confirmed by the investigator."
         ),
         confidence=0.7 if hazards[0] != "Unclassified safety hazard" else 0.35,
-        evidence_refs=_base_refs(pack),
+        evidence_refs=_base_refs(pack) + [v["ref"] for v in seen],
         open_questions=questions,
     )
 
@@ -470,12 +494,22 @@ _QUALITY_DETAIL: dict[str, dict] = {
 
 def quality(pack: dict) -> QualityInvestigationOutput:
     text = _text(pack)
-    defects = _match(text, QUALITY_DEFECTS) or ["Unclassified quality issue"]
+    seen, unreviewed = _vision(pack, {"DEFECT"})
+    defects = _add_mapped(_match(text, QUALITY_DEFECTS), seen, "Unclassified quality issue")
     reqs, tests, stages = [], [], []
     for d in defects:
         det = _QUALITY_DETAIL.get(d)
         if det:
-            reqs.append(f"{d}: requirement - {det['req']} Observed - see incident description.")
+            photos = [v for v in seen if v.get("maps_to") == d]
+            observed = (
+                "; ".join(
+                    f"{v['name']} on photo evidence:{v['evidence_id']}, confirmed by an engineer ({v['ref']})"
+                    for v in photos
+                )
+                if photos
+                else "see incident description"
+            )
+            reqs.append(f"{d}: requirement - {det['req']} Observed - {observed}.")
             tests += det["tests"]
             stages.append(det["stage"])
     structural = any(_has(text, w) for w in ["structural", "load-bearing", "column", "beam", "slab", "transfer"])
@@ -491,10 +525,11 @@ def quality(pack: dict) -> QualityInvestigationOutput:
         consequence=consequence,
         summary=f"{', '.join(defects)} on {'a structural' if structural else 'a non-structural'} element.",
         confidence=0.7 if defects[0] != "Unclassified quality issue" else 0.35,
-        evidence_refs=_base_refs(pack),
+        evidence_refs=_base_refs(pack) + [v["ref"] for v in seen],
         open_questions=[
             "Confirm the governing specification clause and drawing revision.",
             "Raise an NCR if the requirement is confirmed as not met.",
+            *_vision_questions(unreviewed),
         ],
     )
 
