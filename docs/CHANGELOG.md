@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — Web app, first slice
+
+### Added
+
+- `frontend/`: Next.js 15 + TypeScript + Tailwind app against the existing API. Screens: login, dashboard, incident
+  list with filters, incident workspace (report, AI agent outputs and tool traces, deterministic risk, CAPA, closure
+  blockers, evidence, history) and review queue.
+- Human approve/reject of proposed actions with a mandatory reason; AI output is visually distinct ("AI draft") and
+  severity always has a text label. Permissions are read from the API; the server remains the authority.
+- `make web`, `make web-check` and a `frontend` CI job (typecheck, lint, build).
+
+### Known limitations
+
+- No queue endpoint exists, so the review queue gathers pending actions from the project's open incidents client-side.
+- Modify decision, new-incident form, evidence upload, verification and closure screens are not built yet.
+- `npm audit` reports build-time-only advisories in Tailwind 3's file-glob dependencies (`braces`); the fix is a breaking
+  Tailwind 4 migration. Next's nested `postcss` is overridden to the patched version.
+
 ## 0.1.0 — Backend pilot
 
 ### Added

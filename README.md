@@ -6,8 +6,9 @@ Site Guard AI helps construction teams investigate incidents, understand risk, r
 corrective and preventive actions, and manage resolution through verified closure. AI agents do the first pass;
 qualified people approve every action and close every incident.
 
-> Status: **0.1.0 backend pilot.** API, agents, workflow, tests, Docker and CI are working. The web UI, Azure
-> deployment, vision and knowledge graph are the next milestones ([ROADMAP](docs/ROADMAP.md)).
+> Status: **0.1.0 backend pilot plus first web UI slice.** API, agents, workflow, tests, Docker and CI are working.
+> The web app covers login, dashboard, incident list, incident workspace and review queue. Azure deployment, vision
+> and knowledge graph are the next milestones ([ROADMAP](docs/ROADMAP.md)).
 
 ## What it does
 
@@ -52,6 +53,7 @@ cd SITEGUARD-AI
 make install
 make test            # 50 tests
 make run             # open http://localhost:8000/docs
+make web             # in a second terminal: web app at http://localhost:3000
 
 # Option B: PostgreSQL + API in Docker
 cp .env.example .env # then edit the CHANGE values
@@ -75,13 +77,14 @@ backend/tests/ unit, agent and end-to-end API tests
 data/seed/     synthetic incidents, demo users, synthetic site procedures and ITPs
 docs/          PRD, architecture, agents, API, database, security, testing, datasets, results, decisions
 docs/planning/ the original implementation blueprint, playbook and strategy documents
+frontend/      Next.js + TypeScript + Tailwind web app (dashboard, incidents, workspace, review queue)
 scripts/       demo_walkthrough.py
 ```
 
 ## Tech stack
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, PostgreSQL (pgvector image), Anthropic SDK, Docker, GitHub Actions.
-Planned: Next.js + TypeScript + Tailwind, Azure Container Apps, pgvector hybrid search, Neo4j, vision models.
+Web: Next.js 15, React 19, TypeScript, Tailwind. Planned: Azure Container Apps, pgvector hybrid search, Neo4j, vision models.
 
 ## Data and datasets
 

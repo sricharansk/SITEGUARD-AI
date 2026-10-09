@@ -21,3 +21,9 @@ frontend and browser E2E tests.
 ## Definition of Done
 
 Tests, lint, type check and build pass for the affected scope.
+
+## Web app
+
+`make web-check` runs `tsc --noEmit`, `next lint` and `next build` in `frontend/`. The first slice was also exercised
+end to end in a headless browser against the live API (login, dashboard, incident list, workspace, review queue).
+Automated component/E2E tests (Playwright) are not added yet.
