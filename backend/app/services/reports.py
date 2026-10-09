@@ -32,8 +32,12 @@ from app.models import (
     Site,
     User,
     VerificationRecord,
+    VisionAnalysis,
+    VisionObservation,
     utcnow,
 )
+from app.services.vision import BY_LABEL
+from app.services.vision import DISCLAIMER as VISION_DISCLAIMER
 
 DISCLAIMER = (
     "Site Guard AI is decision support. Sections marked AI-GENERATED are model suggestions that people reviewed or "
@@ -45,7 +49,7 @@ FORMATS = {
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "pdf": "application/pdf",
 }
-_REF = re.compile(r"\b(chunk|evidence):([0-9a-f-]{36})\b")
+_REF = re.compile(r"\b(chunk|evidence|vision):([0-9a-f-]{36})\b")
 
 
 @dataclass
@@ -167,6 +171,7 @@ def build(db: Session, inc: Incident, generated_at: datetime | None = None, *, i
         if evidence
         else Block("p", "No evidence files are attached."),
     ]
+    blocks += _vision_blocks(db, inc, evidence, who)
 
     risk = db.scalar(
         select(RiskAssessment)
@@ -320,6 +325,36 @@ def _summary(agent: str, out: dict) -> str:
     return ""
 
 
+def _vision_blocks(db: Session, inc: Incident, evidence: list[Evidence], who) -> list[Block]:
+    """Above-threshold vision observations with their review state. Machine output, labelled as such."""
+    names = {e.id: e.filename for e in evidence}
+    rows = db.execute(
+        select(VisionObservation, VisionAnalysis)
+        .join(VisionAnalysis, VisionAnalysis.id == VisionObservation.analysis_id)
+        .where(VisionObservation.incident_id == inc.id, VisionObservation.above_threshold)
+        .order_by(VisionAnalysis.created_at, VisionObservation.ordinal)
+    ).all()
+    if not rows:
+        return []
+    table = []
+    for obs, analysis in rows:
+        cls = BY_LABEL.get(obs.label)
+        review = obs.review_status.value + (f" by {who(obs.reviewed_by)}" if obs.reviewed_by else "")
+        table.append(
+            (
+                names.get(obs.evidence_id, obs.evidence_id),
+                cls.name if cls else obs.label,
+                f"{obs.confidence:.2f} (threshold {obs.threshold:.2f})",
+                review,
+                f"{analysis.analyzer} {analysis.model_version}, taxonomy {analysis.taxonomy_version}",
+            )
+        )
+    return [
+        Block("note", f"Vision observations (machine-generated). {VISION_DISCLAIMER}"),
+        Block("table", headers=("File", "Observation", "Confidence", "Review", "Analyzer"), rows=tuple(table)),
+    ]
+
+
 def _citations(db: Session, inc: Incident, refs: list[str]) -> list[Block]:
     unique = list(dict.fromkeys(refs))
     rows: list[tuple[str, ...]] = []
@@ -343,6 +378,18 @@ def _citations(db: Session, inc: Incident, refs: list[str]) -> list[Block]:
             ev = db.get(Evidence, rid)
             if ev is not None and ev.incident_id == inc.id:
                 rows.append((ref, ev.filename, f"SHA-256 {ev.sha256[:16]}...", "incident evidence"))
+        elif kind == "vision":
+            obs = db.get(VisionObservation, rid)
+            if obs is not None and obs.incident_id == inc.id:
+                ev = db.get(Evidence, obs.evidence_id)
+                rows.append(
+                    (
+                        ref,
+                        f"{obs.label} on {ev.filename if ev else obs.evidence_id}",
+                        f"confidence {obs.confidence:.2f}, {obs.review_status.value}",
+                        "vision observation (machine-generated)",
+                    )
+                )
     if not rows:
         return [Block("p", "No document or evidence sources are cited.")]
     return [Block("table", headers=("Ref", "Source", "Location", "Origin"), rows=tuple(rows))]

@@ -26,6 +26,9 @@ flowchart LR
 
 - **Six bounded agents** with declared tools, budgets, typed outputs, evidence citations and a full trace
   ([docs/AGENTS.md](docs/AGENTS.md)).
+- **Photo evidence analysis:** PPE, hazard and defect observations against a versioned taxonomy, with project and
+  site thresholds and engineer confirmation before the agents use them. Offline it runs image-quality checks only,
+  until a detection model is chosen; Claude vision is an option.
 - **Runs offline by default** with a deterministic rules engine; set `SITEGUARD_AI_PROVIDER=anthropic` to use
   Claude, with automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the
@@ -96,7 +99,7 @@ scripts/       demo_walkthrough.py
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL with pgvector, pypdf, python-docx, Anthropic SDK;
 Next.js 16, React 19, TypeScript, Tailwind CSS 4; Docker, GitHub Actions.
-Planned: Azure Container Apps, Neo4j, vision models.
+Planned: Azure Container Apps, Neo4j, a trained vision detection model.
 
 ## Data and datasets
 

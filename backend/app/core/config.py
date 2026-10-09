@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     parser_timeout_seconds: int = Field(default=60, ge=5, le=600)
     parser_memory_mb: int = Field(default=1024, ge=256, le=8192)
 
+    # Vision (docs/AGENTS.md#vision). "baseline" runs image-quality checks only; no detection model is chosen yet (O8).
+    vision_provider: Literal["baseline", "anthropic"] = "baseline"
+    vision_max_pixels: int = Field(default=40_000_000, ge=1_000_000, le=200_000_000)
+    vision_max_side: int = Field(default=1568, ge=256, le=4096)
+    vision_timeout_seconds: int = Field(default=30, ge=5, le=300)
+    vision_memory_mb: int = Field(default=1024, ge=256, le=8192)
+
     # Notifications (docs/AGENTS.md#notifications). External delivery is off unless an adapter is chosen; "smtp" is
     # refused when SITEGUARD_ENV is local or test so development never emails real people.
     notification_email_adapter: Literal["disabled", "log", "smtp"] = "disabled"

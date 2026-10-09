@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 09 October 2026 (Prompts 09–13). Tracks the 52 implementation gates (Prompts 00–51) in
+Last updated: 09 October 2026 (Prompts 25–27). Tracks the 52 implementation gates (Prompts 00–51) in
 `docs/planning/Site_Guard_AI_Claude_Code_Detailed_Execution_Playbook_FINAL_UPDATED.md`. Update this file in the
 same commit as any milestone.
 
@@ -89,7 +89,9 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 22 | Human approval | Done | Approve / modify / reject; critical needs HSE manager |
 | 23 | CAPA workflow | Done | Progress, independent verification, gated closure |
 | 24 | Notifications / escalation | Done | In-app notifications from workflow events, four escalation rules, email outbox with retries and dead letters, idempotent; external delivery off by default. Web screen pending |
-| 25–27 | Vision foundation, PPE, defects | Missing | |
+| 25 | Vision foundation | Done | Image preprocessing in a resource-limited child process, analyzer interface, versioned and traceable analyses (evidence SHA-256, analyzer, model and taxonomy versions, thresholds), presented as observations with a disclaimer (DECISIONS 020) |
+| 26 | PPE and hazard detection | Partial | Configurable PPE/hazard classes, thresholds, project/site calibration and evidence-linked detections work end to end; no trained detector yet: `baseline` detects nothing and says so, Claude vision is optional (O8, research-only datasets) |
+| 27 | Quality defect vision | Partial | Defect classes linked to quality agent findings and hypotheses only after engineer confirmation; same detector gap as 26 |
 | 28 | Neo4j knowledge graph | Missing | |
 | 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
 | 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags; knowledge answers report conflicting sources |
@@ -121,7 +123,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 ## Next gate
 
-Prompt 25 (vision foundation), then the remaining gates in order.
+Prompts 29, 30 and 37 (resumable orchestration, conflict handling, resilience), then the remaining gates in order.
 
 ## Verification commands
 

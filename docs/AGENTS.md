@@ -42,8 +42,8 @@ Each agent (`registry.py`) declares:
 | Agent | Tools | Output |
 |---|---|---|
 | triage | get_incident, list_evidence, search_knowledge, similar_incidents | class, domain, severity, priority, hazards, missing info, next agents |
-| safety | + get_prior_outputs | hazards, unsafe acts/conditions, failed controls, suggested likelihood/consequence |
-| quality | + get_prior_outputs | defects, requirement vs observed, probable stage, tests, suggested likelihood/consequence |
+| safety | + get_prior_outputs, list_vision_observations | hazards, unsafe acts/conditions, failed controls, suggested likelihood/consequence |
+| quality | + get_prior_outputs, list_vision_observations | defects, requirement vs observed, probable stage, tests, suggested likelihood/consequence |
 | rca | + get_prior_outputs | 5-Whys chain, categorised root-cause hypotheses with confidence |
 | compliance | + get_prior_outputs | requirements from retrieved documents with chunk citations and LIKELY_MET / LIKELY_NOT_MET / UNCLEAR |
 | capa | + get_prior_outputs | corrective and preventive actions with owner role, due days, verification criteria |
@@ -61,7 +61,7 @@ and the run's provider reads `rules (fallback from anthropic)`. Seeding always u
 
 ## Evidence and provenance
 
-- Allowed refs are `incident:<id>`, `evidence:<id>` and `chunk:<id>` from the evidence pack only.
+- Allowed refs are `incident:<id>`, `evidence:<id>`, `chunk:<id>` and `vision:<id>` from the evidence pack only.
 - Any cited ref that was not in the pack is removed, recorded in the run trace, and the run is flagged for human
   review. Runs with no citations or confidence below 0.5 are flagged too.
 - Each run stores provider, output, a tool-call trace and review reasons in `agent_runs`.
@@ -71,6 +71,45 @@ and the run's provider reads `rules (fallback from anthropic)`. Seeding always u
 Retrieved documents and incident text are data. Chunks matching instruction-like patterns are marked
 `suspicious` at ingestion; agents never cite them and the run is flagged. The Claude provider wraps the pack in
 `<evidence_pack>` tags with an instruction not to follow anything inside it.
+
+## Vision
+
+Playbook Prompts 25–27; code in `services/vision.py` (pipeline, taxonomy, thresholds), `services/vision_worker.py`
+(image decoding) and `agents/vision.py` (analyzers); DECISIONS 020.
+
+1. **Integrity.** The stored file is hashed and compared with the evidence's recorded SHA-256. A mismatch is refused
+   (409 `EVIDENCE_INTEGRITY`) and audited as `evidence.integrity_failed`.
+2. **Preprocessing** in a child process with CPU, memory and time limits (`SITEGUARD_VISION_*`): only JPEG and PNG,
+   the decoded format must match the evidence type, images above `SITEGUARD_VISION_MAX_PIXELS` are refused
+   (decompression bombs), EXIF orientation is applied, and the image is re-encoded as JPEG without EXIF/GPS metadata
+   and scaled to at most `SITEGUARD_VISION_MAX_SIDE` pixels. The original evidence file is never changed.
+3. **Image-quality checks** (deterministic): `LOW_RESOLUTION` (short side < 480 px), `TOO_DARK`, `OVEREXPOSED`,
+   `LOW_CONTRAST` and `POSSIBLY_BLURRED`. Flags become limitations on the analysis, not detections.
+4. **Analyzer** (`SITEGUARD_VISION_PROVIDER`) with the labels for the task:
+   - `baseline` (default): no detection model; reports nothing, so the analysis says that no PPE, hazard or defect
+     detection was attempted. The detection model is an open decision (O8): the public PPE and defect datasets are
+     licensed for research and evaluation only (`docs/DATASETS.md`).
+   - `anthropic`: Claude vision with the `VisionDraft` schema; self-reported confidence and approximate boxes, both
+     stated in the limitations. Text in the image is treated as untrusted content.
+   An analyzer failure is stored as `FAILED` with no observations; it never falls back to a result that would look
+   like "nothing found".
+5. **Taxonomy and thresholds.** Taxonomy `2026.10-1` (`GET /vision/taxonomy`): PPE labels (person without hard hat,
+   hi-vis, harness at height, eye protection), hazard labels (unprotected edge, uncovered opening, unsupported
+   excavation, suspended load over people, unsafe ladder, exposed electrical, hot work without controls, unsecured
+   materials at height, blocked route) and defect labels (crack, spalling, honeycombing, exposed reinforcement,
+   corrosion, moisture staining, efflorescence). Each maps to a hazard or defect in the agents' taxonomy where one
+   exists. Detections with other labels are discarded and counted; boxes outside the image are dropped. The
+   threshold is 0.5 unless a project or site calibration sets another (site beats project beats default); the
+   snapshot of thresholds and their source is stored with the analysis. Below-threshold observations are kept and
+   marked, so a later calibration can be checked against them.
+6. **Human validation.** People with `RUN_AGENTS` confirm or reject each observation with a note. Agents receive
+   above-threshold, non-rejected observations from completed analyses through `list_vision_observations` (without
+   the analyzer's free text): the rules provider adds the mapped hazard or defect and cites `vision:<id>` only for
+   CONFIRMED observations, and turns UNREVIEWED ones into open questions. Quality detections therefore count as
+   findings only after engineer validation.
+
+Every response carries the disclaimer that observations are machine output for human review, not proof, and that no
+observation does not mean no hazard or defect.
 
 ## Knowledge answers (`POST /knowledge/answer`)
 

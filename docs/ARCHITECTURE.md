@@ -72,7 +72,7 @@ flowchart TD
 | Workflow | Transactional incident and CAPA state machines | Same; reminders and escalation (Prompt 24) |
 | Reports | Incident report (Markdown, Word, PDF) rendered by `services/reports.py` from stored records only, AI sections labelled, generation audited | Project summary reports |
 | Notifications | In-app notifications from workflow events (via the audit trail), escalation rules for overdue actions, unreviewed severe incidents and waiting critical reviews, email outbox with retries and dead letters (`python -m app.jobs`); external delivery off by default | Teams/SMS channels (O7) |
-| Vision | None | PPE/hazard and defect detection (Prompts 25–27) |
+| Vision | Image preprocessing in a resource-limited child process (orientation, metadata removal, quality checks), analyzer interface with `baseline` (no detector) and Claude vision adapters, versioned taxonomy for PPE, hazards and defects, project/site calibrated thresholds, observations with evidence SHA-256 and model version, engineer review before agents use them (`services/vision.py`) | A trained PPE and defect detector behind the same interface once a model and licensed training data are approved (O8) |
 | Observability | JSON logs, correlation IDs, audit events, agent traces | Metrics, OpenTelemetry, App Insights |
 | Deployment | Docker image, Compose, GitHub Actions | Azure (Prompts 45–46) |
 

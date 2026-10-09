@@ -10,6 +10,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -392,3 +393,88 @@ class NotificationDelivery(Base):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     notification: Mapped[Notification] = relationship(back_populates="deliveries")
+
+
+class VisionTask(enum.StrEnum):
+    PPE_HAZARD = "PPE_HAZARD"
+    DEFECT = "DEFECT"
+
+
+class ObservationReview(enum.StrEnum):
+    UNREVIEWED = "UNREVIEWED"
+    CONFIRMED = "CONFIRMED"
+    REJECTED = "REJECTED"
+
+
+class VisionAnalysis(Base):
+    """One run of a vision analyzer over one image of evidence (docs/AGENTS.md#vision).
+
+    Records exactly which file (SHA-256), analyzer, model, taxonomy and thresholds produced the observations, so every
+    observation can be traced and reproduced. Observations are machine output for human review, never proof.
+    """
+
+    __tablename__ = "vision_analyses"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), index=True)
+    evidence_sha256: Mapped[str] = mapped_column(String(64))
+    task: Mapped[VisionTask] = mapped_column(Enum(VisionTask, native_enum=False))
+    analyzer: Mapped[str] = mapped_column(String(60))
+    model: Mapped[str] = mapped_column(String(100))
+    model_version: Mapped[str] = mapped_column(String(60))
+    taxonomy_version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20))  # COMPLETED | FAILED
+    error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    preprocessing: Mapped[dict] = mapped_column(JSON, default=dict)
+    image_quality: Mapped[dict] = mapped_column(JSON, default=dict)
+    thresholds: Mapped[dict] = mapped_column(JSON, default=dict)
+    limitations: Mapped[list] = mapped_column(JSON, default=list)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    requested_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    observations: Mapped[list["VisionObservation"]] = relationship(
+        back_populates="analysis", lazy="selectin", order_by="VisionObservation.ordinal"
+    )
+
+
+class VisionObservation(Base):
+    """A labelled region (or whole-image finding) reported by an analyzer. Kept even below threshold, for review."""
+
+    __tablename__ = "vision_observations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("vision_analyses.id"), index=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"))
+    ordinal: Mapped[int] = mapped_column(Integer)
+    category: Mapped[str] = mapped_column(String(20))  # PPE | HAZARD | DEFECT
+    label: Mapped[str] = mapped_column(String(60))
+    confidence: Mapped[float] = mapped_column(Float)
+    threshold: Mapped[float] = mapped_column(Float)
+    above_threshold: Mapped[bool] = mapped_column(Boolean)
+    box: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # normalized {x, y, w, h} on the oriented image
+    polygon: Mapped[list | None] = mapped_column(JSON, nullable=True)  # normalized [[x, y], ...] where supported
+    note: Mapped[str | None] = mapped_column(String(300), nullable=True)  # analyzer's own words: untrusted
+    review_status: Mapped[ObservationReview] = mapped_column(
+        Enum(ObservationReview, native_enum=False), default=ObservationReview.UNREVIEWED
+    )
+    reviewed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    analysis: Mapped[VisionAnalysis] = relationship(back_populates="observations")
+
+
+class VisionCalibration(Timestamped, Base):
+    """A project- or site-level detection threshold for one taxonomy label (Playbook Prompt 26)."""
+
+    __tablename__ = "vision_calibrations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    site_id: Mapped[str | None] = mapped_column(ForeignKey("sites.id"), nullable=True)
+    label: Mapped[str] = mapped_column(String(60))
+    threshold: Mapped[float] = mapped_column(Float)
+    reason: Mapped[str] = mapped_column(Text)
+    updated_by: Mapped[str] = mapped_column(ForeignKey("users.id"))

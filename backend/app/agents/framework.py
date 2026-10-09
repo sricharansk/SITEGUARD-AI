@@ -86,6 +86,7 @@ def allowed_refs(pack: dict) -> set[str]:
     refs = {f"incident:{pack['incident']['id']}"}
     refs |= {f"evidence:{e['id']}" for e in pack.get("evidence", [])}
     refs |= {h["ref"] for h in pack.get("knowledge", [])}
+    refs |= {v["ref"] for v in pack.get("vision", [])}
     return refs
 
 

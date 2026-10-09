@@ -30,6 +30,13 @@
   unreviewed severe incidents and waiting critical reviews, an email outbox with retries, backoff and dead letters,
   `python -m app.jobs` / `make jobs`, `/notifications` endpoints and migration `0003`. Notification failures never
   undo a workflow change; real email is refused in local and test environments.
+- Prompts 25–27 vision: `POST /evidence/{id}/vision` checks the evidence hash, decodes JPEG/PNG in a
+  resource-limited child process (orientation, metadata removal, decompression-bomb limit, image-quality flags) and
+  runs the configured analyzer (`baseline` or Claude vision) against a versioned PPE, hazard and defect taxonomy;
+  project and site threshold calibration (`/projects/{id}/vision/calibration`); observations stored with evidence
+  SHA-256, analyzer, model and taxonomy versions; engineer review (`/vision/observations/{id}/review`); safety and
+  quality agents cite only confirmed observations and question unreviewed ones; reports list observations.
+  Migration `0004`.
 - Prompt 34 reports: `GET /incidents/{id}/report` in Markdown, Word or PDF (fpdf2), built only from stored records
   with labelled AI sections, approval history, verification and cited sources; generation audited with SHA-256.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project

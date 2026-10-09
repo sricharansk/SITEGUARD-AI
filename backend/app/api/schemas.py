@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import Domain, IncidentStatus, Severity, WorkStatus
+from app.models import Domain, IncidentStatus, Severity, VisionTask, WorkStatus
 
 
 class _In(BaseModel):
@@ -119,3 +119,19 @@ class VerifyIn(_In):
     effective: bool
     notes: str = Field(min_length=1, max_length=5000)
     evidence_id: str | None = None
+
+
+class VisionRunIn(_In):
+    task: VisionTask
+
+
+class ObservationReviewIn(_In):
+    decision: Literal["CONFIRMED", "REJECTED"]
+    note: str = Field(min_length=3, max_length=2000)
+
+
+class CalibrationIn(_In):
+    label: str = Field(min_length=1, max_length=60)
+    threshold: float = Field(ge=0.05, le=0.99)
+    site_id: str | None = None
+    reason: str = Field(min_length=3, max_length=2000)

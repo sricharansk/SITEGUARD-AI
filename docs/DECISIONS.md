@@ -113,6 +113,18 @@ Mapping errors are swallowed and logged so a notification problem can never undo
 External delivery is a separate outbox row sent by a job with bounded retries, so a mail outage only changes the
 outbox. Escalation keys (`capa-overdue:<id>:<due date>`, `incident-unreviewed:<id>`) make the job idempotent.
 
+## Decision 020 — Vision is an observation pipeline with a pluggable analyzer and engineer validation
+
+Reason: the detection model is not chosen (O8) and the public PPE and defect datasets are research-only, so the
+milestone builds everything around the model and keeps the model swappable. One `VisionAnalyzer` interface
+(`agents/vision.py`) reports detections against a versioned taxonomy; the service checks the evidence hash, decodes
+the image in a resource-limited child process (as for documents, Decision 017), applies project/site calibrated
+thresholds and stores every detection with the analyzer, model version, taxonomy version and thresholds used. The
+default `baseline` analyzer detects nothing and says so, rather than pretending; Claude vision is available as an
+adapter with self-reported confidence. A failed analysis is stored as `FAILED`, never as "nothing found". Agents only
+treat observations a person CONFIRMED as findings; unreviewed ones become open questions, and no observation is
+ever read as "no hazard".
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.
@@ -126,7 +138,7 @@ These are unresolved. Each lists the behaviour that stays in place until someone
 | O5 | Which semantic embedding model/provider for vector search, given data-residency needs? | Offline hashing embedder in hybrid search (Decision 015) |
 | O6 | Evidence storage container, retention and malware scanning in Azure Blob Storage? | Local disk / mounted volume |
 | O7 | Which notification channels for reminders and escalation (email, Teams, SMS)? | Dashboard overdue counts only |
-| O8 | Which vision models, and can any non-commercial dataset be used beyond evaluation? | No vision features; datasets registered only |
+| O8 | Which vision detection model, and can any non-commercial dataset be used beyond evaluation? | Vision pipeline with the `baseline` analyzer (image-quality checks only) or Claude vision when `SITEGUARD_VISION_PROVIDER=anthropic` (Decision 020); no trained PPE/defect detector |
 | O9 | Is Neo4j needed for the MVP or deferred? (Blueprint lists the knowledge graph as "should have".) | Deferred |
 | O10 | Shared store for rate limiting when running more than one replica? | In-process limiter, single replica |
 | O11 | Commercial-use rights for public datasets before any production use | `commercial_use` flags in `data/dataset_registry.yaml` |

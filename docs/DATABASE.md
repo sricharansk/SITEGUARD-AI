@@ -29,6 +29,7 @@ Blueprint Part 7 lists the target entities. Status today:
 | agent_outputs, rca_cases, rca_hypotheses, requirements, compliance_findings | Stored as validated JSON in `agent_runs.output` (schemas in `app/agents/schemas.py`) rather than separate tables |
 | risk_assessments, capa_actions, approval_events, verification_records, audit_events | Implemented |
 | notifications, notification_deliveries | Implemented (revision `0003`): one in-app row per recipient with a unique `dedupe_key`; one email outbox row per notification with status, attempts, last error and next attempt |
+| vision_analyses, vision_observations, vision_calibrations | Implemented (revision `0004`); see "Vision (revision 0004)" |
 
 ## Incident data
 
@@ -54,6 +55,24 @@ SQLite. A chunk is re-embedded when its text checksum changes; switching to a ne
 and leaves the old ones until they are deleted. The API embeds missing chunks at startup and on
 `POST /documents/reindex`. No ANN index yet: exact distance is fine at pilot scale; add HNSW when a semantic model
 is chosen (DECISIONS O5).
+
+## Vision (revision 0004)
+
+`vision_analyses` record one analyzer run over one image: `organization_id`, `project_id`, `incident_id`,
+`evidence_id` and the `evidence_sha256` that was checked before analysis; `task` (`PPE_HAZARD` or `DEFECT`);
+`analyzer`, `model`, `model_version` and `taxonomy_version`; `status` (`COMPLETED` or `FAILED`, with `error`);
+`preprocessing` (format, original size, orientation corrected, metadata removed, analysis size), `image_quality`
+(measurements and flags), `thresholds` (the threshold and its source for every label), `limitations`, `duration_ms`
+and `requested_by`. A failed analysis keeps its row and has no observations.
+
+`vision_observations` hold every detection the analyzer reported for a taxonomy label, also those below threshold:
+`category`, `label`, `confidence`, the `threshold` applied and `above_threshold`, a normalized `box` (`x`, `y`,
+`w`, `h` as fractions of the oriented image) and `polygon` where the analyzer segments, the analyzer's own `note`
+(untrusted text), and the human review: `review_status` (`UNREVIEWED`, `CONFIRMED`, `REJECTED`), `reviewed_by`,
+`reviewed_at`, `review_note`. Earlier review decisions stay in `audit_events`.
+
+`vision_calibrations` hold a project threshold (`site_id` null) or a site threshold for one label, with `reason`
+and `updated_by`. One row per project, site and label is kept by the service.
 
 ## Migration rule
 

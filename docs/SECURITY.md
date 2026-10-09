@@ -100,6 +100,13 @@ Validate extension, MIME type, size, checksum and content before processing.
 | Incident evidence (`POST /incidents/{id}/evidence`) | jpg, png, pdf, txt | Extension, declared MIME, magic bytes, UTF-8 text, `SITEGUARD_EVIDENCE_MAX_BYTES` |
 | Knowledge documents (`POST /documents/upload`) | pdf, docx, md, txt | Extension picks the parser; a declared MIME type must match it (or be `application/octet-stream`) and the stored type comes from the parser; at most `SITEGUARD_DOCUMENT_MAX_BYTES` is read; DOCX rejected when it would expand past 100 MB, 100x its size or 5,000 entries; PDF and DOCX parsed in a child process with CPU-time, memory and wall-clock limits (`SITEGUARD_PARSER_TIMEOUT_SECONDS`, `SITEGUARD_PARSER_MEMORY_MB`) and at most 5 million characters of text |
 
+Vision analysis (`POST /evidence/{id}/vision`) re-checks the stored file against its SHA-256 first (a mismatch is
+refused and audited), then decodes JPEG/PNG only in a child process with CPU, memory and time limits
+(`SITEGUARD_VISION_*`); the decoded format must match the evidence type and images above
+`SITEGUARD_VISION_MAX_PIXELS` are refused as decompression bombs. Analyzers only see a re-encoded copy without
+EXIF/GPS metadata; the original evidence is never modified. Text written in an image is untrusted content for the
+vision model, and the analyzer's free-text notes are stored as labelled machine text and never passed to the agents.
+
 A file that cannot be parsed is kept as a `FAILED` document with a generic reason; a request that fails for any
 other reason removes the stored file. Downloads are sent as attachments with the stored type and `nosniff`.
 

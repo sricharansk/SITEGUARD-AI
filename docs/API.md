@@ -16,9 +16,9 @@ duplicate effects (a second approval or closure returns 409).
 {"data": null, "error": {"code": "INVALID_REQUEST", "message": "Request validation failed", "correlation_id": "uuid"}}
 ```
 
-Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403,
+Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `IMAGE_UNREADABLE` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403,
 `NOT_FOUND` 404 (also returned for resources in another tenant), `METHOD_NOT_ALLOWED` 405, `INVALID_TRANSITION` /
-`INVALID_STATE` / `NOT_APPROVED` / `CLOSE_BLOCKED` 409 (`CONFLICT` is the generic 409), `FILE_TOO_LARGE` 413,
+`INVALID_STATE` / `NOT_APPROVED` / `CLOSE_BLOCKED` / `EVIDENCE_INTEGRITY` 409 (`CONFLICT` is the generic 409), `FILE_TOO_LARGE` 413,
 `RATE_LIMITED` 429, `INTERNAL_ERROR` 500, and `HTTP_ERROR` for any other HTTP error status.
 
 ## Endpoints
@@ -38,6 +38,11 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /incidents/{id}/close | CLOSE_INCIDENT (+APPROVE_CRITICAL for CRITICAL) | Fails with CLOSE_BLOCKED and reasons |
 | POST | /incidents/{id}/evidence | EDIT_INCIDENT | Multipart; jpg/png/pdf/txt; magic-byte, size and SHA-256 checks |
 | GET | /evidence/{id}/download | READ | |
+| POST | /evidence/{id}/vision | RUN_AGENTS | Vision analysis of a JPEG/PNG: `{"task": "PPE_HAZARD" \| "DEFECT"}`. Refuses tampered files (409 `EVIDENCE_INTEGRITY`, audited), non-images (400 `UNSUPPORTED_FILE`), undecodable or oversized images (400 `IMAGE_UNREADABLE`) and closed incidents (409). Returns the analysis with analyzer, model, model version, taxonomy version, evidence SHA-256, preprocessing, image-quality flags, the thresholds used and their source, limitations, a disclaimer and every observation (label, confidence, threshold, `above_threshold`, normalized box/polygon, `review_status`). An analyzer failure is stored and returned with `status: FAILED` (201), never as an empty result. Audited as `vision.analyze` |
+| GET | /incidents/{id}/vision | READ | The incident's vision analyses with observations, oldest first |
+| POST | /vision/observations/{id}/review | RUN_AGENTS | `{"decision": "CONFIRMED" \| "REJECTED", "note"}`; records who, when and why; audited with before/after. Only CONFIRMED observations count as validated facts for the agents |
+| GET | /vision/taxonomy | any | Labels per task, default threshold, the agent hazard/defect each label maps to, image-quality limits, taxonomy version |
+| GET/PUT | /projects/{id}/vision/calibration | READ / MANAGE_PROJECTS | Detection threshold (0.05–0.99) for one label on the project, or on one of its sites (`site_id`), with a required `reason`; a site value beats the project value, which beats the default. Audited as `vision.calibrate` with before/after |
 | POST | /incidents/{id}/triage | RUN_AGENTS | Triage only |
 | POST | /incidents/{id}/investigate | RUN_AGENTS | Full workflow (covers investigate, RCA, compliance, CAPA) |
 | GET | /incidents/{id}/agent-runs | READ | All runs with traces |

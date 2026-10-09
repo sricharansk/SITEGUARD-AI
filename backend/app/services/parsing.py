@@ -6,15 +6,13 @@ caller records the document as FAILED and keeps its provenance (file name, size,
 """
 
 import io
-import json
 import logging
-import os
 import re
-import subprocess
-import sys
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import PurePath
+
+from app.services.isolation import WorkerCrashed, WorkerTimeout, run_worker
 
 log = logging.getLogger("siteguard.parsing")
 
@@ -200,32 +198,11 @@ def parse_document(filename: str, content: bytes, *, timeout: float = 60, memory
     if not parser.isolated:
         return parser.parse(content)
 
-    def limits() -> None:  # pragma: no cover - runs in the child
-        try:
-            import resource
-
-            resource.setrlimit(resource.RLIMIT_AS, (memory_mb * 1024 * 1024,) * 2)
-            resource.setrlimit(resource.RLIMIT_CPU, (max(1, int(timeout)),) * 2)
-        except (ImportError, ValueError, OSError):
-            pass
-
-    env = {k: v for k, v in os.environ.items() if k in ("PATH", "PYTHONPATH", "LANG", "LC_ALL", "SYSTEMROOT")}
     try:
-        proc = subprocess.run(
-            [sys.executable, "-m", "app.services.parse_worker", parser.name],
-            input=content,
-            capture_output=True,
-            timeout=timeout,
-            preexec_fn=limits if os.name == "posix" else None,
-            env=env,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
+        result = run_worker("app.services.parse_worker", [parser.name], content, timeout=timeout, memory_mb=memory_mb)
+    except WorkerTimeout as exc:
         raise ParseError("Document took too long to parse") from exc
-    try:
-        result = json.loads(proc.stdout)
-    except ValueError:
-        log.warning("parser process failed", extra={"extra_fields": {"code": proc.returncode, "parser": parser.name}})
+    except WorkerCrashed:
         raise ParseError("Document could not be parsed within the resource limits") from None
     if not result.get("ok"):
         raise ParseError(result.get("error") or "Document could not be read")
