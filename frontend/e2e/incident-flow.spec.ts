@@ -55,7 +55,9 @@ test("incident to AI investigation to human approval, and auditor is read-only",
   // 3. Run the AI investigation: staged progress, then labelled AI panels.
   await page.getByRole("button", { name: "Run AI investigation" }).click();
   await expect(page.getByTestId("investigation-progress")).toBeVisible();
-  await expect(page.getByText(/AI investigation finished/)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByRole("status").filter({ hasText: /AI investigation finished: \d+ agent run/ })).toBeVisible({
+    timeout: 120_000,
+  });
 
   const triage = page.getByRole("region", { name: "AI output: Triage" });
   await expect(triage).toBeVisible();
