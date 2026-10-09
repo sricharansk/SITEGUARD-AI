@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects, reports
 from app.core import db as dbmod
@@ -36,14 +38,74 @@ async def lifespan(app: FastAPI):
     yield
 
 
-def validate_settings(s: Settings) -> None:
-    """Refuse to start with settings that are unsafe outside a developer machine."""
-    if s.env not in ("local", "test") and (s.jwt_secret == "dev-only-change-me" or len(s.jwt_secret) < 32):
-        raise RuntimeError("Set SITEGUARD_JWT_SECRET to a random value of at least 32 characters")
-    if s.is_production and s.seed_demo_data:
-        raise RuntimeError("Demo data seeding is not allowed when SITEGUARD_ENV=production")
+KNOWN_ENVIRONMENTS = ("local", "test", "demo", "staging", "production")
+# Shared environments that may hold real incident data: every check below applies (docs/GOVERNANCE.md).
+DEPLOYED_ENVIRONMENTS = ("staging", "production")
+DEFAULT_JWT_SECRET = "dev-only-change-me"
+# Template values contain this marker (.env.example, deployment/staging/staging.env.example). Secrets are compared
+# case-insensitively (it also catches the default secret); URLs only on the upper-case template form, because
+# host names may legitimately contain the word.
+PLACEHOLDER_MARKER = "CHANGE"
+MIN_JWT_SECRET_LENGTH = 32
+MIN_JWT_SECRET_DISTINCT_CHARS = 10
+
+
+def settings_problems(s: Settings) -> list[str]:
+    """Return every reason these settings are unsafe for `s.env`; empty when they are acceptable."""
+    problems: list[str] = []
+    if s.env not in KNOWN_ENVIRONMENTS:
+        problems.append(f"SITEGUARD_ENV must be one of {', '.join(KNOWN_ENVIRONMENTS)} (got {s.env!r})")
+    if s.env not in ("local", "test") and (
+        s.jwt_secret == DEFAULT_JWT_SECRET or len(s.jwt_secret) < MIN_JWT_SECRET_LENGTH
+    ):
+        problems.append(f"Set SITEGUARD_JWT_SECRET to a random value of at least {MIN_JWT_SECRET_LENGTH} characters")
     if s.env in ("local", "test") and s.notification_email_adapter == "smtp":
-        raise RuntimeError("Real email delivery is disabled in local and test environments; use 'log' or 'disabled'")
+        problems.append("Real email delivery is disabled in local and test environments; use 'log' or 'disabled'")
+    if s.env in DEPLOYED_ENVIRONMENTS:
+        problems += _deployed_problems(s)
+    return problems
+
+
+def _deployed_problems(s: Settings) -> list[str]:
+    env = f"SITEGUARD_ENV={s.env}"
+    problems: list[str] = []
+    secret = s.jwt_secret
+    if PLACEHOLDER_MARKER.lower() in secret.lower() or len(set(secret)) < MIN_JWT_SECRET_DISTINCT_CHARS:
+        problems.append(
+            "SITEGUARD_JWT_SECRET looks like a placeholder or has too little variety; generate one with "
+            '`python -c "import secrets; print(secrets.token_urlsafe(48))"`'
+        )
+    if s.seed_demo_data:
+        problems.append(f"Demo data seeding (known passwords) is not allowed when {env}")
+    try:
+        backend = make_url(s.database_url).get_backend_name()
+    except ArgumentError:
+        backend = "invalid"
+    if backend != "postgresql":
+        problems.append(f"SITEGUARD_DATABASE_URL must point at PostgreSQL when {env} (SQLite is for local runs)")
+    origins = [o.strip() for o in s.cors_origins.split(",") if o.strip()]
+    if "*" in origins:
+        problems.append(f"SITEGUARD_CORS_ORIGINS must not contain '*' when {env}")
+    insecure = [o for o in origins if o != "*" and not o.startswith("https://")]
+    if insecure:
+        problems.append(f"SITEGUARD_CORS_ORIGINS must use https:// when {env} (got {', '.join(insecure)})")
+    if not s.public_web_url.startswith("https://"):
+        problems.append(f"SITEGUARD_PUBLIC_WEB_URL must use https:// when {env}")
+    for name, value in (
+        ("SITEGUARD_DATABASE_URL", s.database_url),
+        ("SITEGUARD_PUBLIC_WEB_URL", s.public_web_url),
+        ("SITEGUARD_CORS_ORIGINS", s.cors_origins),
+    ):
+        if PLACEHOLDER_MARKER in value:
+            problems.append(f"{name} still contains a template placeholder ({PLACEHOLDER_MARKER})")
+    return problems
+
+
+def validate_settings(s: Settings) -> None:
+    """Refuse to start with settings that are unsafe for the configured environment."""
+    problems = settings_problems(s)
+    if problems:
+        raise RuntimeError("Unsafe configuration: " + "; ".join(problems))
 
 
 def create_app() -> FastAPI:
