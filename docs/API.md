@@ -56,6 +56,7 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /documents/reindex | MANAGE_DOCUMENTS (organization-wide membership) | `?organization_id=`; embeds chunks that lack a current vector; idempotent; returns `embedded`, `skipped`, `failed` |
 | GET | /search | READ | Hybrid search (BM25 + vector, fused and reranked) over org-wide and project documents; `mode=hybrid` or `lexical` (BM25 only), default `SITEGUARD_RETRIEVAL_MODE`; each hit carries document, version, effective date, page, section, tags, scope and scores |
 | POST | /knowledge/answer | READ | Grounded answer: `project_id`, `question`, optional `incident_id`, `domain`. Status `ANSWERED`, `INSUFFICIENT_EVIDENCE` or `CONFLICTING_EVIDENCE`; cited statements, `unsupported_claims`, `conflicts`, `excluded_sources`, `needs_human_review`, disclaimer. Audited |
+| GET | /incidents/{id}/report | READ | `format=md` (default), `docx`, `pdf` or `json` (blocks for a preview); `include_ai=false` leaves out the AI section. Built only from stored records; AI output labelled AI-GENERATED; sources cited; every generation audited as `report.generate` with the SHA-256, also returned in `X-Report-SHA256` |
 | GET | /notifications | any | The caller's in-app notifications, newest first, with `unread`; `unread_only`, `limit` (1–200) |
 | POST | /notifications/{id}/read | recipient only | Others get 404 |
 | POST | /notifications/read-all | any | Marks the caller's notifications read |

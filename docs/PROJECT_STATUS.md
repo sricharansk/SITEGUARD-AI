@@ -96,7 +96,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 31 | Incident command center UI | Done | One workspace: summary, risk, evidence, AI triage and investigation, citations, RCA, compliance, CAPA, approvals, verification, timeline; AI output labelled |
 | 32 | Dashboard / analytics | Partial | Dashboard API and screen; no date filters or response-time trend yet |
 | 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; the web screen shows search results, not yet grounded answers or uploads |
-| 34 | Reports | Missing | |
+| 34 | Reports | Done | Incident report in Markdown, Word and PDF from stored records: incident, history, evidence, risk, labelled AI analysis, actions, approval history, verification, cited sources; audited with SHA-256; snapshot-tested. Web download button pending |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
 | 37 | Resilience | Partial | Provider fallback, agent failure isolation; no retries or queue |

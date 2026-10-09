@@ -30,6 +30,8 @@
   unreviewed severe incidents and waiting critical reviews, an email outbox with retries, backoff and dead letters,
   `python -m app.jobs` / `make jobs`, `/notifications` endpoints and migration `0003`. Notification failures never
   undo a workflow change; real email is refused in local and test environments.
+- Prompt 34 reports: `GET /incidents/{id}/report` in Markdown, Word or PDF (fpdf2), built only from stored records
+  with labelled AI sections, approval history, verification and cited sources; generation audited with SHA-256.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project
   dashboard, incident list and intake, incident command center, CAPA review board, knowledge search and audit log;
   Vitest unit and component tests, Playwright browser E2E, Docker image, compose service and CI jobs.
