@@ -56,6 +56,35 @@ jobs:
           SITEGUARD_TEST_POSTGRES_URL: postgresql+psycopg://siteguard:ci-only@localhost:5432/siteguard_test
         run: pytest -q tests/test_postgres.py -rs
 
+  neo4j:
+    # Knowledge graph adapter against a real Neo4j, on the same image as the docker-compose `graph` profile.
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5.26-community
+        env:
+          NEO4J_AUTH: neo4j/ci-only-password
+        ports: ["7687:7687"]
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p ci-only-password 'RETURN 1'" --health-interval 10s
+          --health-timeout 10s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -r requirements.lock -e ".[dev]"
+      - name: Neo4j integration tests
+        env:
+          SITEGUARD_TEST_NEO4J_URI: bolt://localhost:7687
+          SITEGUARD_TEST_NEO4J_USER: neo4j
+          SITEGUARD_TEST_NEO4J_PASSWORD: ci-only-password
+        run: pytest -q tests/test_graph.py -rs
+
   docker:
     runs-on: ubuntu-latest
     needs: backend

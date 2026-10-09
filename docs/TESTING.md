@@ -1,8 +1,8 @@
 # Testing
 
 Run: `make test` (or `cd backend && pytest -q`). Lint and types: `make lint`. CI runs both, the PostgreSQL +
-pgvector integration tests, a Docker build and an end-to-end smoke run of `scripts/demo_walkthrough.py`
-(`.github/workflows/ci.yml`). Tests use SQLite and the
+pgvector integration tests, the Neo4j knowledge graph integration test, a Docker build and an end-to-end smoke run
+of `scripts/demo_walkthrough.py` (`.github/workflows/ci.yml`). Tests use SQLite and the
 rules provider; they never call a live model or external service.
 
 ## Implemented
@@ -16,6 +16,7 @@ rules provider; they never call a live model or external service.
 | tests/test_notifications.py | Event mapping (critical incident, review, assignment, verification, failed verification), no cross-tenant or self notifications, per-recipient read state, mapping failure leaves the workflow intact, retries with backoff then dead letter, admin retry, no duplicate sends, external delivery disabled by default, escalation rules idempotent and non-mutating, endpoint authorization, SMTP refused locally |
 | tests/test_reports.py | Report content matches the records (incident fields, history, evidence, approval, failed and passed verification, labelled AI, cited chunk and evidence), normalised snapshot (`tests/snapshots/incident_report.md`, refresh with `UPDATE_SNAPSHOTS=1`), Word and PDF text, audit event with the same SHA-256, format validation and tenant isolation |
 | tests/test_postgres.py | PostgreSQL + pgvector: migrations match models, extension enabled, vector distance search. Runs when `SITEGUARD_TEST_POSTGRES_URL` is set (CI `postgres` job), skipped otherwise |
+| tests/test_graph.py | Knowledge graph: every entity and relationship type built from one incident driven through evidence, investigation, review, rejection, verification with evidence, a project document and a project-scoped membership; the Prompt 28 gate (every node and relationship resolves to its PostgreSQL row, field and agent run); idempotent sync (second run creates and deletes nothing, identical snapshot); deleted evidence, agent runs and people leave the graph with their relationships; tenant isolation (separate person nodes per organization, purge of one tenant leaves the other intact, node takeover refused); project and tenant filtering of the neighbourhood even against a bad store answer; both endpoints (success, audit, `include_ai`, validation, 401/403/404, 409 when disabled); the job and its purge of deleted organizations; unsafe Neo4j settings refused; the Neo4j adapter with a fake driver (only fixed allowlisted Cypher, every value a parameter, MERGE on id, constraints, driver errors as 503). `test_neo4j_integration` runs the adapter against a real Neo4j when `SITEGUARD_TEST_NEO4J_URI` (plus `_USER`, `_PASSWORD`) is set (CI `neo4j` job): exact property round-trip, idempotency, deletion, tenant isolation and the same neighbourhood as the in-memory store |
 | tests/test_agents.py | Triage fixtures (obvious, mixed, insufficient evidence, near miss), tool allowlist, budget, provider failure and invalid output fallback, invented citations removed, poisoned document not cited, Claude provider request shape and refusal fallback (mocked) |
 | tests/test_migrations.py | Migrations produce exactly the model schema, pilot databases are stamped without data loss, downgrade to base and back |
 | tests/test_dataset_registry.py | Every registered dataset has licence and commercial-use fields; non-commercial licences are marked as such; downloaded entries need a checksum |
@@ -38,6 +39,7 @@ CI runs the web checks in the `frontend` job and the browser test in the `e2e` j
 | Unit: parsers (PDF/DOCX), embedding retry and idempotency | Implemented (`tests/test_knowledge.py`); API idempotency keys not yet (Prompt 37) |
 | Integration: API + database, authentication, RAG, agent orchestration, CAPA | Implemented |
 | Integration: PostgreSQL + pgvector | Implemented (`tests/test_postgres.py`, CI `postgres` job) |
+| Integration: Neo4j knowledge graph | Implemented (`tests/test_graph.py::test_neo4j_integration`, CI `neo4j` job) |
 | Integration: object storage | Not yet (local disk only) |
 | E2E: login → project → incident → evidence → AI analysis → approval → CAPA → verification → closure | API-level (`test_end_to_end_incident_to_verified_closure`, walkthrough script); browser E2E for login → incident → AI analysis → approval (`frontend/e2e/`) |
 

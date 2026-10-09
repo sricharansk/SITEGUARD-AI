@@ -37,6 +37,23 @@ services:
     depends_on:
       - api
 
+  # Optional knowledge graph (docs/ARCHITECTURE.md#knowledge-graph). Not started by default:
+  #   docker compose --profile graph up -d neo4j
+  # then set SITEGUARD_GRAPH_BACKEND=neo4j, SITEGUARD_NEO4J_URI=bolt://neo4j:7687 and SITEGUARD_NEO4J_PASSWORD (the
+  # same value as NEO4J_PASSWORD) in .env, restart the api and run `python -m app.jobs graph-sync` in it.
+  neo4j:
+    image: neo4j:5.26-community
+    profiles: ["graph"]
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-siteguard-graph-local}
+    ports: ["127.0.0.1:7474:7474", "127.0.0.1:7687:7687"]
+    volumes: [neo4jdata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:7474 || exit 1"]
+      interval: 10s
+      retries: 12
+
 volumes:
   pgdata:
   evidence:
+  neo4jdata:

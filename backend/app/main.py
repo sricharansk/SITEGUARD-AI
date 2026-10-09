@@ -4,13 +4,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects, reports
+from app.api import agents, auth, capa, dashboard, graph, incidents, knowledge, notifications, projects, reports
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.observability import CorrelationMiddleware, SecurityHeadersMiddleware, configure_logging
+from app.services import graph as graph_service
 
 TITLE = "Site Guard AI: Multi-Agent Construction Safety & Quality Incident Resolution System"
+NEO4J_SCHEMES = ("bolt://", "bolt+s://", "bolt+ssc://", "neo4j://", "neo4j+s://", "neo4j+ssc://")
 
 
 def init_db() -> None:
@@ -34,6 +36,7 @@ async def lifespan(app: FastAPI):
     configure_logging()
     init_db()
     yield
+    graph_service.close_store()
 
 
 def validate_settings(s: Settings) -> None:
@@ -44,6 +47,13 @@ def validate_settings(s: Settings) -> None:
         raise RuntimeError("Demo data seeding is not allowed when SITEGUARD_ENV=production")
     if s.env in ("local", "test") and s.notification_email_adapter == "smtp":
         raise RuntimeError("Real email delivery is disabled in local and test environments; use 'log' or 'disabled'")
+    if s.graph_backend == "neo4j":
+        if not s.neo4j_uri.startswith(NEO4J_SCHEMES):
+            raise RuntimeError("SITEGUARD_NEO4J_URI must use the bolt or neo4j scheme (bolt+s / neo4j+s for TLS)")
+        if not s.neo4j_password.get_secret_value():
+            raise RuntimeError("Set SITEGUARD_NEO4J_PASSWORD when SITEGUARD_GRAPH_BACKEND=neo4j")
+        if s.is_production and not s.neo4j_uri.startswith(("bolt+s://", "neo4j+s://")):
+            raise RuntimeError("Use a verified TLS Neo4j connection (bolt+s:// or neo4j+s://) in production")
 
 
 def create_app() -> FastAPI:
@@ -66,7 +76,7 @@ def create_app() -> FastAPI:
         expose_headers=["X-Correlation-ID"],
     )
     install_error_handlers(app)
-    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, reports):
+    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, reports, graph):
         app.include_router(r.router)
 
     @app.get("/health", tags=["ops"])

@@ -35,8 +35,17 @@ Production deployment needs the project owner's explicit approval (open decision
 - `backend/Dockerfile`: non-root image installed from `requirements.lock`, health check, migrations applied on
   startup, seed data baked in (seeds only when `SITEGUARD_ENV` is local/test/demo or
   `SITEGUARD_SEED_DEMO_DATA=true`; refused in production).
-- `docker-compose.yml`: PostgreSQL 16 with pgvector + API, verified locally with the walkthrough script.
+- `docker-compose.yml`: PostgreSQL 16 with pgvector + API, verified locally with the walkthrough script; an optional
+  Neo4j 5.26 service under the `graph` profile (`docker compose --profile graph up -d neo4j`), not started by default.
 - `.github/workflows/ci.yml`: lint, type check, tests, image build and an end-to-end smoke run.
+
+## Knowledge graph
+
+Optional; keep `SITEGUARD_GRAPH_BACKEND=disabled` until a Neo4j host is chosen (open decision O9). When it is
+enabled: use `bolt+s://` or `neo4j+s://` (the API refuses plain Bolt in production), keep `SITEGUARD_NEO4J_PASSWORD`
+in Key Vault, and schedule `python -m app.jobs graph-sync` (for example as a Container Apps job) after
+`python -m app.jobs all`. The graph holds no data that PostgreSQL does not, so it needs no backup of its own: rebuild
+it with `graph-sync`.
 
 ## Azure pilot steps (next milestone)
 

@@ -106,6 +106,30 @@ other reason removes the stored file. Downloads are sent as attachments with the
 Organization-wide documents and the reindex job affect every project, so they need an organization-wide
 membership with `MANAGE_DOCUMENTS`; a role limited to one project can only add documents to that project.
 
+## Knowledge graph
+
+The optional Neo4j graph (docs/ARCHITECTURE.md#knowledge-graph) is a derived copy of PostgreSQL and follows the same
+tenant rules:
+
+- Every node and relationship carries `organization_id` and `project_id`. Node ids are relational ids, people are
+  separate nodes per organization, relationships only join nodes of one organization, and a sync that would take
+  over another organization's node is refused and rolled back.
+- `GET /incidents/{id}/graph` is authorized exactly like reading the incident (404 outside the caller's scope, before
+  any graph check) and returns only that organization's records in projects the caller can see; the filter is in the
+  Cypher query and applied again in the service. `POST /graph/sync` needs an organization-wide membership with
+  `MANAGE_PROJECTS` and is audited as `graph.sync`.
+- Cypher is fixed text built from allowlisted labels and relationship types; record values only travel as query
+  parameters, and there is no endpoint that accepts Cypher.
+- `SITEGUARD_NEO4J_PASSWORD` is a secret setting and is never logged (graph errors log the exception type only).
+  With `SITEGUARD_GRAPH_BACKEND=neo4j` the API refuses to start without a password or with a URI that is not
+  `bolt://` or `neo4j://` (or their TLS forms), and in production it requires a verified TLS connection (`bolt+s://`
+  or `neo4j+s://`). The compose `neo4j` service binds
+  to 127.0.0.1 only.
+- Graph properties copy stored text (incident titles, AI output, document titles). Treat them as untrusted data and
+  render them as text; the graph is not given to agents as instructions.
+- Only a person's full name and active flag are copied; email addresses, password hashes, evidence storage keys and
+  document text stay in PostgreSQL.
+
 ## Logging
 
 Do not log passwords, tokens, API keys, request bodies or raw sensitive evidence.

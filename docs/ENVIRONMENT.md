@@ -23,6 +23,22 @@ make demo                       # regenerate docs/RESULTS.md from a live run
 All settings are environment variables prefixed `SITEGUARD_` (see `.env.example` and
 `backend/app/core/config.py`). Set `SITEGUARD_AI_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` to use Claude.
 
+## Knowledge graph (optional)
+
+Off by default (`SITEGUARD_GRAPH_BACKEND=disabled`). To use Neo4j locally:
+
+```bash
+docker compose --profile graph up -d neo4j     # Neo4j 5.26 on 127.0.0.1:7687 (browser on :7474)
+# in .env: SITEGUARD_GRAPH_BACKEND=neo4j, SITEGUARD_NEO4J_PASSWORD = the compose NEO4J_PASSWORD,
+# SITEGUARD_NEO4J_URI=bolt://neo4j:7687 for the api container or bolt://localhost:7687 from the host
+make graph-sync                                 # python -m app.jobs graph-sync: every organization
+```
+
+`SITEGUARD_GRAPH_BACKEND=memory` keeps the graph inside the API process (sync with `POST /graph/sync`); it is lost on
+restart and a separate job process cannot see it. To run the integration test against a local Neo4j, set
+`SITEGUARD_TEST_NEO4J_URI`, `SITEGUARD_TEST_NEO4J_USER` and `SITEGUARD_TEST_NEO4J_PASSWORD` and run
+`pytest tests/test_graph.py -rs`.
+
 ## Secrets
 
 Use `.env.example` as the template. Never commit real values. Demo users share `SITEGUARD_DEMO_PASSWORD`, so demo

@@ -53,6 +53,13 @@ class Settings(BaseSettings):
     escalation_unreviewed_hours: int = Field(default=24, ge=1)
     escalation_review_hours: int = Field(default=48, ge=1)
 
+    # Knowledge graph (docs/ARCHITECTURE.md#knowledge-graph): a projection of PostgreSQL rebuilt by `graph-sync`.
+    # "memory" keeps it in the API process (tests, single-process demos); "neo4j" uses the server below.
+    graph_backend: Literal["disabled", "memory", "neo4j"] = "disabled"
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: SecretStr = SecretStr("")
+
     @model_validator(mode="after")
     def _resolve_seed_default(self) -> "Settings":
         if self.seed_demo_data is None:
