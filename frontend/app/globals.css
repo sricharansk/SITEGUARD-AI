@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/*
+ * Site Guard design tokens (docs/DESIGN_SYSTEM.md). Dense enterprise layout on a neutral slate base,
+ * safety amber for brand and attention, and three content kinds that never look alike:
+ *   verified evidence  -> solid emerald accents
+ *   human decisions    -> solid sky accents
+ *   AI decision support -> dashed violet frame with a visible "needs human review" label
+ * Risk and severity always carry text and a shape icon; color is never the only signal.
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --color-brand-50: #fffbeb;
+  --color-brand-100: #fef3c7;
+  --color-brand-400: #fbbf24;
+  --color-brand-500: #f59e0b;
+  --color-brand-600: #d97706;
+  --color-brand-700: #b45309;
+  --color-ink: #0f172a;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-slate-100 font-sans text-sm text-slate-900 antialiased;
+  }
+  :focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-slate-900;
+  }
+}
+
+@layer components {
+  .card {
+    /* min-w-0: a wide table scrolls inside its card instead of widening the grid track. */
+    @apply min-w-0 rounded-md border border-slate-200 bg-white shadow-xs;
+  }
+  .card-header {
+    @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2.5;
+  }
+  .card-title {
+    @apply text-sm font-semibold tracking-tight text-slate-900;
+  }
+  .card-body {
+    @apply px-4 py-3;
+  }
+  .btn-primary,
+  .btn-secondary,
+  .btn-approve,
+  .btn-danger,
+  .btn-ai {
+    @apply inline-flex items-center justify-center gap-1.5 rounded border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-700;
+  }
+  .btn-secondary {
+    @apply border-slate-300 bg-white text-slate-800 hover:bg-slate-50;
+  }
+  .btn-approve {
+    @apply border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800;
+  }
+  .btn-danger {
+    @apply border-red-700 bg-red-700 text-white hover:bg-red-800;
+  }
+  .btn-ai {
+    @apply border-violet-700 bg-violet-700 text-white hover:bg-violet-800;
+  }
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+  .field-label {
+    @apply mb-1 block text-xs font-semibold text-slate-700;
+  }
+  .field-hint {
+    @apply mt-1 text-xs text-slate-500;
+  }
+  .input {
+    @apply block w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 disabled:bg-slate-100;
+  }
+  .table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+  .table th {
+    @apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold tracking-wide text-slate-600 uppercase;
+  }
+  .table td {
+    @apply border-b border-slate-100 px-3 py-2 align-top;
+  }
+  .link {
+    @apply font-medium text-blue-800 underline decoration-blue-800/30 underline-offset-2 hover:decoration-blue-800;
+  }
+  .kicker {
+    @apply text-[11px] font-semibold tracking-wider text-slate-500 uppercase;
+  }
+  .mono {
+    @apply font-mono text-xs;
+  }
+}

@@ -70,6 +70,14 @@ Reason: several registered datasets forbid redistribution or commercial use, and
 `data/raw/`, `data/interim/` and `data/processed/` are git-ignored; each dataset is recorded in
 `data/dataset_registry.yaml` with its source, version, checksum and licence so it can be fetched again.
 
+## Decision 015 — The web app reaches the API through a same-origin BFF
+
+Reason: keep the API token out of browser JavaScript and avoid cross-origin calls. The Next.js server signs in on
+the user's behalf (`/api/session`), stores the JWT in an httpOnly, SameSite=Lax cookie (Secure in production) and
+forwards browser calls under `/api/backend/*` to the API with `Authorization: Bearer`. Writes must carry an
+`Origin` matching the host (CSRF), only the API roots the app uses are forwarded, and a 401 from the API clears the
+cookie. The API still authorizes every call; the UI only hides controls using the `permissions` the API returns.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.

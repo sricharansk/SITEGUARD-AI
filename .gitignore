@@ -37,6 +37,11 @@ htmlcov/
 node_modules/
 .next/
 coverage/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+blob-report/
 
 # Editors and OS
 .idea/
