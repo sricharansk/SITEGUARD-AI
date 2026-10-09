@@ -550,3 +550,88 @@ def test_untrusted_blocks_cannot_be_closed_and_model_conflicts_need_sources(db, 
         db, organization_id=org.id, project_id=project_id, question="excavation shoring trench box", answerer=Claims()
     )
     assert out["conflicts"] == [next(c for c in out["conflicts"] if "differs" in c)]
+
+
+# --- Prompt 33: every search hit and every citation is authorized ----------------------------------------------------
+
+
+def test_search_and_answers_never_cross_tenants(client, project_id, db):
+    from app.models import Project
+    from tests.test_api import _new_incident
+
+    other_org = db.query(Organization).filter_by(name="Other Builders Ltd").one()
+    other_project = db.query(Project).filter_by(organization_id=other_org.id).one()
+    body = {
+        "organization_id": other_org.id,  # organization-wide: the broadest scope inside the other tenant
+        "title": "Other tenant cofferdam dewatering rule",
+        "text": "# Cofferdam\n\nCofferdam dewatering pumps must run on a standby generator during flood alerts.",
+        "doc_type": "PROCEDURE",
+        "source": "test",
+    }
+    created = client.post("/documents", json=body, headers=auth(client, "other"))
+    assert created.status_code == 201, created.text
+    doc_id = created.json()["data"]["id"]
+    q = "cofferdam dewatering pumps standby generator flood"
+    question = "Must cofferdam dewatering pumps run on a standby generator during flood alerts?"
+    # The owning tenant finds and cites it, so the query itself matches.
+    own = client.get("/search", params={"q": q, "project_id": other_project.id}, headers=auth(client, "other"))
+    assert own.json()["data"][0]["document_id"] == doc_id
+    cited = _ask(client, other_project.id, question, who="other").json()["data"]
+    assert cited["status"] == "ANSWERED" and [c["document_id"] for c in cited["citations"]] == [doc_id]
+    # Demo users searching or asking in their own project never see it, whatever their role.
+    for who in ("hse", "auditor", "site", "admin"):
+        headers = auth(client, who)
+        hits = client.get("/search", params={"q": q, "project_id": project_id}, headers=headers).json()["data"]
+        assert all(h["document_id"] != doc_id for h in hits), who
+        answer = _ask(client, project_id, question, who=who).json()["data"]
+        assert answer["status"] == "INSUFFICIENT_EVIDENCE" and answer["citations"] == [], who
+        assert "generator" not in answer["answer"].lower(), who
+        assert all(d["id"] != doc_id for d in client.get("/documents", headers=headers).json()["data"]), who
+        assert client.get(f"/documents/{doc_id}", headers=headers).status_code == 404, who
+    # Neither tenant can aim search or answers at the other's project, or at its incidents.
+    demo_search = {"q": q, "project_id": project_id}
+    assert client.get("/search", params=demo_search, headers=auth(client, "other")).status_code == 404
+    other_search = {"q": q, "project_id": other_project.id}
+    assert client.get("/search", params=other_search, headers=auth(client, "hse")).status_code == 404
+    assert _ask(client, other_project.id, question, who="hse").status_code == 404
+    demo_incident = _new_incident(client, project_id)
+    r = _ask(client, other_project.id, question, who="other", incident_id=demo_incident["id"])
+    assert r.status_code == 404 and r.json()["error"]["code"] == "NOT_FOUND"
+
+
+def test_project_limited_users_only_search_their_own_project(client, org_id, project_id, db):
+    from app.core.security import hash_password
+    from app.models import Membership, Role, User
+    from tests.conftest import PASSWORD
+
+    sibling = client.post(
+        "/projects",
+        json={"organization_id": org_id, "code": "SIB-33", "name": "Sibling search scope", "sites": ["S"]},
+        headers=auth(client, "admin"),
+    ).json()["data"]
+    doc = {
+        "organization_id": org_id,
+        "project_id": sibling["id"],
+        "title": "Sibling tunnel lining grout ITP",
+        "text": "# Grout\n\nTunnel segment annulus grout must reach 2 MPa before the shield advances.",
+        "doc_type": "ITP",
+        "source": "test",
+    }
+    sibling_doc = client.post("/documents", json=doc, headers=auth(client, "hse")).json()["data"]["id"]
+    email = "viewer-project@demo.siteguard.local"
+    user = User(email=email, full_name="Project Viewer", password_hash=hash_password(PASSWORD))
+    db.add(user)
+    db.flush()
+    db.add(Membership(user_id=user.id, organization_id=org_id, project_id=project_id, role=Role.VIEWER))
+    db.commit()
+    viewer = auth(client, "viewer-project")
+    q = "tunnel segment annulus grout shield"
+    hits = client.get("/search", params={"q": q, "project_id": project_id}, headers=viewer)
+    assert hits.status_code == 200 and all(h["document_id"] != sibling_doc for h in hits.json()["data"])
+    # Organization-wide documents stay visible; the sibling project's search, answers and documents do not.
+    own = client.get("/search", params={"q": "trench shoring", "project_id": project_id}, headers=viewer).json()["data"]
+    assert own and all(h["scope"] == "organization" or h["project_id"] == project_id for h in own)
+    assert client.get("/search", params={"q": q, "project_id": sibling["id"]}, headers=viewer).status_code == 404
+    assert _ask(client, sibling["id"], "When can the tunnel shield advance?", who="viewer-project").status_code == 404
+    assert all(d["id"] != sibling_doc for d in client.get("/documents", headers=viewer).json()["data"])
+    assert client.get(f"/documents/{sibling_doc}", headers=viewer).status_code == 404
