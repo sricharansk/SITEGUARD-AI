@@ -9,6 +9,9 @@
 - Login rate limiting (429 `RATE_LIMITED`) and security headers on every response.
 - `backend/requirements.lock`; pinned dev tools.
 - `docs/PROJECT_STATUS.md`, `.claude/` rules, reviewer agents and settings, `data/dataset_registry.yaml`.
+- Prompt 00 baseline: repository state, structure, checks and playbook conflicts in `docs/PROJECT_STATUS.md`;
+  `.gitignore` now covers all `.env.*` files, keys, local databases and downloaded datasets; `.env.example`
+  lists every setting.
 
 ### Changed
 

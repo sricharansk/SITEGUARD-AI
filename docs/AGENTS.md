@@ -3,6 +3,10 @@
 Site Guard AI uses six bounded agents inside a fixed workflow. Agents recommend; people decide.
 Code: `backend/app/agents/`.
 
+This file describes the product's agents. The Claude Code agents used to build and review the repository
+(code, security, RAG and safety-domain reviewers) are defined separately in `.claude/agents/`, with their rules in
+`.claude/rules/`.
+
 ## Workflow
 
 ```mermaid
@@ -29,7 +33,7 @@ Each agent (`registry.py`) declares:
 | Field | Meaning |
 |---|---|
 | `tools` | Allowlist. Calling any other tool raises `ToolNotAllowed` and is recorded in the trace. |
-| `max_tool_calls` | Budget. Exceeding it raises `BudgetExceeded`. |
+| `max_tool_calls` | Budget (6 for every agent today). Exceeding it raises `BudgetExceeded`. |
 | `gather` | Calls declared tools to build an *evidence pack* (incident, evidence, retrieved chunks, prior outputs). |
 | output schema | Pydantic model in `schemas.py`; anything else is rejected. |
 | `rules` | Deterministic decision function used offline and as the fallback. |
@@ -58,7 +62,8 @@ and the run's provider reads `rules (fallback from anthropic)`. Seeding always u
 ## Evidence and provenance
 
 - Allowed refs are `incident:<id>`, `evidence:<id>` and `chunk:<id>` from the evidence pack only.
-- Any cited ref that was not in the pack is removed, and the run is flagged for human review.
+- Any cited ref that was not in the pack is removed, recorded in the run trace, and the run is flagged for human
+  review. Runs with no citations or confidence below 0.5 are flagged too.
 - Each run stores provider, output, a tool-call trace and review reasons in `agent_runs`.
 
 ## Untrusted content and prompt injection

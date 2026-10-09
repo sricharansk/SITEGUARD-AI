@@ -1,16 +1,77 @@
 # Project Status
 
-Last updated: 09 October 2026. Tracks the 52 implementation gates (Prompts 00–51) in
+Last updated: 09 October 2026 (Prompt 00 baseline). Tracks the 52 implementation gates (Prompts 00–51) in
 `docs/planning/Site_Guard_AI_Claude_Code_Detailed_Execution_Playbook_FINAL_UPDATED.md`. Update this file in the
 same commit as any milestone.
+
+## Baseline (Prompt 00)
+
+| Item | State |
+|---|---|
+| Remote | `origin` = https://github.com/sricharansk/SITEGUARD-AI |
+| Default branch | `main` at `065c2a9` (PR #1, backend pilot, merged) |
+| Working branch | `claude/siteguard-buildout-7r52wj`, open as PR #2 (hardening + this baseline) |
+| Tracked files | 113. No `.env`, database, key or certificate files are tracked; a pattern scan of tracked files and full history found no credentials. |
+| Ignored locally | `.env`, caches, `build/`, `*.egg-info/` (see `.gitignore`) |
+
+### Repository structure
+
+```text
+CLAUDE.md, README.md, Makefile, docker-compose.yml, .env.example, .gitignore
+.claude/            Claude Code rules, reviewer agents, permission settings
+.github/workflows/  ci.yml: backend lint/types/tests, Docker build, end-to-end smoke run
+backend/            FastAPI app (40 modules), Alembic migrations, 7 test files, Dockerfile, requirements.lock
+data/               seed/ (synthetic incidents, users, procedures), dataset_registry.yaml
+docs/               source-of-truth documents; docs/planning/ holds the Blueprint, Playbook and strategy files
+scripts/            demo_walkthrough.py (drives one incident end to end, writes docs/RESULTS.md)
+PROJECT 2.MD        the original project brief (older copy of docs/planning/PROJECT 2 FINAL CONTENTS.MD)
+```
+
+Not created yet (Blueprint Part 15): `frontend/`, root `tests/`, `evals/`, `deployment/`. They are added by the
+prompts that need them rather than as empty folders.
+
+### Stack and manifests
+
+| Area | What is in the repository |
+|---|---|
+| Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic; `backend/pyproject.toml`, runtime deps locked in `backend/requirements.lock`, dev tools pinned |
+| Database | PostgreSQL 16 (pgvector image) via Compose; SQLite for local runs and tests |
+| AI | Rules provider (default, offline) and Claude provider (`anthropic` SDK) behind one interface |
+| Containers | `backend/Dockerfile` (non-root, health check); `docker-compose.yml` (db + api) |
+| CI | `.github/workflows/ci.yml` |
+| Configuration | Environment variables prefixed `SITEGUARD_`; every setting is listed in `.env.example` |
+
+### Baseline checks
+
+| Command | Result on 09 October 2026 |
+|---|---|
+| `ruff check app tests` / `ruff format --check app tests` | Clean |
+| `mypy app --ignore-missing-imports` (mypy 2.4.0) | Clean |
+| `pytest -q` | 57 passed |
+| `docker build -f backend/Dockerfile .` | Builds |
+| `docker compose up` + `scripts/demo_walkthrough.py` | Passes end to end on PostgreSQL |
+
+### Conflicts with the playbook
+
+1. The playbook and blueprint expect themselves at the repository root; they are in `docs/planning/`.
+2. Several docs (ARCHITECTURE, SECURITY, OBSERVABILITY) describe the target system (OIDC, Neo4j, object storage,
+   metrics); the table below says what exists.
+3. The playbook asks for "LangGraph-style" orchestration; the code uses a bounded sequential workflow
+   (DECISIONS 007).
+4. All demo incidents and procedures are synthetic. The public datasets in `docs/DATASETS.md` are registered but
+   not downloaded, and several vision datasets are non-commercial.
+5. The playbook runs prompts in order, but Prompts 02–23 were largely implemented together in PR #1. The table
+   records the real state of each gate so the remaining work can continue in order.
+
+## Gate status
 
 Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 | Prompt | Milestone | Status | Notes |
 |---|---|---|---|
-| 00 | Repository baseline | Done | This file, `.gitignore`, `.env.example`, `docs/AGENTS.md` |
-| 01 | Source-of-truth documentation | Done | `docs/`; planning package in `docs/planning/` |
-| 02 | Application scaffold | Partial | Backend done; web app (`frontend/`) in progress |
+| 00 | Repository baseline | Done | This report; `.gitignore`, `.env.example`, `docs/AGENTS.md` refreshed |
+| 01 | Source-of-truth documentation | Partial | Docs in place; ARCHITECTURE, SECURITY and OBSERVABILITY describe the target without marking what exists |
+| 02 | Application scaffold | Partial | Backend done; no `frontend/` yet |
 | 03 | Local development environment | Done | Makefile, Compose (PostgreSQL + API), `.env.example` |
 | 04 | PostgreSQL foundation | Done | Alembic migrations, applied on startup; parity test |
 | 05 | Authentication / RBAC | Partial | Password + JWT, 9 roles, server-side RBAC, login rate limit; no OIDC yet |
@@ -32,8 +93,8 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 28 | Neo4j knowledge graph | Missing | |
 | 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
 | 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags |
-| 31 | Incident command center UI | Missing | In progress with the web app |
-| 32 | Dashboard / analytics | Partial | Dashboard API; UI in progress |
+| 31 | Incident command center UI | Missing | |
+| 32 | Dashboard / analytics | Partial | Dashboard API only |
 | 33 | Knowledge search | Done | API, tenant and project scoped |
 | 34 | Reports | Missing | |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
@@ -49,7 +110,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 47 | Governance gate | Missing | |
 | 48 | End-to-end acceptance | Partial | API-level E2E test and walkthrough; no browser E2E |
 | 49–50 | Final review, release | Missing | |
-| 51 | Claude Code control plane | Done | `CLAUDE.md`, `.claude/rules`, `.claude/agents`, `.claude/settings.json` |
+| 51 | Claude Code control plane | Partial | `CLAUDE.md`, `.claude/rules`, `.claude/agents`, `.claude/settings.json` exist; the verification itself runs as the last gate |
 
 ## Known gaps that affect a demo
 
@@ -57,6 +118,11 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
   in `data/dataset_registry.yaml` but not downloaded or ingested.
 - Evidence is stored on local disk; mount a volume in containers.
 - The login rate limiter is per process.
+
+## Next gate
+
+Prompt 01 (documentation source of truth): check every document in `docs/` against the code and mark target-state
+sections clearly.
 
 ## Verification commands
 

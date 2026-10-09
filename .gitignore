@@ -1,14 +1,45 @@
+# Secrets and local environment files (only the template is tracked)
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.proxy-ca.crt
+secrets/
+
+# Local databases and uploaded evidence
 *.db
+*.sqlite
+*.sqlite3
+evidence_store/
+
+# Downloaded datasets: keep raw and derived files out of git (licences often forbid redistribution);
+# record each one in data/dataset_registry.yaml instead.
+data/raw/
+data/interim/
+data/processed/
+
+# Python
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 .venv/
-evidence_store/
-node_modules/
-.next/
-*.log
 *.egg-info/
 build/
+.coverage
+htmlcov/
+
+# Node / web app
+node_modules/
+.next/
+coverage/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+*.log

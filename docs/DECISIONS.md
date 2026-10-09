@@ -64,3 +64,9 @@ Reason: demo users share one known password. `SITEGUARD_SEED_DEMO_DATA` now defa
 Reason: CI found type errors that an unpinned local toolchain did not. Runtime dependencies are locked in
 `backend/requirements.lock` (used by the Docker image and CI) and dev tools are pinned in `pyproject.toml`.
 
+## Decision 014 — Downloaded datasets stay out of git
+
+Reason: several registered datasets forbid redistribution or commercial use, and raw files are large.
+`data/raw/`, `data/interim/` and `data/processed/` are git-ignored; each dataset is recorded in
+`data/dataset_registry.yaml` with its source, version, checksum and licence so it can be fetched again.
+
