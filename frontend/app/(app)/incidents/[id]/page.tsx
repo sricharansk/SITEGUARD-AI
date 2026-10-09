@@ -10,6 +10,7 @@ import { CapaActionCard, ProposeActionForm } from "@/components/incident/capa";
 import { EvidencePanel } from "@/components/incident/evidence-panel";
 import { InvestigationPanel } from "@/components/incident/investigation-panel";
 import { peopleIndex } from "@/components/incident/people";
+import { ReportDownload } from "@/components/incident/report-download";
 import { RiskPanel } from "@/components/incident/risk-panel";
 import { IncidentSummary, LifecycleStepper, Timeline } from "@/components/incident/summary";
 import { CloseControl, TransitionControl } from "@/components/incident/workflow-panel";
@@ -26,6 +27,7 @@ const SECTIONS = [
   ["capa", "Actions"],
   ["evidence", "Evidence"],
   ["workflow", "Workflow"],
+  ["report", "Report"],
   ["timeline", "Timeline"],
 ] as const;
 
@@ -192,6 +194,9 @@ export default function IncidentPage() {
               <hr className="border-slate-200" />
               <CloseControl incident={incident} blockers={data.close_blockers} permissions={permissions} onChanged={reload} />
             </div>
+          </Card>
+          <Card id="report" title="Incident report">
+            <ReportDownload incidentId={incident.id} />
           </Card>
           <Card id="timeline" title="Lifecycle timeline">
             <Timeline history={data.history} people={people} />
