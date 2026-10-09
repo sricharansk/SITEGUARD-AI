@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -26,6 +27,16 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-opus-5-5"
     agent_timeout_seconds: float = 60.0
     login_rate_limit_per_minute: int = 10
+
+    # Knowledge documents and retrieval (docs/AGENTS.md, docs/DATABASE.md).
+    document_max_bytes: int = 25 * 1024 * 1024
+    chunk_strategy: Literal["heading", "page", "semantic"] = "heading"
+    chunk_max_chars: int = Field(default=900, ge=200, le=8000)
+    embedding_provider: Literal["hashing"] = "hashing"
+    retrieval_mode: Literal["hybrid", "lexical"] = "hybrid"
+    # PDF and DOCX are parsed in a child process with these limits (hostile files must not stall the API).
+    parser_timeout_seconds: int = Field(default=60, ge=5, le=600)
+    parser_memory_mb: int = Field(default=1024, ge=256, le=8192)
 
     @model_validator(mode="after")
     def _resolve_seed_default(self) -> "Settings":

@@ -36,7 +36,7 @@ deterministic fallback when the LLM is unavailable.
 Reason: the product must work offline, in CI and when the AI provider fails (ERROR_HANDLING.md). Rules output is
 reproducible and testable; Claude adds better reasoning when configured.
 
-## Decision 009 — BM25 retrieval before pgvector
+## Decision 009 — BM25 retrieval before pgvector (superseded by 015)
 
 Reason: no embedding provider is needed for the pilot and results are explainable. The `rag.search` interface
 stays the same when vector and hybrid retrieval are added.
@@ -70,6 +70,33 @@ Reason: several registered datasets forbid redistribution or commercial use, and
 `data/raw/`, `data/interim/` and `data/processed/` are git-ignored; each dataset is recorded in
 `data/dataset_registry.yaml` with its source, version, checksum and licence so it can be fetched again.
 
+## Decision 015 — Hybrid retrieval with an offline hashing embedder until a model is chosen
+
+Reason: Prompts 11–12 need vector search, but the embedding model is an open decision (O5: data residency, cost)
+and tests must not call external services. `HashingEmbedder` (`hashing-bow` v1, 384 dimensions) hashes stemmed
+words and word pairs into a normalised vector: deterministic, offline and free, and it catches word forms and
+phrases BM25 misses, but it does not capture meaning. Vectors are stored per (chunk, model, version) in pgvector, so
+a semantic model plugs in behind the `Embedder` interface and is indexed alongside without a schema change.
+Lexical and vector rankings are combined with reciprocal rank fusion (k = 60), which needs no score calibration,
+then a deterministic reranker (query coverage, heading match, phrase match) orders the top candidates. On the 14
+labelled queries in `evals/retrieval/seed_queries.yaml` hybrid hit@3 must stay ≥ 0.85 and never below lexical.
+
+## Decision 016 — Grounded answers verify citations and support after the model
+
+Reason: an answer is only useful for safety work if each statement can be traced to a source. Whatever the
+answerer returns, statements that cite unknown refs or share less than half their terms with a cited chunk are
+removed into `unsupported_claims`; conflicting values across documents force `CONFLICTING_EVIDENCE`; a question the
+sources barely cover returns `INSUFFICIENT_EVIDENCE` without calling a model. This keeps the guarantee the same for
+the rules and Claude answerers.
+
+## Decision 017 — Untrusted binary documents are parsed in a resource-limited child process
+
+Reason: PDF and DOCX parsers can be driven into minutes of CPU or gigabytes of memory by small hostile files, and the
+API process serves every tenant. `parsing.parse_document` runs pypdf and python-docx in `python -m
+app.services.parse_worker` with an address-space limit, a CPU-time limit and a wall-clock timeout, after cheap
+pre-checks (zip expansion, page count). Text and Markdown stay in process. The cost is a process start per binary
+upload, which is small next to parsing and embedding.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.
@@ -80,7 +107,7 @@ These are unresolved. Each lists the behaviour that stays in place until someone
 | O2 | How do contractors and clients get access? There is no dedicated role. | Project-scoped memberships with an existing role (AUDITOR or VIEWER for clients) |
 | O3 | Should triage run automatically when an incident is saved (Blueprint Flow 2) instead of on request? | Runs on request (`/triage`, `/investigate`); needs a background job runner first |
 | O4 | Keep the bounded sequential orchestrator or adopt a graph framework with persisted checkpoints? | Bounded sequential workflow (Decision 007) |
-| O5 | Which embedding model/provider for vector search, given data-residency needs? | BM25 only (Decision 009) |
+| O5 | Which semantic embedding model/provider for vector search, given data-residency needs? | Offline hashing embedder in hybrid search (Decision 015) |
 | O6 | Evidence storage container, retention and malware scanning in Azure Blob Storage? | Local disk / mounted volume |
 | O7 | Which notification channels for reminders and escalation (email, Teams, SMS)? | Dashboard overdue counts only |
 | O8 | Which vision models, and can any non-commercial dataset be used beyond evaluation? | No vision features; datasets registered only |

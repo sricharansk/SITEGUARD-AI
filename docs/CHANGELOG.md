@@ -18,8 +18,24 @@
   open decisions are listed in `docs/DECISIONS.md`; `tests/test_docs.py` fails when a route, role or error code
   is missing from the docs.
 
+- Prompts 09–13 knowledge pipeline: PDF and DOCX parsing (`POST /documents/upload`) with processing states,
+  failure reasons, duplicate detection and the original file kept; heading, page and semantic chunking with page and
+  section provenance; chunk embeddings (`chunk_embeddings`, pgvector on PostgreSQL) with idempotent batch indexing
+  and retries (`POST /documents/reindex`, also at startup); hybrid search (BM25 + vector, reciprocal rank fusion,
+  reranking) with full citation metadata; grounded answers (`POST /knowledge/answer`) with insufficient and
+  conflicting evidence statuses and unsupported claims removed. `GET /documents/{id}` and
+  `GET /documents/{id}/download`. Migration `0002`. Labelled retrieval queries in `evals/retrieval/`.
+- CI job running PostgreSQL + pgvector integration tests.
+- Upload hardening: PDF/DOCX parsed in a resource-limited child process, zip-bomb checks, declared MIME type
+  checked against the extension, size enforced while reading, no stored file left behind by a failed request,
+  organization-wide documents and reindex limited to organization-wide roles, injection flagging covers headings
+  and titles, untrusted blocks escaped in model prompts.
+
 ### Changed
 
+- `GET /search` is hybrid by default (`mode=lexical` for BM25 only) and returns version, effective date, page,
+  tags, scope and scores on every hit. `POST /documents` accepts `effective_date` and `tags` and returns the
+  existing document (200, `duplicate: true`) for the same content and version.
 - Demo data seeds by default only when `SITEGUARD_ENV` is local, test or demo; production refuses to start with
   seeding on, and non-local environments refuse a weak JWT secret.
 

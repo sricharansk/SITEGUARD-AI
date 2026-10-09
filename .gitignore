@@ -43,3 +43,6 @@ coverage/
 .vscode/
 .DS_Store
 *.log
+
+# Claude Code worktrees (local only)
+.claude/worktrees/

@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 09 October 2026 (Prompt 00 baseline). Tracks the 52 implementation gates (Prompts 00–51) in
+Last updated: 09 October 2026 (Prompts 09–13). Tracks the 52 implementation gates (Prompts 00–51) in
 `docs/planning/Site_Guard_AI_Claude_Code_Detailed_Execution_Playbook_FINAL_UPDATED.md`. Update this file in the
 same commit as any milestone.
 
@@ -78,11 +78,11 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 06 | Projects / sites | Done | Sites created with the project only |
 | 07 | Incident lifecycle | Done | Enforced state machine; CLOSED only after verification |
 | 08 | Evidence / storage | Done | Magic-byte validation, SHA-256, local disk (Blob Storage adapter pending) |
-| 09 | Document parsing | Partial | Markdown / plain text only; no PDF or DOCX |
-| 10 | Chunking / provenance | Done | Heading-aware chunks with source metadata; no page numbers |
-| 11 | Embeddings / vector search | Missing | BM25 only |
-| 12 | Hybrid retrieval / reranking | Missing | |
-| 13 | Grounded RAG answers | Missing | Search returns cited chunks; no answer endpoint |
+| 09 | Document parsing | Done | PDF, DOCX, Markdown, text; PENDING → PROCESSING → READY / FAILED; original kept; duplicates detected. No OCR for scanned PDFs |
+| 10 | Chunking / provenance | Done | Heading, page and semantic strategies; page, section, version, effective date, tags on every hit; tables never split |
+| 11 | Embeddings / vector search | Done | `chunk_embeddings` (pgvector on PostgreSQL), idempotent batch indexing with retries; offline hashing embedder until a semantic model is chosen (O5) |
+| 12 | Hybrid retrieval / reranking | Done | BM25 + vector, RRF, deterministic reranker; 14 labelled queries, hybrid hit@3 ≥ 0.85 and never below lexical |
+| 13 | Grounded RAG answers | Done | `POST /knowledge/answer`: citations, insufficient and conflicting evidence, unsupported claims removed, provider fallback |
 | 14 | Risk engine | Done | Deterministic 5x5 matrix, versioned |
 | 15 | Agent framework | Done | Tool allowlist, budget, schema validation, citation filtering, fallback |
 | 16–21 | Triage, safety, quality, RCA, compliance, CAPA agents | Done | Rules provider default; Claude provider with fallback |
@@ -92,10 +92,10 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 25–27 | Vision foundation, PPE, defects | Missing | |
 | 28 | Neo4j knowledge graph | Missing | |
 | 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
-| 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags |
+| 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags; knowledge answers report conflicting sources |
 | 31 | Incident command center UI | Missing | |
 | 32 | Dashboard / analytics | Partial | Dashboard API only |
-| 33 | Knowledge search | Done | API, tenant and project scoped |
+| 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; web screen comes with the web app |
 | 34 | Reports | Missing | |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
@@ -105,7 +105,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 40–41 | Evaluation, red team | Missing | Unit tests cover injection and fallback only |
 | 42 | Performance | Missing | |
 | 43 | Docker | Done | Non-root image from `requirements.lock`, health check |
-| 44 | GitHub Actions | Done | Lint, types, tests, image build, end-to-end smoke run |
+| 44 | GitHub Actions | Done | Lint, types, tests, PostgreSQL + pgvector tests, image build, end-to-end smoke run |
 | 45–46 | Staging, Azure | Missing | No live deployment without the owner's explicit approval |
 | 47 | Governance gate | Missing | |
 | 48 | End-to-end acceptance | Partial | API-level E2E test and walkthrough; no browser E2E |

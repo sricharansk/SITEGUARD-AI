@@ -49,8 +49,13 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /capa/{id}/approve | as review | Shortcut for APPROVE |
 | PATCH | /capa/{id}/progress | UPDATE_CAPA_PROGRESS | IN_PROGRESS / COMPLETED, assignee |
 | POST | /capa/{id}/verify | VERIFY_CAPA | Not by the assignee; failed verification reopens work |
-| GET/POST | /documents | READ / MANAGE_DOCUMENTS | Ingest text/Markdown into chunks |
-| GET | /search | READ | BM25 over org-wide and project documents |
+| GET/POST | /documents | READ / MANAGE_DOCUMENTS | Ingest text/Markdown (`effective_date`, `tags` optional). The same content, version and scope returns the existing document with 200 and `duplicate: true` |
+| POST | /documents/upload | MANAGE_DOCUMENTS (organization-wide membership when `project_id` is empty) | Multipart PDF / DOCX / Markdown / text up to `SITEGUARD_DOCUMENT_MAX_BYTES` (413 above); declared type must match the extension (400 `UNSUPPORTED_FILE`); original kept; an unparseable or unsafe file is stored as a `FAILED` document with the reason (201) |
+| GET | /documents/{id} | READ | Metadata, processing state and every chunk with page, section and ref |
+| GET | /documents/{id}/download | READ | Original uploaded file (404 for text ingested through `POST /documents`) |
+| POST | /documents/reindex | MANAGE_DOCUMENTS (organization-wide membership) | `?organization_id=`; embeds chunks that lack a current vector; idempotent; returns `embedded`, `skipped`, `failed` |
+| GET | /search | READ | Hybrid search (BM25 + vector, fused and reranked) over org-wide and project documents; `mode=hybrid` or `lexical` (BM25 only), default `SITEGUARD_RETRIEVAL_MODE`; each hit carries document, version, effective date, page, section, tags, scope and scores |
+| POST | /knowledge/answer | READ | Grounded answer: `project_id`, `question`, optional `incident_id`, `domain`. Status `ANSWERED`, `INSUFFICIENT_EVIDENCE` or `CONFLICTING_EVIDENCE`; cited statements, `unsupported_claims`, `conflicts`, `excluded_sources`, `needs_human_review`, disclaimer. Audited |
 | GET | /dashboard | READ | Totals, status/severity/domain/month breakdowns, top hazards, CAPA and agent stats |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
 | GET | /health | - | |
@@ -62,6 +67,6 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | GET/POST /organizations | Not yet; organizations come from seeding. `GET /me` lists the caller's organizations |
 | PATCH /projects/{id} | Not yet |
 | GET /evidence/{id} | `GET /evidence/{id}/download`; metadata is in the incident workspace |
-| POST /documents/{id}/ingest | `POST /documents` ingests in one step |
+| POST /documents/{id}/ingest | `POST /documents` and `POST /documents/upload` parse, chunk and embed in one step; `POST /documents/reindex` re-runs embedding |
 | POST /incidents/{id}/rca, /compliance | Run inside `POST /incidents/{id}/investigate` |
 

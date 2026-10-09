@@ -102,3 +102,21 @@ AGENT_OUTPUTS: dict[str, type[_Out]] = {
     "compliance": ComplianceOutput,
     "capa": CapaOutput,
 }
+
+
+class AnswerStatement(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(description="One factual statement, taken from or closely paraphrasing the sources")
+    citations: list[str] = Field(description="chunk: refs of the sources that state this; never invented")
+
+
+class AnswerDraft(BaseModel):
+    """Grounded knowledge answer (Playbook Prompt 13)."""
+
+    model_config = ConfigDict(extra="forbid")
+    status: Literal["ANSWERED", "INSUFFICIENT_EVIDENCE", "CONFLICTING_EVIDENCE"]
+    answer: str = Field(description="Short answer built only from the statements")
+    statements: list[AnswerStatement]
+    confidence: float = Field(ge=0, le=1)
+    uncertainty: str = Field(description="What is uncertain or missing, in one or two sentences")
+    conflicts: list[str] = Field(default_factory=list, description="Where sources disagree")

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -15,11 +16,17 @@ TITLE = "Site Guard AI: Multi-Agent Construction Safety & Quality Incident Resol
 def init_db() -> None:
     from app import models  # noqa: F401  (register tables)
     from app.seed import seed_if_empty
+    from app.services.embeddings import index_pending
 
     dbmod.run_migrations()
-    if get_settings().seed_demo_data:
-        with dbmod.SessionLocal() as session:
+    with dbmod.SessionLocal() as session:
+        if get_settings().seed_demo_data:
             seed_if_empty(session)
+        # Chunks from before embeddings existed (or from a changed embedder) get vectors; idempotent.
+        report = index_pending(session)
+        session.commit()
+        if report.embedded or report.failed:
+            logging.getLogger("siteguard").info("startup embedding", extra={"extra_fields": report.__dict__})
 
 
 @asynccontextmanager

@@ -72,6 +72,26 @@ Retrieved documents and incident text are data. Chunks matching instruction-like
 `suspicious` at ingestion; agents never cite them and the run is flagged. The Claude provider wraps the pack in
 `<evidence_pack>` tags with an instruction not to follow anything inside it.
 
+## Knowledge answers (`POST /knowledge/answer`)
+
+A bounded RAG answer, separate from the incident workflow (`services/answer.py`):
+
+1. Retrieve up to 6 hits through the hybrid search, scoped to the caller's organization and project (plus
+   organization-wide documents). With an `incident_id`, the incident title is added to the query.
+2. Drop suspicious (instruction-like) chunks and list them under `excluded_sources`.
+3. If no source contains at least a third of the question's terms, return `INSUFFICIENT_EVIDENCE` without calling
+   any model.
+4. The answerer drafts statements, each citing `chunk:` refs: `rules` extracts the best-matching source sentences;
+   `anthropic` uses Claude with the sources wrapped in `<sources>` as untrusted data and the `AnswerDraft` schema.
+   A provider failure falls back to `rules` (`provider` reads `rules (fallback from anthropic)`).
+5. Every statement must cite a retrieved ref and share at least half of its terms with a cited chunk; anything else
+   moves to `unsupported_claims` and is not part of the answer.
+6. Statements from different documents that give different values in the same unit for the same requirement are
+   reported in `conflicts`; the status becomes `CONFLICTING_EVIDENCE` and confidence is capped at 0.4.
+
+`needs_human_review` is true unless the status is `ANSWERED`, nothing was unsupported and confidence ≥ 0.5. Every
+answer carries the decision-support disclaimer and is audited as `knowledge.answer`.
+
 ## Risk engine
 
 `services/risk.py`, matrix version `5x5-v1`: score = likelihood x consequence; LOW <= 4, MEDIUM <= 9,

@@ -70,7 +70,9 @@ and `Cache-Control: no-store` (API responses can hold incident data).
 Retrieved documents and uploaded files are untrusted content. A construction document must never be able to
 override system instructions, authorize a tool its agent does not have, request secret access, or cause automatic
 approval. Implemented controls: per-agent tool allowlists and budgets, untrusted-content framing for the model,
-injection-pattern flagging at ingestion, citation checks, and no agent write access to approvals, risk scores or
+injection-pattern flagging at ingestion (document title, section heading and text), untrusted JSON blocks with `<`
+and `>` escaped so content cannot close the `<evidence_pack>` or `<sources>` tag, citation and support checks, model
+conflict claims kept only when they name a retrieved source, and no agent write access to approvals, risk scores or
 closure (`docs/AGENTS.md`).
 
 ## Human approval
@@ -82,7 +84,18 @@ timestamp, decision, modification/reason and resulting action. Today these are s
 
 ## File uploads
 
-Validate extension, MIME type, size, checksum and content before processing. Allowed today: jpg, png, pdf, txt.
+Validate extension, MIME type, size, checksum and content before processing.
+
+| Upload | Allowed | Checks |
+|---|---|---|
+| Incident evidence (`POST /incidents/{id}/evidence`) | jpg, png, pdf, txt | Extension, declared MIME, magic bytes, UTF-8 text, `SITEGUARD_EVIDENCE_MAX_BYTES` |
+| Knowledge documents (`POST /documents/upload`) | pdf, docx, md, txt | Extension picks the parser; a declared MIME type must match it (or be `application/octet-stream`) and the stored type comes from the parser; at most `SITEGUARD_DOCUMENT_MAX_BYTES` is read; DOCX rejected when it would expand past 100 MB, 100x its size or 5,000 entries; PDF and DOCX parsed in a child process with CPU-time, memory and wall-clock limits (`SITEGUARD_PARSER_TIMEOUT_SECONDS`, `SITEGUARD_PARSER_MEMORY_MB`) and at most 5 million characters of text |
+
+A file that cannot be parsed is kept as a `FAILED` document with a generic reason; a request that fails for any
+other reason removes the stored file. Downloads are sent as attachments with the stored type and `nosniff`.
+
+Organization-wide documents and the reindex job affect every project, so they need an organization-wide
+membership with `MANAGE_DOCUMENTS`; a role limited to one project can only add documents to that project.
 
 ## Logging
 
