@@ -1,9 +1,18 @@
 # Testing
 
-Run: `make test` (or `cd backend && pytest -q`). Lint and types: `make lint`. CI runs both, the PostgreSQL +
-pgvector integration tests, a Docker build and an end-to-end smoke run of `scripts/demo_walkthrough.py`
-(`.github/workflows/ci.yml`). Tests use SQLite and the
-rules provider; they never call a live model or external service.
+Run: `make test` (or `cd backend && pytest -q`). Lint and types: `make lint`. Tests use SQLite and the rules
+provider; they never call a live model or external service.
+
+CI (`.github/workflows/ci.yml`, on push, pull request and weekly):
+
+| Job | Runs |
+|---|---|
+| backend | ruff, mypy, pytest; ruff and mypy on the operations scripts |
+| postgres | `tests/test_postgres.py` and the backup/restore drill `tests/test_backup_restore.py` on pgvector PostgreSQL 16 |
+| dependency-audit | `scripts/dependency_audit.py` for `backend/requirements.lock` (pip-audit) and the web app (npm audit, production, high+) |
+| docker | Builds both images; checks non-root and that unconfigured or placeholder settings are refused; `docker compose` stack (demo) with `scripts/smoke_test.py --require-login` and `scripts/demo_walkthrough.py`; staging stack from the template with the anonymous smoke test and the scheduled jobs |
+| infrastructure | actionlint (with shellcheck) on the workflows; `az bicep build`, `lint` and `build-params` for `deployment/azure/` |
+| frontend, e2e | Web lint, types, unit tests, build; Playwright browser E2E |
 
 ## Implemented
 
@@ -20,6 +29,9 @@ rules provider; they never call a live model or external service.
 | tests/test_migrations.py | Migrations produce exactly the model schema, pilot databases are stamped without data loss, downgrade to base and back |
 | tests/test_dataset_registry.py | Every registered dataset has licence and commercial-use fields; non-commercial licences are marked as such; downloaded entries need a checksum |
 | tests/test_docs.py | Source-of-truth documents exist; every API route, role and error code in the code is documented |
+| tests/test_config_validation.py | Every unsafe setting refused in staging and production (default, short, placeholder and low-variety JWT secrets, demo seeding, SQLite, `*` and http CORS origins, http public URL, placeholder URLs), all problems reported at once, unknown environment refused, local/test/demo rules unchanged |
+| tests/test_ops_scripts.py | `scripts/backup.py` (URL handling without passwords in arguments, archive round trip, path traversal and symlink refusal, checksum and row-count checks, damaged backups refused before the database is touched), `scripts/smoke_test.py` API checks against the app (signed in, anonymous, `--require-login`, wrong password never printed), `scripts/dependency_audit.py` (pip-audit and npm report parsing, severity filter, exceptions with aliases, expiry and validation, the committed exceptions file, tool errors fail closed) |
+| tests/test_backup_restore.py | Restore drill on PostgreSQL: demo data, evidence and an uploaded document backed up, restored into a fresh database and directory; row counts, evidence hashes and vector search match; restoring over data refused; tampered file detected. Runs when `SITEGUARD_TEST_POSTGRES_URL` is set and the PostgreSQL client tools exist (`SITEGUARD_TEST_PG_BIN`) |
 | tests/test_api.py | Login rate limit, security headers, unsafe production settings refused, error envelope, login, validation, tenant isolation, RBAC, evidence validation, invalid transitions, full E2E incident -> investigation -> review -> work -> failed and passed verification -> closure -> audit, critical closure permission, agent failure with manual continuation, dashboard and search |
 
 ## Web app
@@ -38,7 +50,9 @@ CI runs the web checks in the `frontend` job and the browser test in the `e2e` j
 | Unit: parsers (PDF/DOCX), embedding retry and idempotency | Implemented (`tests/test_knowledge.py`); API idempotency keys not yet (Prompt 37) |
 | Integration: API + database, authentication, RAG, agent orchestration, CAPA | Implemented |
 | Integration: PostgreSQL + pgvector | Implemented (`tests/test_postgres.py`, CI `postgres` job) |
-| Integration: object storage | Not yet (local disk only) |
+| Integration: object storage | Not yet (local disk or a mounted Azure Files share) |
+| Backup and restore | Implemented (`tests/test_backup_restore.py`, CI `postgres` job) |
+| Deployment smoke tests | Implemented (`scripts/smoke_test.py` in the CI `docker` job and the deploy workflow) |
 | E2E: login → project → incident → evidence → AI analysis → approval → CAPA → verification → closure | API-level (`test_end_to_end_incident_to_verified_closure`, walkthrough script); browser E2E for login → incident → AI analysis → approval (`frontend/e2e/`) |
 
 ## AI evaluation (not yet, Prompt 40)

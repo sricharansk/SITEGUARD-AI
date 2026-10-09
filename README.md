@@ -67,7 +67,8 @@ make demo            # regenerates docs/RESULTS.md from a live run
 Demo logins (password `siteguard-demo`, change with `SITEGUARD_DEMO_PASSWORD`):
 `hse@`, `pm@`, `safety@`, `qa@`, `site@`, `auditor@`, `admin@demo.siteguard.local`.
 A second tenant, `other@demo.siteguard.local`, is used to prove isolation.
-Demo data seeds only when `SITEGUARD_ENV` is `local`, `test` or `demo`; production refuses to start with it on.
+Demo data seeds only when `SITEGUARD_ENV` is `local`, `test` or `demo`; staging and production refuse to start
+with it on, and refuse other unsafe settings too ([docs/GOVERNANCE.md](docs/GOVERNANCE.md#configuration-validation)).
 Database migrations run automatically on startup (`make migrate` runs them by hand).
 
 ## Repository layout
@@ -89,8 +90,20 @@ docs/          PRD, architecture, agents, API, database, security, testing, data
 docs/PROJECT_STATUS.md  what is done, partial and missing against the 52 implementation gates
 .claude/       Claude Code rules, reviewer agents and permission settings
 docs/planning/ the original implementation blueprint, playbook and strategy documents
-scripts/       demo_walkthrough.py
+scripts/       demo_walkthrough.py, smoke_test.py (deployment smoke test), backup.py (backup, restore, verify),
+               dependency_audit.py (CI vulnerability audit)
+deployment/    staging/ (compose stack and settings template), azure/ (Bicep for Container Apps, PostgreSQL,
+               Key Vault, storage, monitoring)
+.github/       CI and the manual, OIDC-based deploy workflow
 ```
+
+## Deployment and operations
+
+Production images, a staging stack, Azure infrastructure as code and a manual deploy workflow are in place and
+validated locally and offline; nothing is deployed to the cloud until the owner approves it.
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) covers images, staging (backup before migrate, rollback) and the Azure
+owner steps; [docs/GOVERNANCE.md](docs/GOVERNANCE.md) covers data classification, retention, access review,
+incident response, model and dataset governance, and backup and restore.
 
 ## Tech stack
 
