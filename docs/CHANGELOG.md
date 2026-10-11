@@ -52,6 +52,12 @@
   trends (`services/analytics.py`, metric definitions in `docs/API.md`); knowledge screen with grounded answers,
   document upload and search provenance; notification bell, notifications page and delivery outbox; report download
   in the incident workspace. Browser E2E for answers, uploads, reports, notifications and dashboard filters.
+- Prompts 38 and 43–47 deployment and governance: production API and web images; the API refuses unsafe settings
+  for its environment; isolated staging stack; Azure Bicep templates and a manual, OIDC-authenticated deploy
+  workflow gated by GitHub environment approval (nothing is deployed from CI); `scripts/smoke_test.py`,
+  `scripts/backup.py` (backup, restore and evidence hash verification) and `scripts/dependency_audit.py`; CI jobs for
+  dependency audit, images, compose and staging smoke tests, restore drill, actionlint and Bicep;
+  `docs/GOVERNANCE.md`.
 - Prompt 34 reports: `GET /incidents/{id}/report` in Markdown, Word or PDF (fpdf2), built only from stored records
   with labelled AI sections, approval history, verification and cited sources; generation audited with SHA-256.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project

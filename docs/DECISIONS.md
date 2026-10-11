@@ -149,6 +149,16 @@ AI output and its review status. Reads go through the same incident authorizatio
 to the caller's organization and projects. The store is `disabled` by default, `memory` for tests and demos, or
 `neo4j`.
 
+## Decision 023 — Deployment is manual, keyless and gated; configuration is validated at startup
+
+Reason: Playbook Prompts 43–47 ask for staging, Azure infrastructure and a governance gate, and production
+deployment needs the owner's explicit approval (O12). Azure resources are declared in Bicep; the deploy workflow runs
+only on manual dispatch, signs in to Azure with OpenID Connect (no stored cloud credentials), checks that CI passed for
+the commit and relies on GitHub environment protection (required reviewers, main only for production). The API
+image defaults to `SITEGUARD_ENV=production`, and the API lists every unsafe setting and refuses to start (weak or
+placeholder secrets, SQLite, demo seeding, non-HTTPS URLs, wildcard CORS, plain Neo4j Bolt), so a misconfigured
+container fails closed. Evidence is on Azure Files until Blob Storage is chosen (O6).
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.

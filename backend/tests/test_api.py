@@ -294,7 +294,16 @@ def test_unsafe_settings_refused():
         validate_settings(settings(env="staging", jwt_secret="short"))
     with pytest.raises(RuntimeError):
         validate_settings(settings(env="production", jwt_secret="x" * 40, seed_demo_data=True))
-    validate_settings(settings(env="production", jwt_secret="x" * 40))
+    # Full rules for staging and production: tests/test_config_validation.py.
+    validate_settings(
+        settings(
+            env="production",
+            jwt_secret="Vq3-T8pZ_x1LmN4rW7yB2cD5eF6gH9jK0sA",
+            database_url="postgresql+psycopg://siteguard@db.internal:5432/siteguard",
+            cors_origins="",
+            public_web_url="https://siteguard.example.com",
+        )
+    )
 
 
 def test_project_permissions_members_and_capa_board(client, project_id):

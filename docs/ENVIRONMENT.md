@@ -23,6 +23,20 @@ make demo                       # regenerate docs/RESULTS.md from a live run
 All settings are environment variables prefixed `SITEGUARD_` (see `.env.example` and
 `backend/app/core/config.py`). Set `SITEGUARD_AI_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` to use Claude.
 
+`SITEGUARD_ENV` is one of `local`, `test`, `demo`, `staging` or `production`; anything else is refused. The API
+refuses to start with settings that are unsafe for that environment and lists every problem at once (table in
+`docs/GOVERNANCE.md#configuration-validation`). In `staging` and `production` that means a random JWT secret
+(32+ characters, no `CHANGE` placeholder), PostgreSQL, demo seeding off, and `https://` for
+`SITEGUARD_PUBLIC_WEB_URL` and any CORS origin. The API image defaults to `production`, so `.env` must set
+`SITEGUARD_ENV=local` or `demo` for the local Docker stack.
+
+| Environment | Where | Settings |
+|---|---|---|
+| local, test | `make run`, tests | `.env.example` / defaults; SQLite allowed; demo data seeds |
+| demo | `docker compose` with `SITEGUARD_ENV=demo` | Real JWT secret; demo data seeds (known passwords) |
+| staging | `deployment/staging/` on one host, or Azure | `deployment/staging/staging.env.example` (placeholders only), or Key Vault in Azure |
+| production | Azure (`deployment/azure/`) | Key Vault through managed identity; never a file |
+
 ## Knowledge graph (optional)
 
 Off by default (`SITEGUARD_GRAPH_BACKEND=disabled`). To use Neo4j locally:
@@ -41,14 +55,26 @@ restart and a separate job process cannot see it. To run the integration test ag
 
 ## Secrets
 
-Use `.env.example` as the template. Never commit real values. Demo users share `SITEGUARD_DEMO_PASSWORD`, so demo
-seeding defaults to on only when `SITEGUARD_ENV` is `local`, `test` or `demo`; `production` refuses it.
+Use `.env.example` (local, demo) or `deployment/staging/staging.env.example` (staging) as the template. Never
+commit real values: `.env`, `.env.*` and `*.env` are git-ignored; keep the staging settings file outside the checkout
+(`/etc/siteguard/staging.env`, chmod 600). In Azure the apps read secrets from Key Vault (docs/DEPLOYMENT.md#azure). Demo users share `SITEGUARD_DEMO_PASSWORD`, so demo
+seeding defaults to on only when `SITEGUARD_ENV` is `local`, `test` or `demo`; `staging` and `production` refuse it.
 
 ## Dependencies
 
 Runtime dependencies are locked in `backend/requirements.lock` (Linux, CPython 3.12+); `make install` installs from
 it. Dev tools (pytest, httpx, ruff, mypy) are pinned in `backend/pyproject.toml` to the versions CI uses. Web app
 dependencies are pinned to exact versions in `frontend/package.json` and locked in `frontend/package-lock.json`.
+Container base images are pinned by tag and digest in the Dockerfiles. CI audits both locks for known
+vulnerabilities (`scripts/dependency_audit.py`, docs/SECURITY.md#dependency-scanning).
+
+## Operations tools
+
+- `scripts/smoke_test.py` (needs `httpx`): smoke test a running stack (docs/DEPLOYMENT.md#smoke-test).
+- `scripts/backup.py` (standard library only, plus PostgreSQL 16 client tools `pg_dump`, `pg_restore`, `psql`):
+  backup, restore and verify (docs/GOVERNANCE.md#backup-and-restore).
+- `scripts/dependency_audit.py` (needs `pip-audit` and `npm`): the CI dependency audit.
+- Azure: Azure CLI with Bicep for `deployment/azure/` (offline validation needs only `az bicep`).
 
 ## Database migrations
 

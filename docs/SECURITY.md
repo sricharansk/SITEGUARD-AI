@@ -9,7 +9,8 @@ Target: OIDC/OAuth2, with Microsoft Entra ID as the enterprise option.
 Implemented today: email + password (PBKDF2) issuing short-lived HS256 JWTs. Login is rate limited per client and
 email (`SITEGUARD_LOGIN_RATE_LIMIT_PER_MINUTE`, default 10, in-process; use a shared store when running more than
 one replica). Outside `local`/`test` the API refuses to start with the default or a JWT secret shorter than 32
-characters.
+characters; in `staging` and `production` it also refuses a secret containing the `CHANGE` placeholder or with fewer
+than 10 distinct characters (full list in docs/GOVERNANCE.md#configuration-validation).
 
 ## Authorization
 
@@ -42,23 +43,42 @@ closing a CRITICAL incident needs APPROVE_CRITICAL.
 |---|---|
 | Tenant isolation | Implemented and tested |
 | Least privilege | Implemented (role table above) |
-| Secure secret handling | Environment variables; `.env` files git-ignored; Key Vault planned for Azure |
-| TLS in transit | Provided by the hosting platform (Azure Container Apps ingress); not terminated by the app |
-| Managed encryption at rest | Provided by managed PostgreSQL and Blob Storage once deployed |
+| Secure secret handling | Environment variables; `.env`/`*.env` files git-ignored; placeholder-only templates; Key Vault references through a managed identity in the Azure templates (`deployment/azure/`, not yet deployed) |
+| Safe configuration | API refuses unsafe settings per environment and the image defaults to `production` (docs/GOVERNANCE.md#configuration-validation) |
+| TLS in transit | Provided by the hosting platform: HTTPS-only Container Apps ingress, PostgreSQL `sslmode=require`, HTTPS-only storage (Azure templates); a TLS reverse proxy for the staging host. Not terminated by the app |
+| Managed encryption at rest | Provided by managed PostgreSQL and Azure Storage once deployed |
+| Container images | Non-root (uid 10001), read-only code, digest-pinned bases, no secrets in layers, allowlisted build contexts (docs/DEPLOYMENT.md#images) |
+| Network exposure (Azure) | PostgreSQL private (VNet only); API internal ingress; storage firewall limited to the apps subnet; registry admin user disabled |
 | Secure file validation | Implemented (extension, declared type, magic bytes, size, SHA-256) |
 | Rate limiting where appropriate | Login rate limited; other routes not yet |
 | Safe error messages | Implemented (error envelope; unexpected errors return a generic message) |
 | Audit logging | Implemented (`audit_events` with correlation IDs) |
-| Dependency scanning | Not yet (Prompt 38) |
-| Backup / restore | Not yet (managed PostgreSQL backups once deployed) |
-| Access reviews | Not yet (process, Prompt 47) |
+| Dependency scanning | Implemented: CI `dependency-audit` job, on every push, pull request and weekly (see below) |
+| Backup / restore | Implemented: `scripts/backup.py` with checksums and a CI restore drill; PostgreSQL point-in-time restore in Azure (docs/GOVERNANCE.md#backup-and-restore) |
+| Access reviews | Process defined (docs/GOVERNANCE.md#access-review); no admin UI yet |
+| Deployment credentials | GitHub OIDC federation, no stored cloud secrets; least-privilege roles; manual, environment-protected deploys |
+
+## Dependency scanning
+
+`scripts/dependency_audit.py` runs in the CI `dependency-audit` job:
+
+- `pip-audit` on the exact pins in `backend/requirements.lock` (PyPI advisory data). Every known vulnerability
+  fails, since pip-audit reports no severity.
+- `npm audit --omit=dev --audit-level=high` on the web app's production dependencies: high and critical advisories
+  fail. Development-only tools are not in the images.
+
+A finding that cannot be fixed yet needs an entry in `.github/dependency-audit-exceptions.toml`, reviewed in a pull
+request: advisory id, ecosystem, package, reason, reviewer, review date and an expiry at most 90 days after review.
+Expired or incomplete entries fail the audit, and unused entries are reported. Fix a finding by bumping the pin
+minimally and regenerating the lock (Decision 013). Container base images are pinned by digest and bumped by hand
+(docs/DEPLOYMENT.md#images); image scanning is not yet in CI.
 
 ## Secrets
 
 Never commit credentials. Use environment variables locally and managed secret storage in the cloud.
 
 Demo data uses a shared known password, so it seeds by default only in `local`, `test` and `demo` environments, and
-the API refuses to start with seeding on in `production`.
+the API refuses to start with seeding on in `staging` or `production`.
 
 ## HTTP headers
 

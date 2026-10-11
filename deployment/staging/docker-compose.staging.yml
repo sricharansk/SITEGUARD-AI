@@ -1,0 +1,92 @@
+# Site Guard AI staging stack on one host (Playbook Prompt 45). Isolated from local and production: its own
+# PostgreSQL database and volume, its own evidence volume, its own secrets. Demo seeding is off and external
+# notifications are disabled; SITEGUARD_ENV=staging turns on every startup check in validate_settings.
+# The Azure staging environment is deployment/azure (same images and settings, secrets from Key Vault).
+#
+# From the repository root, with the settings file kept outside the checkout:
+#   cp deployment/staging/staging.env.example /etc/siteguard/staging.env   # replace every CHANGE value; chmod 600
+#   docker compose -f deployment/staging/docker-compose.staging.yml --env-file /etc/siteguard/staging.env \
+#     up -d --build --wait
+#   python scripts/smoke_test.py --api-url http://127.0.0.1:8000 --web-url http://127.0.0.1:3000
+# Upgrades, backup before migrate, and rollback: docs/DEPLOYMENT.md#staging.
+#
+# Only the settings listed below reach the containers (not the whole env file), so the API never sees the
+# database password except inside its database URL.
+name: siteguard-staging
+
+x-api-environment: &api-environment
+  # Fixed here so the settings file cannot weaken them.
+  SITEGUARD_ENV: staging
+  SITEGUARD_SEED_DEMO_DATA: "false"
+  SITEGUARD_DATABASE_URL: postgresql+psycopg://siteguard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/siteguard_staging
+  SITEGUARD_EVIDENCE_DIR: /srv/evidence
+  # From the settings file.
+  SITEGUARD_JWT_SECRET: ${SITEGUARD_JWT_SECRET:?set SITEGUARD_JWT_SECRET}
+  SITEGUARD_PUBLIC_WEB_URL: ${SITEGUARD_PUBLIC_WEB_URL:?set SITEGUARD_PUBLIC_WEB_URL}
+  SITEGUARD_CORS_ORIGINS: ${SITEGUARD_CORS_ORIGINS:-}
+  SITEGUARD_LOGIN_RATE_LIMIT_PER_MINUTE: ${SITEGUARD_LOGIN_RATE_LIMIT_PER_MINUTE:-10}
+  # disabled (default) or log; real delivery (smtp) is not wired into the staging stack.
+  SITEGUARD_NOTIFICATION_EMAIL_ADAPTER: ${SITEGUARD_NOTIFICATION_EMAIL_ADAPTER:-disabled}
+  SITEGUARD_AI_PROVIDER: ${SITEGUARD_AI_PROVIDER:-rules}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: siteguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: siteguard_staging
+    volumes: [staging-pgdata:/var/lib/postgresql/data]
+    # Loopback only, for backups and maintenance from this host (scripts/backup.py); never published publicly.
+    ports: ["127.0.0.1:${STAGING_DB_PORT:-5433}:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siteguard -d siteguard_staging"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: ${SITEGUARD_API_IMAGE:-siteguard-api:local}
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    environment: *api-environment
+    volumes: [staging-evidence:/srv/evidence]
+    # Loopback only: browsers reach the API through the web app. Put a TLS reverse proxy in front of the web app;
+    # the session cookie is Secure.
+    ports: ["127.0.0.1:${STAGING_API_PORT:-8000}:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ${SITEGUARD_WEB_IMAGE:-siteguard-web:local}
+    build:
+      context: ../../frontend
+    environment:
+      SITEGUARD_API_URL: http://api:8000
+      # The public https origin the TLS proxy serves (the proxy may rewrite Host).
+      SITEGUARD_ALLOWED_ORIGINS: ${SITEGUARD_PUBLIC_WEB_URL:?set SITEGUARD_PUBLIC_WEB_URL}
+    ports: ["127.0.0.1:${STAGING_WEB_PORT:-3000}:3000"]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Scheduled jobs (escalation rules, then due notification deliveries). Run from cron, for example every 15 min:
+  #   docker compose -f deployment/staging/docker-compose.staging.yml --env-file /etc/siteguard/staging.env \
+  #     run --rm jobs
+  jobs:
+    image: ${SITEGUARD_API_IMAGE:-siteguard-api:local}
+    profiles: [jobs]
+    environment: *api-environment
+    command: ["python", "-m", "app.jobs", "all"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  staging-pgdata:
+  staging-evidence:

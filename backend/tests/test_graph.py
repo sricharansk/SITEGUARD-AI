@@ -7,6 +7,7 @@ adapter's Cypher (fake driver) and, when SITEGUARD_TEST_NEO4J_URI is set, a real
 
 import os
 import re
+import secrets
 import time
 from types import SimpleNamespace
 
@@ -637,14 +638,18 @@ def test_neo4j_settings_refused_when_unsafe():
         validate_settings(settings(neo4j_uri="http://neo4j:7474", neo4j_password="local-pass"))
     with pytest.raises(RuntimeError):
         validate_settings(settings(neo4j_uri="bolt://neo4j:7687"))  # no password
-    with pytest.raises(RuntimeError):
-        validate_settings(
-            settings(env="production", jwt_secret="x" * 40, neo4j_uri="bolt://neo4j:7687", neo4j_password="p" * 12)
-        )
+    deployed = {
+        "env": "production",
+        "jwt_secret": secrets.token_urlsafe(48),
+        "database_url": "postgresql+psycopg://siteguard:pw@db.internal:5432/siteguard",
+        "cors_origins": "https://siteguard.example",
+        "public_web_url": "https://siteguard.example",
+        "neo4j_password": "p" * 12,
+    }
+    with pytest.raises(RuntimeError, match="verified TLS Neo4j"):
+        validate_settings(settings(neo4j_uri="bolt://neo4j:7687", **deployed))
     validate_settings(settings(neo4j_uri="bolt://neo4j:7687", neo4j_password="local-pass"))
-    validate_settings(
-        settings(env="production", jwt_secret="x" * 40, neo4j_uri="neo4j+s://graph.example", neo4j_password="p" * 12)
-    )
+    validate_settings(settings(neo4j_uri="neo4j+s://graph.example", **deployed))
     assert "p" * 12 not in repr(settings(neo4j_password="p" * 12))  # SecretStr never prints the password
 
 

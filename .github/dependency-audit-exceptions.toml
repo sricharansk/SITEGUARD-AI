@@ -1,0 +1,17 @@
+# Reviewed exceptions for the dependency audit (scripts/dependency_audit.py, CI job `dependency-audit`).
+#
+# The audit fails on any known vulnerability in backend/requirements.lock and on high or critical advisories in the
+# web app's production dependencies. Fix by bumping the pin (docs/ENVIRONMENT.md#dependencies). Add an entry here
+# only when no fixed version exists or the advisory cannot affect Site Guard AI as deployed, and say why. Changes to
+# this file need review like code. An entry fails the audit again once it expires (at most 90 days after review).
+#
+# [[exception]]
+# id = "GHSA-xxxx-xxxx-xxxx"      # advisory id: GHSA, PYSEC or CVE (any alias the tool reports matches)
+# ecosystem = "pypi"              # pypi | npm
+# package = "example-package"
+# reason = "Why it does not affect us, or why no fix is possible yet, and what limits the exposure."
+# reviewed_by = "Name"
+# reviewed_on = 2026-10-09        # unquoted dates
+# expires = 2027-01-07
+
+# No exceptions: the audit on 09 October 2026 found no known vulnerabilities in either set.

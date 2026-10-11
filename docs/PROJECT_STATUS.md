@@ -102,14 +102,14 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
 | 37 | Resilience | Done | Bounded retries with backoff, provider fallback, failure isolation, stage rollback, resumable after a crash (lease); no external queue (single API process) |
-| 38 | Security hardening | Partial | Validation, scoping, rate-limited login, security headers, safe seeding defaults, locked deps; no dependency scanning |
+| 38 | Security hardening | Done | Validation, scoping, rate-limited login, security headers, safe seeding defaults, locked deps; startup refuses unsafe settings per environment; dependency audit (pip-audit, npm audit) in CI with reviewed, expiring exceptions |
 | 39 | Prompt injection / tool safety | Partial | Untrusted framing, injection flagging, allowlisted tools; no red-team suite |
 | 40–41 | Evaluation, red team | Missing | Unit tests cover injection and fallback only |
 | 42 | Performance | Missing | |
-| 43 | Docker | Done | Non-root image from `requirements.lock`, health check |
-| 44 | GitHub Actions | Done | Lint, types, tests, PostgreSQL + pgvector tests, image build, end-to-end smoke run |
-| 45–46 | Staging, Azure | Missing | No live deployment without the owner's explicit approval |
-| 47 | Governance gate | Missing | |
+| 43 | Docker | Done | Production API and web images: multi-stage, digest-pinned bases, non-root, health checks, no secrets in layers; unconfigured containers refuse to start |
+| 44 | GitHub Actions | Done | Lint, types, tests, PostgreSQL + pgvector tests with restore drill, Neo4j test, dependency audit, both images, compose and staging stacks with smoke tests, actionlint and Bicep checks, web checks and browser E2E |
+| 45–46 | Staging, Azure | Partial | Isolated staging stack (`deployment/staging/`) verified in CI; Azure Bicep (Container Apps, private PostgreSQL, Key Vault, Azure Files, Log Analytics) and a manual OIDC deploy workflow with smoke tests. Not deployed: needs Azure credentials and the owner's approval (O12) |
+| 47 | Governance gate | Done | `docs/GOVERNANCE.md`: data classification, retention, access review, incident response, model and dataset governance, backup and restore (tested), configuration validation, change management |
 | 48 | End-to-end acceptance | Partial | API-level E2E test, walkthrough and a Playwright browser E2E (incident → investigation → approval; auditor read-only) |
 | 49–50 | Final review, release | Missing | |
 | 51 | Claude Code control plane | Partial | `CLAUDE.md`, `.claude/rules`, `.claude/agents`, `.claude/settings.json` exist; the verification itself runs as the last gate |

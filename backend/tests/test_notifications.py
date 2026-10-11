@@ -253,6 +253,14 @@ def test_real_email_is_refused_in_local_and_test():
         with pytest.raises(RuntimeError):
             validate_settings(Settings(_env_file=None, env=env, notification_email_adapter="smtp"))
     validate_settings(Settings(_env_file=None, env="local", notification_email_adapter="log"))
-    staging = Settings(_env_file=None, env="staging", jwt_secret="x" * 40, notification_email_adapter="smtp")
+    staging = Settings(
+        _env_file=None,
+        env="staging",
+        jwt_secret="Vq3-T8pZ_x1LmN4rW7yB2cD5eF6gH9jK0sA",
+        database_url="postgresql+psycopg://siteguard:pw@db:5432/siteguard_staging",
+        cors_origins="",
+        public_web_url="https://staging.siteguard.example.com",
+        notification_email_adapter="smtp",
+    )
     validate_settings(staging)
     assert notifications.get_email_adapter().name == "disabled"  # the test suite's own settings
