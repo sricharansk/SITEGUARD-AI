@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -38,21 +38,31 @@ def triage(incident_id: str, p: Principal = Depends(current_principal), db: Sess
 
 
 @router.post("/incidents/{incident_id}/investigate")
-def investigate(incident_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    """Run the full bounded workflow. Ends with proposed actions in PENDING_REVIEW for a human."""
+def investigate(
+    incident_id: str,
+    pause_after: list[str] = Query(default=[], max_length=8),
+    p: Principal = Depends(current_principal),
+    db: Session = Depends(get_db),
+):
+    """Run the full bounded workflow, checkpointed after every stage. Ends with proposed actions in PENDING_REVIEW
+    for a human, or earlier when `pause_after` names a stage to stop at for human review."""
     inc = load_incident(db, p, incident_id, Permission.RUN_AGENTS)
-    result = orchestrator.run_investigation(db, inc, p.id)
+    result = orchestrator.run_investigation(db, inc, p.id, pause_after=pause_after, checkpoint=db.commit)
     db.commit()
-    return ok(
-        {
-            "workflow_id": result["workflow_id"],
-            "incident_status": inc.status,
-            "runs": [ser.run(r) for r in result["runs"]],
-            "risk": ser.risk(result["risk"]),
-            "proposed_actions": [ser.capa(a) for a in result["capa"]],
-            "flags": result["flags"],
-        }
-    )
+    return ok(investigation_payload(inc, result))
+
+
+def investigation_payload(inc, result: dict) -> dict:
+    return {
+        "workflow_id": result["workflow_id"],
+        "workflow": ser.workflow(result["workflow"]),
+        "incident_status": inc.status,
+        "runs": [ser.run(r) for r in result["runs"]],
+        "risk": ser.risk(result["risk"]),
+        "proposed_actions": [ser.capa(a) for a in result["capa"]],
+        "conflicts": [ser.conflict(c) for c in result["conflicts"]],
+        "flags": result["flags"],
+    }
 
 
 @router.get("/incidents/{incident_id}/agent-runs")

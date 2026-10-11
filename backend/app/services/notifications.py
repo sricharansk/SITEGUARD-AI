@@ -146,6 +146,41 @@ def drafts_for_event(db: Session, ev: AuditEvent) -> list[Draft]:
             out.append(_capa(ev, capa, inc, "VERIFICATION_REQUIRED", "Action completed; verify it", verifiers))
         elif action == "capa.verify" and d.get("effective") is False:
             out.append(_capa(ev, capa, inc, "VERIFICATION_FAILED", "Action failed verification", _assignee(db, capa)))
+    elif action == "conflict.detected":
+        inc = db.get(Incident, ev.entity_id)
+        if inc is not None:
+            n = len(d.get("conflicts", []))
+            out.append(
+                Draft(
+                    "AI_CONFLICT",
+                    "HIGH",
+                    f"AI findings disagree on {_label(inc)}",
+                    f"The investigation recorded {n} conflict(s) between agents, documents, photos or the report. "
+                    "Review both sides and record a decision; the incident cannot close until you do.",
+                    holders(db, inc.organization_id, inc.project_id, Permission.APPROVE_CAPA),
+                    f"event:{ev.id}",
+                    "incident",
+                    inc.id,
+                    inc,
+                )
+            )
+    elif action == "workflow.failed":
+        inc = db.get(Incident, d.get("incident_id", ""))
+        if inc is not None:
+            out.append(
+                Draft(
+                    "WORKFLOW_FAILED",
+                    "INFO",
+                    f"The AI investigation stopped on {_label(inc)}",
+                    f"The {d.get('stage', 'current')} stage failed. Finished stages are kept; resume the workflow "
+                    "to retry it, or continue manually.",
+                    _active_user(db, ev.actor_id),
+                    f"event:{ev.id}",
+                    "incident",
+                    inc.id,
+                    inc,
+                )
+            )
     elif action.startswith("agent.") and action.endswith(".failed"):
         inc = db.get(Incident, ev.entity_id)
         if inc is not None:

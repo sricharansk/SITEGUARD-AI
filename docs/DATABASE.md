@@ -30,6 +30,7 @@ Blueprint Part 7 lists the target entities. Status today:
 | risk_assessments, capa_actions, approval_events, verification_records, audit_events | Implemented |
 | notifications, notification_deliveries | Implemented (revision `0003`): one in-app row per recipient with a unique `dedupe_key`; one email outbox row per notification with status, attempts, last error and next attempt |
 | vision_analyses, vision_observations, vision_calibrations | Implemented (revision `0004`); see "Vision (revision 0004)" |
+| workflow_runs, agent_conflicts | Implemented (revision `0005`); see "Workflows and conflicts (revision 0005)" |
 
 ## Incident data
 
@@ -73,6 +74,21 @@ and `requested_by`. A failed analysis keeps its row and has no observations.
 
 `vision_calibrations` hold a project threshold (`site_id` null) or a site threshold for one label, with `reason`
 and `updated_by`. One row per project, site and label is kept by the service.
+
+## Workflows and conflicts (revision 0005)
+
+`workflow_runs` hold one triage or investigation run of the agent workflow: `organization_id`, `incident_id`,
+`kind` (`TRIAGE` or `INVESTIGATION`), `status` (`RUNNING`, `PAUSED`, `FAILED`, `COMPLETED`, `CANCELLED`) with
+`status_reason`, `provider`, `current_stage`, `stages` (per stage: status `PENDING` / `RUNNING` / `SUCCEEDED` /
+`FAILED` / `SKIPPED` / `ERROR`, attempts, agent run id, error, timestamps), `state` (the validated output of every
+finished stage, which a resume continues from), `pause_after`, `pause_requested`, `uncertainty` (confidence, review
+reasons and open questions across agents), `lease_expires_at` (a RUNNING workflow whose lease passed is treated as
+crashed and can be resumed), `started_by`, `created_at`, `updated_at`, `finished_at`.
+
+`agent_conflicts` hold one recorded disagreement: `organization_id`, `incident_id`, `workflow_id`, `kind`,
+`summary`, `details` (both sides), `refs`, `status` (`OPEN`, `RESOLVED`, `SUPERSEDED`), `resolution`,
+`resolved_by`, `resolved_at`, `created_at`. Rows are never deleted; a later investigation marks still-open rows
+`SUPERSEDED` with a note.
 
 ## Migration rule
 

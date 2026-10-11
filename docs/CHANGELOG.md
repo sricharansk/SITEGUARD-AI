@@ -37,6 +37,13 @@
   SHA-256, analyzer, model and taxonomy versions; engineer review (`/vision/observations/{id}/review`); safety and
   quality agents cite only confirmed observations and question unreviewed ones; reports list observations.
   Migration `0004`.
+- Prompts 29, 30 and 37 workflow: investigations are `workflow_runs` checkpointed after every stage, with
+  pause-after-stage (`?pause_after=`), pause, resume and cancel (`/workflows/{id}/...`), crash recovery through a
+  lease, bounded agent retries with backoff, and a stage that fails rolled back and resumable. Disagreements between
+  agents, with the reported severity, between cited documents and between vision analyses are stored as
+  `agent_conflicts`, notified to reviewers and must be resolved by a person before closure
+  (`/incidents/{id}/conflicts`, `/conflicts/{id}/resolve`). An uncertainty summary is kept per workflow.
+  Migration `0005`.
 - Prompt 34 reports: `GET /incidents/{id}/report` in Markdown, Word or PDF (fpdf2), built only from stored records
   with labelled AI sections, approval history, verification and cited sources; generation audited with SHA-256.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project

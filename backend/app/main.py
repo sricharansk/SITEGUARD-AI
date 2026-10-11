@@ -4,7 +4,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects, reports, vision
+from app.api import (
+    agents,
+    auth,
+    capa,
+    dashboard,
+    incidents,
+    knowledge,
+    notifications,
+    projects,
+    reports,
+    vision,
+    workflows,
+)
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
@@ -66,7 +78,8 @@ def create_app() -> FastAPI:
         expose_headers=["X-Correlation-ID"],
     )
     install_error_handlers(app)
-    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, reports, vision):
+    routers = (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, reports, vision, workflows)
+    for r in routers:
         app.include_router(r.router)
 
     @app.get("/health", tags=["ops"])

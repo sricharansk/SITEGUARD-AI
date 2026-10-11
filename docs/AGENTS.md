@@ -26,6 +26,43 @@ flowchart LR
 The orchestrator (`orchestrator.py`) runs the steps in order. It moves the incident to `PENDING_APPROVAL` and
 stops. No agent can approve an action, change a risk score or close an incident.
 
+### Checkpoints, pause and resume
+
+Each run is a `workflow_runs` row (Decision 021). Stages: `triage`, `safety`, `quality`, `risk`, `rca`,
+`compliance`, `capa`, `approval`. After every stage the stage record and its validated output are saved with the
+stage's own records in one transaction. Then:
+
+- `?pause_after=<stage>` on `POST /incidents/{id}/investigate`, or `POST /workflows/{id}/pause` while running,
+  stops the workflow as `PAUSED` before the next stage so a person can review what is stored.
+- `POST /workflows/{id}/resume` continues from the next unfinished stage with the stored state; finished stages
+  are never repeated, so agent runs, risk assessments and actions are never duplicated.
+- `POST /workflows/{id}/cancel` stops it with a reason; nothing stored is removed.
+- A stage that raises an unexpected error is rolled back, recorded as `ERROR`, and the workflow becomes `FAILED`
+  (the person who started it is notified); it can be resumed once the cause is fixed.
+- A `RUNNING` workflow whose lease (`SITEGUARD_WORKFLOW_LEASE_SECONDS`) has passed is treated as crashed and can be
+  resumed.
+- Only one workflow per incident may be `RUNNING`, `PAUSED` or `FAILED` (409 `WORKFLOW_ACTIVE`).
+
+## Conflicts and uncertainty
+
+The workflow never picks a winner silently (`services/conflicts.py`). At the approval stage it records an
+`agent_conflicts` row, with both sides and references, for each of:
+
+| Kind | When |
+|---|---|
+| `SEVERITY_DISAGREEMENT` | AI triage severity is two or more levels from the reported severity |
+| `DOMAIN_DISAGREEMENT` | Triage classes a SAFETY incident as QUALITY or the reverse |
+| `RISK_ABOVE_REPORTED` | The risk matrix band is CRITICAL, or two levels above the reported severity |
+| `AGENT_DISAGREEMENT` | Safety and quality investigations differ by two or more on likelihood or consequence (the matrix uses the higher) |
+| `SOURCE_CONFLICT` | Two cited documents in scope give different values, in the same unit, for the same requirement |
+| `VISION_DISAGREEMENT` | Two analyses of the same photo and task disagree whether a label is present |
+| `VISION_REVIEW_DISAGREEMENT` | Reviewers confirmed and rejected the same label on the same photo |
+
+People with `APPROVE_CAPA` are notified (`AI_CONFLICT`). An `OPEN` conflict blocks closure until a person records a
+decision (`POST /conflicts/{id}/resolve`); a later investigation marks still-open conflicts `SUPERSEDED` and
+records its own. The workflow also stores an uncertainty summary: confidence per agent, the lowest confidence,
+low-confidence agents, agents needing review with their reasons, failed stages and every open question.
+
 ## Bounded agent contract
 
 Each agent (`registry.py`) declares:
@@ -184,5 +221,9 @@ HIGH <= 16, CRITICAL >= 17. Agents only suggest the two inputs. A human can reco
 
 ## Failure behaviour
 
-An agent that raises is recorded as `FAILED`; the workflow continues with the remaining agents, the incident is
-kept, and people can add actions manually (`POST /incidents/{id}/capa`) and use manual transitions.
+An agent stage is tried up to `SITEGUARD_AGENT_MAX_ATTEMPTS` times with exponential backoff
+(`SITEGUARD_AGENT_RETRY_BACKOFF_SECONDS`). A stage that still fails is recorded as `FAILED` with its attempts; the
+workflow continues with the remaining agents, the incident is kept, and people can add actions manually
+(`POST /incidents/{id}/capa`) and use manual transitions. An error outside an agent (for example while storing
+actions) rolls the stage back and fails the workflow, which can then be resumed (see "Checkpoints, pause and
+resume").

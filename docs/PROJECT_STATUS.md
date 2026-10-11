@@ -93,15 +93,15 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 26 | PPE and hazard detection | Partial | Configurable PPE/hazard classes, thresholds, project/site calibration and evidence-linked detections work end to end; no trained detector yet: `baseline` detects nothing and says so, Claude vision is optional (O8, research-only datasets) |
 | 27 | Quality defect vision | Partial | Defect classes linked to quality agent findings and hypotheses only after engineer confirmation; same detector gap as 26 |
 | 28 | Neo4j knowledge graph | Missing | |
-| 29 | Multi-agent orchestration | Done | Bounded sequential workflow (DECISIONS 007) |
-| 30 | Uncertainty / conflict | Partial | Low-confidence, suspicious-source and severity-conflict flags; knowledge answers report conflicting sources |
+| 29 | Multi-agent orchestration | Done | Bounded workflow checkpointed per stage; pause after a stage, pause, resume, cancel; one active workflow per incident (DECISIONS 007, 021) |
+| 30 | Uncertainty / conflict | Done | Agent, severity, risk, source-document and vision conflicts stored with both sides, notified, resolved by a person before closure; uncertainty summary per workflow |
 | 31 | Incident command center UI | Done | One workspace: summary, risk, evidence, AI triage and investigation, citations, RCA, compliance, CAPA, approvals, verification, timeline; AI output labelled |
 | 32 | Dashboard / analytics | Partial | Dashboard API and screen; no date filters or response-time trend yet |
 | 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; the web screen shows search results, not yet grounded answers or uploads |
 | 34 | Reports | Done | Incident report in Markdown, Word and PDF from stored records: incident, history, evidence, risk, labelled AI analysis, actions, approval history, verification, cited sources; audited with SHA-256; snapshot-tested. Web download button pending |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
-| 37 | Resilience | Partial | Provider fallback, agent failure isolation; no retries or queue |
+| 37 | Resilience | Done | Bounded retries with backoff, provider fallback, failure isolation, stage rollback, resumable after a crash (lease); no external queue (single API process) |
 | 38 | Security hardening | Partial | Validation, scoping, rate-limited login, security headers, safe seeding defaults, locked deps; no dependency scanning |
 | 39 | Prompt injection / tool safety | Partial | Untrusted framing, injection flagging, allowlisted tools; no red-team suite |
 | 40–41 | Evaluation, red team | Missing | Unit tests cover injection and fallback only |
@@ -123,7 +123,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 
 ## Next gate
 
-Prompts 29, 30 and 37 (resumable orchestration, conflict handling, resilience), then the remaining gates in order.
+Prompts 35, 36 and 39 (audit completeness, telemetry, adversarial documents), then the remaining gates in order.
 
 ## Verification commands
 

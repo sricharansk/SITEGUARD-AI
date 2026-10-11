@@ -125,6 +125,20 @@ adapter with self-reported confidence. A failed analysis is stored as `FAILED`, 
 treat observations a person CONFIRMED as findings; unreviewed ones become open questions, and no observation is
 ever read as "no hazard".
 
+## Decision 021 — The bounded workflow is checkpointed and resumable; conflicts are stored, not resolved by AI
+
+Reason: Playbook Prompts 29, 30 and 37 need pause for human review, resume after a crash and no silent winner when
+agents or sources disagree. A graph framework (O4) was not needed for that: the fixed stage order of Decision 007 is
+kept and each stage is checkpointed in a `workflow_runs` row (status, per-stage record and validated state) in the
+same transaction as the stage's records. A resume continues from the next unfinished stage, so finished stages are
+never repeated and actions are never duplicated; a stage that raises is rolled back, recorded as `ERROR` and the
+workflow is `FAILED` but resumable. Agent stages are retried a bounded number of times
+(`SITEGUARD_AGENT_MAX_ATTEMPTS`, exponential backoff) before they are recorded as failed and the workflow carries on.
+A lease marks crashed runs. Only one active workflow per incident is allowed (409 `WORKFLOW_ACTIVE`). Disagreements
+(severity, domain, risk above reported, safety versus quality, cited documents with different values, vision
+analyses or reviews that disagree) are stored as `agent_conflicts` with both sides, people with `APPROVE_CAPA`
+are notified, and closure is blocked until a person records a decision.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.
@@ -134,7 +148,7 @@ These are unresolved. Each lists the behaviour that stays in place until someone
 | O1 | Which identity provider and tenant for SSO (Entra ID is the documented preference)? | Email + password with JWT |
 | O2 | How do contractors and clients get access? There is no dedicated role. | Project-scoped memberships with an existing role (AUDITOR or VIEWER for clients) |
 | O3 | Should triage run automatically when an incident is saved (Blueprint Flow 2) instead of on request? | Runs on request (`/triage`, `/investigate`); needs a background job runner first |
-| O4 | Keep the bounded sequential orchestrator or adopt a graph framework with persisted checkpoints? | Bounded sequential workflow (Decision 007) |
+| O4 | Keep the bounded sequential orchestrator or adopt a graph framework (for example LangGraph) for branching workflows? | Bounded sequential workflow with persisted checkpoints, pause/resume and retries (Decisions 007 and 021) |
 | O5 | Which semantic embedding model/provider for vector search, given data-residency needs? | Offline hashing embedder in hybrid search (Decision 015) |
 | O6 | Evidence storage container, retention and malware scanning in Azure Blob Storage? | Local disk / mounted volume |
 | O7 | Which notification channels for reminders and escalation (email, Teams, SMS)? | Dashboard overdue counts only |

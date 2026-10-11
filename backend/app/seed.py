@@ -16,6 +16,7 @@ from app.agents.framework import RulesProvider
 from app.core.config import get_settings
 from app.core.security import Principal, hash_password
 from app.models import (
+    AgentConflict,
     CapaAction,
     Domain,
     Membership,
@@ -28,7 +29,7 @@ from app.models import (
     WorkStatus,
     utcnow,
 )
-from app.services import capa, incidents, rag
+from app.services import capa, conflicts, incidents, rag
 
 
 def _front_matter(text: str) -> tuple[dict, str]:
@@ -153,6 +154,10 @@ def _seed_incidents(db: Session, project: Project) -> None:
             if actions:
                 capa.update_progress(db, site_eng, inc, actions[0], WorkStatus.IN_PROGRESS, None, "Started")
             continue
+        for found in db.scalars(
+            select(AgentConflict).where(AgentConflict.incident_id == inc.id, AgentConflict.status == "OPEN")
+        ):
+            conflicts.resolve(db, found, inc, "Reviewed by the HSE manager; the recorded severity stands.", hse.id)
         verifier = verifiers["QUALITY" if row["domain"] == "QUALITY" else "SAFETY"]
         for a in actions:
             capa.update_progress(db, site_eng, inc, a, WorkStatus.COMPLETED, None, "Done; photos attached")

@@ -1,4 +1,5 @@
 from app.models import (
+    AgentConflict,
     AgentRun,
     ApprovalEvent,
     AuditEvent,
@@ -12,6 +13,7 @@ from app.models import (
     VisionAnalysis,
     VisionCalibration,
     VisionObservation,
+    WorkflowRun,
 )
 from app.services.vision import BY_LABEL, DISCLAIMER
 
@@ -233,4 +235,44 @@ def calibration(c: VisionCalibration) -> dict:
         "reason": c.reason,
         "updated_by": c.updated_by,
         "updated_at": c.updated_at,
+    }
+
+
+def workflow(w: WorkflowRun | None) -> dict | None:
+    if w is None:
+        return None
+    return {
+        "id": w.id,
+        "incident_id": w.incident_id,
+        "kind": w.kind,
+        "status": w.status,
+        "status_reason": w.status_reason,
+        "provider": w.provider,
+        "current_stage": w.current_stage,
+        "stages": w.stages,
+        "pause_after": w.pause_after,
+        "pause_requested": w.pause_requested,
+        "uncertainty": w.uncertainty,
+        "lease_expires_at": w.lease_expires_at,
+        "started_by": w.started_by,
+        "created_at": w.created_at,
+        "updated_at": w.updated_at,
+        "finished_at": w.finished_at,
+    }
+
+
+def conflict(c: AgentConflict) -> dict:
+    return {
+        "id": c.id,
+        "incident_id": c.incident_id,
+        "workflow_id": c.workflow_id,
+        "kind": c.kind,
+        "summary": c.summary,
+        "details": c.details,
+        "refs": c.refs,
+        "status": c.status,
+        "resolution": c.resolution,
+        "resolved_by": c.resolved_by,
+        "resolved_at": c.resolved_at,
+        "created_at": c.created_at,
     }

@@ -17,7 +17,7 @@ from app.models import (
     VerificationRecord,
     WorkStatus,
 )
-from app.services import audit, lifecycle
+from app.services import audit, conflicts, lifecycle
 
 ACTIVE = (ApprovalStatus.APPROVED, ApprovalStatus.MODIFIED)
 EDITABLE_FIELDS = (
@@ -236,6 +236,9 @@ def close_blockers(db: Session, inc: Incident) -> list[str]:
     unverified = [a.title for a in active if a.work_status != WorkStatus.VERIFIED]
     if unverified:
         blockers.append(f"{len(unverified)} approved action(s) not verified effective.")
+    open_conflicts = conflicts.open_count(db, inc.id)
+    if open_conflicts:
+        blockers.append(f"{open_conflicts} AI conflict(s) need a recorded human decision.")
     return blockers
 
 
