@@ -110,7 +110,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 44 | GitHub Actions | Done | Lint, types, tests, PostgreSQL + pgvector tests with restore drill, Neo4j test, dependency audit, both images, compose and staging stacks with smoke tests, actionlint and Bicep checks, web checks and browser E2E |
 | 45–46 | Staging, Azure | Partial | Isolated staging stack (`deployment/staging/`) verified in CI; Azure Bicep (Container Apps, private PostgreSQL, Key Vault, Azure Files, Log Analytics) and a manual OIDC deploy workflow with smoke tests. Not deployed: needs Azure credentials and the owner's approval (O12) |
 | 47 | Governance gate | Done | `docs/GOVERNANCE.md`: data classification, retention, access review, incident response, model and dataset governance, backup and restore (tested), configuration validation, change management |
-| 48 | End-to-end acceptance | Partial | API-level E2E test, walkthrough and a Playwright browser E2E (incident → investigation → approval; auditor read-only) |
+| 48 | End-to-end acceptance | Done | `tests/test_acceptance.py` runs the full controlled lifecycle (project → evidence → documents → retrieval → triage → investigation with pause/resume → risk → RCA → compliance → CAPA → approval → work → verification → closure → dashboard, report, audit) with authorization checks at each step; browser E2E in `frontend/e2e/`. People come from seeding (no user-management API yet) |
 | 49–50 | Final review, release | Missing | |
 | 51 | Claude Code control plane | Partial | `CLAUDE.md`, `.claude/rules`, `.claude/agents`, `.claude/settings.json` exist; the verification itself runs as the last gate |
 
