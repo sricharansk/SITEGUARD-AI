@@ -1,4 +1,4 @@
-.PHONY: install test lint run up down demo migrate revision web-install web-dev web-test web-e2e
+.PHONY: install test lint run up down demo migrate revision jobs graph-sync web-install web-dev web-test web-e2e
 
 install:
 	cd backend && pip install -r requirements.lock -e ".[dev]"
@@ -26,6 +26,9 @@ migrate:  ## Apply database migrations (the API also does this on startup)
 
 jobs:  ## Run the scheduled jobs once: escalation rules, then due notification deliveries
 	cd backend && python -m app.jobs all
+
+graph-sync:  ## Rebuild the knowledge graph from PostgreSQL (needs SITEGUARD_GRAPH_BACKEND=neo4j)
+	cd backend && python -m app.jobs graph-sync
 
 revision:  ## Create a migration from model changes: make revision m="add reports table"
 	cd backend && alembic revision --autogenerate -m "$(m)"

@@ -139,6 +139,16 @@ A lease marks crashed runs. Only one active workflow per incident is allowed (40
 analyses or reviews that disagree) are stored as `agent_conflicts` with both sides, people with `APPROVE_CAPA`
 are notified, and closure is blocked until a person records a decision.
 
+## Decision 022 — The knowledge graph is an optional, rebuildable projection of PostgreSQL
+
+Reason: Playbook Prompt 28 asks for a Neo4j knowledge graph, while PostgreSQL stays the system of record (Decision
+002) and Neo4j is not needed to run the MVP (O9). The graph is derived: `graph-sync` rebuilds one organization's
+nodes and relationships from stored rows, idempotently, and deletes what PostgreSQL no longer has, so it can be
+dropped and rebuilt at any time. Every node and relationship names its source row and field, whether it came from
+AI output and its review status. Reads go through the same incident authorization (404 out of scope) and are limited
+to the caller's organization and projects. The store is `disabled` by default, `memory` for tests and demos, or
+`neo4j`.
+
 ## Open decisions
 
 These are unresolved. Each lists the behaviour that stays in place until someone decides.
@@ -153,7 +163,7 @@ These are unresolved. Each lists the behaviour that stays in place until someone
 | O6 | Evidence storage container, retention and malware scanning in Azure Blob Storage? | Local disk / mounted volume |
 | O7 | Which notification channels for reminders and escalation (email, Teams, SMS)? | Dashboard overdue counts only |
 | O8 | Which vision detection model, and can any non-commercial dataset be used beyond evaluation? | Vision pipeline with the `baseline` analyzer (image-quality checks only) or Claude vision when `SITEGUARD_VISION_PROVIDER=anthropic` (Decision 020); no trained PPE/defect detector |
-| O9 | Is Neo4j needed for the MVP or deferred? (Blueprint lists the knowledge graph as "should have".) | Deferred |
+| O9 | Is Neo4j needed in production, and should agents use graph-aware retrieval? | Optional projection, off by default (`SITEGUARD_GRAPH_BACKEND=disabled`, Decision 022); agents use document retrieval only |
 | O10 | Shared store for rate limiting when running more than one replica? | In-process limiter, single replica |
 | O11 | Commercial-use rights for public datasets before any production use | `commercial_use` flags in `data/dataset_registry.yaml` |
 | O12 | Production environment and go-live approval | No production deployment without the owner's explicit approval |

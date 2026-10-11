@@ -92,7 +92,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 25 | Vision foundation | Done | Image preprocessing in a resource-limited child process, analyzer interface, versioned and traceable analyses (evidence SHA-256, analyzer, model and taxonomy versions, thresholds), presented as observations with a disclaimer (DECISIONS 020) |
 | 26 | PPE and hazard detection | Partial | Configurable PPE/hazard classes, thresholds, project/site calibration and evidence-linked detections work end to end; no trained detector yet: `baseline` detects nothing and says so, Claude vision is optional (O8, research-only datasets) |
 | 27 | Quality defect vision | Partial | Defect classes linked to quality agent findings and hypotheses only after engineer confirmation; same detector gap as 26 |
-| 28 | Neo4j knowledge graph | Missing | |
+| 28 | Neo4j knowledge graph | Done | Optional projection rebuilt from PostgreSQL with provenance; incident neighbourhood API; off by default (DECISIONS 022). Agents do not use graph retrieval yet (O9) |
 | 29 | Multi-agent orchestration | Done | Bounded workflow checkpointed per stage; pause after a stage, pause, resume, cancel; one active workflow per incident (DECISIONS 007, 021) |
 | 30 | Uncertainty / conflict | Done | Agent, severity, risk, source-document and vision conflicts stored with both sides, notified, resolved by a person before closure; uncertainty summary per workflow |
 | 31 | Incident command center UI | Done | One workspace: summary, risk, evidence, AI triage and investigation, citations, RCA, compliance, CAPA, approvals, verification, timeline; AI output labelled |

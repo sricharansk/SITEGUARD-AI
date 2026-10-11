@@ -90,6 +90,14 @@ crashed and can be resumed), `started_by`, `created_at`, `updated_at`, `finished
 `resolved_by`, `resolved_at`, `created_at`. Rows are never deleted; a later investigation marks still-open rows
 `SUPERSEDED` with a note.
 
+## Knowledge graph (derived, no tables)
+
+The Neo4j knowledge graph (docs/ARCHITECTURE.md#knowledge-graph) adds no tables and no migration. `graph-sync` reads
+organizations, projects, sites, memberships, users, incidents, evidence, documents, document_chunks (to resolve cited
+`chunk:` refs), agent_runs, capa_actions, approval_events and verification_records, and never writes to them. The
+graph can be dropped and rebuilt from PostgreSQL at any time; each node and relationship names its source row in
+`source_table` / `source_id`. Rows deleted here leave the graph on the next sync of their organization.
+
 ## Migration rule
 
 Every schema change: (1) update this file; (2) create an Alembic revision; (3) test upgrade and downgrade

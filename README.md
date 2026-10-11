@@ -35,6 +35,9 @@ flowchart LR
   person who did the work cannot verify it, and an incident cannot close until every approved action is verified.
 - **Enterprise basics:** nine roles with server-side RBAC, tenant isolation, evidence validation and SHA-256
   provenance, audit trail with correlation IDs, consistent error envelope.
+- **Knowledge graph (optional):** a Neo4j projection of incidents, evidence, hazards, causes, requirements, actions,
+  people and documents, rebuilt from PostgreSQL, where every node and relationship names the record it came from
+  and whether it is unreviewed AI output or a human decision ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#knowledge-graph)).
 
 ## Real results
 
@@ -79,7 +82,8 @@ Database migrations run automatically on startup (`make migrate` runs them by ha
 backend/app/
   agents/      framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/         FastAPI routes
-  services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit
+  services/    risk matrix, lifecycle state machine, RAG, CAPA/approval/verification, evidence, audit,
+               notifications, reports, knowledge graph
   core/        config, database and migrations runner, security/RBAC, rate limit, errors, observability
   migrations/  Alembic revisions
 backend/tests/ unit, agent, knowledge, migration, PostgreSQL and end-to-end API tests
@@ -97,9 +101,9 @@ scripts/       demo_walkthrough.py
 
 ## Tech stack
 
-Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL with pgvector, pypdf, python-docx, Anthropic SDK;
-Next.js 16, React 19, TypeScript, Tailwind CSS 4; Docker, GitHub Actions.
-Planned: Azure Container Apps, Neo4j, a trained vision detection model.
+Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL with pgvector, pypdf, python-docx, Pillow,
+Anthropic SDK, Neo4j (optional knowledge graph); Next.js 16, React 19, TypeScript, Tailwind CSS 4; Docker, GitHub
+Actions. Planned: Azure Container Apps, a trained vision detection model.
 
 ## Data and datasets
 

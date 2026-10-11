@@ -18,8 +18,10 @@ duplicate effects (a second approval or closure returns 409).
 
 Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `IMAGE_UNREADABLE` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403,
 `NOT_FOUND` 404 (also returned for resources in another tenant), `METHOD_NOT_ALLOWED` 405, `INVALID_TRANSITION` /
-`INVALID_STATE` / `NOT_APPROVED` / `CLOSE_BLOCKED` / `EVIDENCE_INTEGRITY` / `WORKFLOW_ACTIVE` 409 (`CONFLICT` is the generic 409), `FILE_TOO_LARGE` 413,
-`RATE_LIMITED` 429, `INTERNAL_ERROR` 500, and `HTTP_ERROR` for any other HTTP error status.
+`INVALID_STATE` / `NOT_APPROVED` / `CLOSE_BLOCKED` / `EVIDENCE_INTEGRITY` / `WORKFLOW_ACTIVE` 409 (`CONFLICT` is the
+generic 409), `GRAPH_DISABLED` 409 (the knowledge graph is turned off on this server), `FILE_TOO_LARGE` 413,
+`RATE_LIMITED` 429, `INTERNAL_ERROR` 500, `GRAPH_UNAVAILABLE` 503 (the Neo4j store cannot be reached; retry later),
+and `HTTP_ERROR` for any other HTTP error status.
 
 ## Endpoints
 
@@ -69,6 +71,8 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `IMAGE_UNREADABLE` 4
 | GET | /search | READ | Hybrid search (BM25 + vector, fused and reranked) over org-wide and project documents; `mode=hybrid` or `lexical` (BM25 only), default `SITEGUARD_RETRIEVAL_MODE`; each hit carries document, version, effective date, page, section, tags, scope and scores |
 | POST | /knowledge/answer | READ | Grounded answer: `project_id`, `question`, optional `incident_id`, `domain`. Status `ANSWERED`, `INSUFFICIENT_EVIDENCE` or `CONFLICTING_EVIDENCE`; cited statements, `unsupported_claims`, `conflicts`, `excluded_sources`, `needs_human_review`, disclaimer. Audited |
 | GET | /incidents/{id}/report | READ | `format=md` (default), `docx`, `pdf` or `json` (blocks for a preview); `include_ai=false` leaves out the AI section. Built only from stored records; AI output labelled AI-GENERATED; sources cited; every generation audited as `report.generate` with the SHA-256, also returned in `X-Report-SHA256` |
+| GET | /incidents/{id}/graph | READ | The incident's neighbourhood in the knowledge graph: `nodes` (`id`, `label`, `properties`, `provenance`) and `edges` (`id`, `type`, `source`, `target`, `properties`, `provenance`). Provenance is `organization_id`, `project_id`, `source_table`, `source_id`, `source_field`, `ai_derived`, `agent_run_id`, `review_status`. `include_ai=false` leaves out AI-derived items; `synced` is false until the organization has been synced. Authorized like reading the incident (404 out of scope); limited to the incident's organization and the caller's projects. 409 `GRAPH_DISABLED`, 503 `GRAPH_UNAVAILABLE` |
+| POST | /graph/sync | MANAGE_PROJECTS (organization-wide) | `?organization_id=`; rebuilds that organization's knowledge graph from PostgreSQL (normally `python -m app.jobs graph-sync`); idempotent, removes what PostgreSQL no longer has; returns node and relationship counts with how many were created and deleted; audited as `graph.sync`. 409 `GRAPH_DISABLED`, 503 `GRAPH_UNAVAILABLE` |
 | GET | /notifications | any | The caller's in-app notifications, newest first, with `unread`; `unread_only`, `limit` (1–200) |
 | POST | /notifications/{id}/read | recipient only | Others get 404 |
 | POST | /notifications/read-all | any | Marks the caller's notifications read |
