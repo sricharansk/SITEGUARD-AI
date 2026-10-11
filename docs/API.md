@@ -79,9 +79,35 @@ and `HTTP_ERROR` for any other HTTP error status.
 | POST | /notifications/run | MANAGE_PROJECTS (organization-wide) | `?organization_id=`; runs the escalation rules and sends due deliveries (normally `python -m app.jobs all` on a schedule) |
 | GET | /notifications/deliveries | VIEW_AUDIT (organization-wide) | `?organization_id=&status=`; the email outbox, including `FAILED` dead letters |
 | POST | /notifications/deliveries/{id}/retry | MANAGE_PROJECTS (organization-wide) | Re-queues a `FAILED` or `SKIPPED` delivery (409 otherwise) |
-| GET | /dashboard | READ | Totals, status/severity/domain/month breakdowns, top hazards, CAPA and agent stats |
+| GET | /dashboard | READ | Filters `project_id` (a readable project; 404 otherwise; default every readable project), `date_from`, `date_to` (inclusive UTC days of `occurred_at`, 1970-01-01 to 2999-12-31, `date_from` <= `date_to`), `interval` `month` (default) or `week`; invalid values are 400 `INVALID_REQUEST`. Totals with response and closure times, status/severity/domain/month breakdowns, response and closure `trends`, top hazards and quality defects, CAPA and agent stats. See "Dashboard metrics" |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
 | GET | /health | - | |
+
+## Dashboard metrics
+
+`GET /dashboard` selects one set of incidents and computes every number from it: incidents in the caller's readable
+projects (or the one `project_id`) whose `occurred_at` falls between `date_from` 00:00 UTC and the end of `date_to`
+(either bound may be omitted). All times are UTC. Durations are rounded to one decimal; a metric with no qualifying
+incident is `null`, never 0.
+
+| Field | Definition |
+|---|---|
+| `filters` | The filters applied: `project_id` (null for every readable project), `projects` (how many), `date_from`, `date_to`, `interval` |
+| `totals.incidents`, `open`, `open_critical`, `closed` | Incidents in the set; not CLOSED; CRITICAL and not CLOSED; CLOSED |
+| `totals.responded`, `awaiting_response` | Incidents that have / have not had a first response |
+| `totals.mean_response_hours`, `median_response_hours` | Response time: `reported_at` to the first lifecycle transition out of REPORTED (a manual transition, or AI triage or investigation that a person started; agents never start on their own). Never below 0 |
+| `totals.mean_days_to_close`, `median_days_to_close` | Days from `reported_at` to `closed_at`, over incidents that are CLOSED |
+| `totals.awaiting_review`, `actions_open`, `actions_overdue` | CAPA actions of the set's incidents: PENDING_REVIEW; APPROVED or MODIFIED and not VERIFIED; APPROVED or MODIFIED, not COMPLETED or VERIFIED, with `due_date` before today |
+| `by_status`, `by_severity`, `by_domain`, `by_month` | Incident counts per value; `by_month` per `YYYY-MM` of `occurred_at` |
+| `trends` | `interval`, `truncated`, `buckets`. One bucket per calendar month (`YYYY-MM`) or ISO week (`YYYY-Www`, Monday start) of `occurred_at`, contiguous and zero-filled from `date_from` (or the earliest occurrence) to `date_to` (or the latest). Each bucket: `period`, `start`, `end`, `incidents`, `closed`, `open`, `responded`, mean and median response hours and days to close for the incidents that occurred in it. At most 260 buckets; a longer range keeps the latest 260 and sets `truncated` (totals still cover the whole range) |
+| `top_hazards`, `top_defects` | Up to 8 `[label, incidents]` pairs: how many incidents list the label in their latest SUCCEEDED triage (`hazards`) or quality investigation (`defects`) run. A label counts once per incident however often the agent was re-run; the rules placeholder "No known ..." is left out. AI decision support, not findings |
+| `capa_by_status`, `capa_work` | Actions per approval status; approved or modified actions per work status |
+| `agents` | Runs for the set's incidents: `runs`, `succeeded`, `failed`, `flagged_for_review`, `fallbacks`, `providers` |
+| `overdue_actions` | Up to 10 overdue actions, earliest due date first |
+| `recent` | The 8 most recently reported incidents in the set |
+
+Cost is bounded by the filter: one light row per incident, grouped SQL aggregates for actions and runs, and the
+first-response times in one grouped query; there are no per-incident queries.
 
 ## Blueprint endpoints not implemented as written
 

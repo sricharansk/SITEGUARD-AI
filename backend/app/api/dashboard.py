@@ -1,5 +1,5 @@
-from collections import Counter
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import desc, select
@@ -10,72 +10,32 @@ from app.api.deps import ok
 from app.core.db import get_db
 from app.core.errors import NotFound
 from app.core.security import Permission, Principal, current_principal
-from app.models import AgentRun, ApprovalStatus, AuditEvent, CapaAction, Incident, IncidentStatus, WorkStatus
+from app.models import AuditEvent
+from app.services import analytics
 
 router = APIRouter(tags=["dashboard"])
 
 
 @router.get("/dashboard")
-def dashboard(project_id: str | None = None, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+def dashboard(
+    project_id: str | None = Query(default=None, description="One readable project; default: every readable project"),
+    date_from: date | None = Query(default=None, description="First day (UTC) the incidents occurred, inclusive"),
+    date_to: date | None = Query(default=None, description="Last day (UTC) the incidents occurred, inclusive"),
+    interval: Literal["month", "week"] = Query(default="month", description="Trend bucket size"),
+    p: Principal = Depends(current_principal),
+    db: Session = Depends(get_db),
+):
+    """Safety and quality metrics for the incidents that occurred in the range (docs/API.md "Dashboard metrics")."""
     visible = p.visible_project_filter(db)
     if project_id:
         if project_id not in visible:
             raise NotFound("Project not found")
         visible = [project_id]
-    incidents = list(db.scalars(select(Incident).where(Incident.project_id.in_(visible)))) if visible else []
-    ids = [i.id for i in incidents]
-    actions = list(db.scalars(select(CapaAction).where(CapaAction.incident_id.in_(ids)))) if ids else []
-    runs = list(db.scalars(select(AgentRun).where(AgentRun.incident_id.in_(ids)))) if ids else []
-    today = date.today()
-    active_actions = [a for a in actions if a.approval_status in (ApprovalStatus.APPROVED, ApprovalStatus.MODIFIED)]
-    overdue = [
-        a
-        for a in active_actions
-        if a.due_date and a.due_date < today and a.work_status not in (WorkStatus.COMPLETED, WorkStatus.VERIFIED)
-    ]
-    days = [
-        (i.closed_at - i.reported_at).total_seconds() / 86400
-        for i in incidents
-        if i.status == IncidentStatus.CLOSED and i.closed_at is not None
-    ]
-
-    hazards: Counter[str] = Counter()
-    for r in runs:
-        if r.agent == "triage" and r.output:
-            hazards.update(h for h in r.output.get("hazards", []) if not h.startswith("No known"))
-    by_month: Counter[str] = Counter(i.occurred_at.strftime("%Y-%m") for i in incidents)
-    open_critical = [i for i in incidents if i.severity.value == "CRITICAL" and i.status != IncidentStatus.CLOSED]
-
-    return ok(
-        {
-            "totals": {
-                "incidents": len(incidents),
-                "open": sum(1 for i in incidents if i.status != IncidentStatus.CLOSED),
-                "open_critical": len(open_critical),
-                "awaiting_review": sum(1 for a in actions if a.approval_status == ApprovalStatus.PENDING_REVIEW),
-                "actions_open": sum(1 for a in active_actions if a.work_status != WorkStatus.VERIFIED),
-                "actions_overdue": len(overdue),
-                "mean_days_to_close": round(sum(days) / len(days), 1) if days else None,
-            },
-            "by_status": Counter(i.status.value for i in incidents),
-            "by_severity": Counter(i.severity.value for i in incidents),
-            "by_domain": Counter(i.domain.value for i in incidents),
-            "by_month": dict(sorted(by_month.items())),
-            "top_hazards": hazards.most_common(8),
-            "capa_by_status": Counter(a.approval_status.value for a in actions),
-            "capa_work": Counter(a.work_status.value for a in active_actions),
-            "agents": {
-                "runs": len(runs),
-                "succeeded": sum(1 for r in runs if r.status == "SUCCEEDED"),
-                "failed": sum(1 for r in runs if r.status == "FAILED"),
-                "flagged_for_review": sum(1 for r in runs if r.needs_human_review),
-                "fallbacks": sum(1 for r in runs if "fallback" in r.provider),
-                "providers": Counter(r.provider for r in runs),
-            },
-            "overdue_actions": [ser.capa(a) for a in overdue[:10]],
-            "recent": [ser.incident(i) for i in sorted(incidents, key=lambda i: i.reported_at, reverse=True)[:8]],
-        }
-    )
+    filters = analytics.Filters(project_ids=visible, date_from=date_from, date_to=date_to, interval=interval)
+    data = analytics.dashboard(db, filters, project_id=project_id)
+    data["overdue_actions"] = [ser.capa(a) for a in data["overdue_actions"]]
+    data["recent"] = [ser.incident(i) for i in data["recent"]]
+    return ok(data)
 
 
 @router.get("/audit")

@@ -129,6 +129,12 @@ export const InfoIcon = (p: IconProps) => (
     <path d="M8 7.2v4M8 4.8v.1" />
   </Svg>
 );
+export const BellIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1.2 1.3H2.8Z" />
+    <path d="M6.6 14.2a1.5 1.5 0 0 0 2.8 0" />
+  </Svg>
+);
 export const HardHatIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M2 11.5h12M3 11.5V10a5 5 0 0 1 10 0v1.5M6.5 5.3V3.5h3v1.8" />

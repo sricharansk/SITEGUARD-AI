@@ -88,7 +88,7 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 16–21 | Triage, safety, quality, RCA, compliance, CAPA agents | Done | Rules provider default; Claude provider with fallback |
 | 22 | Human approval | Done | Approve / modify / reject; critical needs HSE manager |
 | 23 | CAPA workflow | Done | Progress, independent verification, gated closure |
-| 24 | Notifications / escalation | Done | In-app notifications from workflow events, four escalation rules, email outbox with retries and dead letters, idempotent; external delivery off by default. Web screen pending |
+| 24 | Notifications / escalation | Done | In-app notifications from workflow events, four escalation rules, email outbox with retries and dead letters, idempotent; external delivery off by default. Web bell, notifications page and delivery outbox |
 | 25 | Vision foundation | Done | Image preprocessing in a resource-limited child process, analyzer interface, versioned and traceable analyses (evidence SHA-256, analyzer, model and taxonomy versions, thresholds), presented as observations with a disclaimer (DECISIONS 020) |
 | 26 | PPE and hazard detection | Partial | Configurable PPE/hazard classes, thresholds, project/site calibration and evidence-linked detections work end to end; no trained detector yet: `baseline` detects nothing and says so, Claude vision is optional (O8, research-only datasets) |
 | 27 | Quality defect vision | Partial | Defect classes linked to quality agent findings and hypotheses only after engineer confirmation; same detector gap as 26 |
@@ -96,9 +96,9 @@ Status values: **Done**, **Partial** (works, with listed gaps), **Missing**.
 | 29 | Multi-agent orchestration | Done | Bounded workflow checkpointed per stage; pause after a stage, pause, resume, cancel; one active workflow per incident (DECISIONS 007, 021) |
 | 30 | Uncertainty / conflict | Done | Agent, severity, risk, source-document and vision conflicts stored with both sides, notified, resolved by a person before closure; uncertainty summary per workflow |
 | 31 | Incident command center UI | Done | One workspace: summary, risk, evidence, AI triage and investigation, citations, RCA, compliance, CAPA, approvals, verification, timeline; AI output labelled |
-| 32 | Dashboard / analytics | Partial | Dashboard API and screen; no date filters or response-time trend yet |
-| 33 | Knowledge search | Partial | Hybrid search and grounded answer APIs; the web screen shows search results, not yet grounded answers or uploads |
-| 34 | Reports | Done | Incident report in Markdown, Word and PDF from stored records: incident, history, evidence, risk, labelled AI analysis, actions, approval history, verification, cited sources; audited with SHA-256; snapshot-tested. Web download button pending |
+| 32 | Dashboard / analytics | Done | Project, date and interval filters; response and closure times; monthly or weekly trends; top hazards and defects; metric definitions in `docs/API.md#dashboard-metrics` |
+| 33 | Knowledge search | Done | Web screen for hybrid search with provenance, grounded answers (citations, insufficient and conflicting evidence, unsupported claims) and document upload |
+| 34 | Reports | Done | Incident report in Markdown, Word and PDF from stored records: incident, history, evidence, risk, labelled AI analysis, actions, approval history, verification, cited sources; audited with SHA-256; snapshot-tested. Download from the incident workspace |
 | 35 | Audit / provenance | Done | Audit events with correlation IDs; evidence hashes |
 | 36 | Observability | Partial | JSON logs, correlation IDs; no metrics / OpenTelemetry |
 | 37 | Resilience | Done | Bounded retries with backoff, provider fallback, failure isolation, stage rollback, resumable after a crash (lease); no external queue (single API process) |

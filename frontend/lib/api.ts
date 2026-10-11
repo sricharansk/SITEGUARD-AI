@@ -1,6 +1,6 @@
 // Browser-side API client. Every call goes to the same-origin BFF proxy (/api/backend/...), which adds the
 // bearer token from the httpOnly session cookie. The token is never visible to browser JavaScript.
-import type { ApiErrorBody, Envelope } from "./types";
+import type { ApiErrorBody, Envelope, ReportFormat } from "./types";
 
 export const API_BASE = "/api/backend";
 
@@ -142,6 +142,84 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
 export function evidenceDownloadUrl(evidenceId: string): string {
   return `${API_BASE}/evidence/${encodeURIComponent(evidenceId)}/download`;
+}
+
+export interface DownloadedFile {
+  blob: Blob;
+  filename: string;
+  /** X-Report-SHA256: the digest the API recorded in the audit log for this exact file. */
+  sha256: string | null;
+}
+
+/** The file name from `Content-Disposition: attachment; filename="..."`, without any path. */
+export function filenameFromDisposition(value: string | null): string | null {
+  if (!value) return null;
+  const encoded = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(value);
+  let name: string | null = null;
+  if (encoded?.[1]) {
+    try {
+      name = decodeURIComponent(encoded[1].trim());
+    } catch {
+      name = null;
+    }
+  }
+  name ??= /filename\s*=\s*"([^"]*)"/i.exec(value)?.[1] ?? /filename\s*=\s*([^;]+)/i.exec(value)?.[1]?.trim() ?? null;
+  const base = name?.split(/[\\/]/).pop()?.trim();
+  return base ? base : null;
+}
+
+export function reportPath(incidentId: string, format: ReportFormat, includeAi: boolean): string {
+  return buildPath(`/incidents/${encodeURIComponent(incidentId)}/report`, { format, include_ai: includeAi });
+}
+
+/**
+ * GET /incidents/{id}/report as a file. The BFF passes the bytes, Content-Disposition and X-Report-SHA256 through
+ * unchanged; errors come back as the usual envelope and are thrown as ApiError.
+ */
+export async function downloadReport(
+  incidentId: string,
+  format: ReportFormat,
+  includeAi: boolean,
+  signal?: AbortSignal,
+): Promise<DownloadedFile> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${reportPath(incidentId, format, includeAi)}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw toApiError(error);
+  }
+  if (!res.ok) {
+    try {
+      await parseEnvelope<unknown>(res);
+    } catch (error) {
+      if (error instanceof ApiError && error.isUnauthenticated) onUnauthenticated(error);
+      throw error;
+    }
+  }
+  return {
+    blob: await res.blob(),
+    filename: filenameFromDisposition(res.headers.get("content-disposition")) ?? `incident-report.${format}`,
+    sha256: res.headers.get("x-report-sha256"),
+  };
+}
+
+/** Hand a downloaded file to the browser's save flow. */
+export function saveFile(file: DownloadedFile): void {
+  const url = URL.createObjectURL(file.blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Revoke after the click has been handled; the download keeps its own reference.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /** Sign in through the BFF; the session cookie is set by the server. Throws ApiError on failure. */

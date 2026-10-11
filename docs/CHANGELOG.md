@@ -48,6 +48,10 @@
   locations, incidents, evidence, documents, hazards, causes, requirements, actions and verifications with
   provenance on every node and relationship; idempotent `graph-sync` job and `POST /graph/sync`;
   `GET /incidents/{id}/graph`; off by default.
+- Prompts 32 and 33 web: dashboard filters (project, period, month or week) with response and closure times and
+  trends (`services/analytics.py`, metric definitions in `docs/API.md`); knowledge screen with grounded answers,
+  document upload and search provenance; notification bell, notifications page and delivery outbox; report download
+  in the incident workspace. Browser E2E for answers, uploads, reports, notifications and dashboard filters.
 - Prompt 34 reports: `GET /incidents/{id}/report` in Markdown, Word or PDF (fpdf2), built only from stored records
   with labelled AI sections, approval history, verification and cited sources; generation audited with SHA-256.
 - Web app (`frontend/`, Next.js 16): sign-in through a same-origin BFF with an httpOnly session cookie, project

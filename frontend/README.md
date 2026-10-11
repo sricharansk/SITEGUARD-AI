@@ -62,9 +62,11 @@ browser ──same origin──▶ Next.js server (BFF) ──Bearer token──
   cookie (httpOnly, SameSite=Lax, Path=/, 8 hours, Secure when `NODE_ENV=production`). The token is never returned
   to browser JavaScript. `DELETE` signs out.
 - `app/api/backend/[...path]/route.ts`: forwards GET/POST/PATCH (JSON and multipart) to `SITEGUARD_API_URL` with
-  `Authorization: Bearer <cookie>`. It passes the status, body, `Content-Type`, `Content-Disposition` and
-  `X-Correlation-ID` through, and nothing else (no upstream cookies). Only the API roots the app uses are
-  reachable; `/auth/*` and the OpenAPI docs are not. When the API answers 401, the cookie is cleared.
+  `Authorization: Bearer <cookie>`. It streams the status and body through unchanged (binary reports and evidence
+  byte for byte) with `Content-Type`, `Content-Disposition`, `X-Report-SHA256` and `X-Correlation-ID`, and nothing
+  else (no upstream cookies or server headers). Only the API roots the app uses are reachable (including
+  `knowledge` and `notifications`); `/auth/*` and the OpenAPI docs are not. When the API answers 401, the cookie is
+  cleared.
 - CSRF: every non-GET request to the BFF must carry an `Origin` that matches the `Host` (or is listed in
   `SITEGUARD_ALLOWED_ORIGINS`); anything else gets 403 before the API is called. SameSite=Lax is the second layer.
 - `proxy.ts` redirects page requests without a session cookie to `/login?next=...`. It is only a convenience:
@@ -81,7 +83,10 @@ In production, serve the app over HTTPS: the session cookie is Secure, so a brow
 The browser never decides authorization. `GET /projects` and `GET /incidents/{id}` return a `permissions` array
 for the signed-in user; `lib/permissions.ts` uses it only to decide which controls to show (for example the
 Approve button needs `APPROVE_CAPA`, or `APPROVE_CRITICAL` for a critical action, and the audit log needs
-`VIEW_AUDIT`). The API checks every call again. A 403 renders the "Not authorized" state, a 404 says the record
+`VIEW_AUDIT`). Organization-wide features use the memberships in `GET /me` (`meOrgWideCan`): the delivery outbox
+needs an organization-wide `VIEW_AUDIT` role, retrying a delivery an organization-wide `MANAGE_PROJECTS` role, and
+organization-wide documents an organization-wide `MANAGE_DOCUMENTS` role, mirroring `Principal.require_org_wide`.
+The API checks every call again. A 403 renders the "Not authorized" state, a 404 says the record
 does not exist or is outside the user's projects (the API does not reveal which), and a 401 sends the user to
 sign in.
 
@@ -101,12 +106,13 @@ sign in.
 | Route | What it does |
 |---|---|
 | `/login` | Sign in through the BFF. |
-| `/dashboard` | KPI tiles, incidents by status, severity, domain and month, recurring hazards from AI triage, agent run health, CAPA status, overdue actions, recent incidents. |
+| `/dashboard` | One filter row (period of occurrence with presets or From/To in UTC, trend by month or ISO week, this project or all the user's projects; an inverted or invalid range is refused before it is sent). KPI tiles including closed, awaiting first response, median first response and mean days to close; response and closure trend charts (three single-series charts, never a dual axis, with an exact table); incidents by status, severity and domain; recurring hazards from AI triage and quality defects from AI quality investigation; agent run health; CAPA status; overdue actions; recent incidents. The previous numbers stay, dimmed, while a new slice loads. |
 | `/incidents` | Incident register with status, severity, domain and text filters. |
 | `/incidents/new` | Report an incident (validated in the browser, validated again by the API). |
-| `/incidents/[id]` | Command center: reported facts, lifecycle, evidence upload and download with SHA-256, AI investigation with staged progress and labelled agent panels, risk matrix and human risk assessment, CAPA review (approve, modify, reject with a reason), progress, verification, manual status changes, closure with the API's close blockers, timeline. |
+| `/incidents/[id]` | Command center: reported facts, lifecycle, evidence upload and download with SHA-256, AI investigation with staged progress and labelled agent panels, risk matrix and human risk assessment, CAPA review (approve, modify, reject with a reason), progress, verification, manual status changes, closure with the API's close blockers, report download (PDF, Word or Markdown, with or without the labelled AI analysis; shows the file name and the audited SHA-256), timeline. |
 | `/review` | CAPA board with the pending review queue and tabs by approval and work status. |
-| `/knowledge` | Documents and authorized search with source title, document type, citation ref and the suspicious-content flag. |
+| `/knowledge` | Ask the documents: grounded answers from `POST /knowledge/answer`, framed as AI decision support, with each statement linked to its citation (title, version, page, section), and the insufficient-evidence and conflicting-evidence statuses stated plainly; removed unsupported claims appear only as struck-out text. Authorized search with version, page, section, effective date and scope on every hit. Documents with processing status; users with `MANAGE_DOCUMENTS` upload a file (PDF, Word, Markdown, text) or paste text and see the processing result. |
+| `/notifications` | The signed-in user's notifications with priority, Open incident, Mark as read and Mark all as read; for organization-wide auditors, HSE managers and administrators, the email delivery outbox with a status filter and, for administrators and project managers, Retry on FAILED or SKIPPED deliveries. The header bell shows the unread count and refreshes on navigation, every minute and after marking read. |
 | `/audit` | Audit log, shown only with `VIEW_AUDIT`. |
 
 AI output is framed consistently (`components/ai/ai-panel.tsx`): dashed violet border, the "AI decision support,
@@ -130,7 +136,9 @@ Charts print their values and have a screen-reader table.
 npm run lint        # ESLint (next core-web-vitals + TypeScript + jsx-a11y rules), no warnings allowed
 npm run typecheck   # next typegen && tsc --noEmit
 npm test            # Vitest: API client and envelope, permission gating, badges, AI panel labelling,
-                    # screen states, BFF origin check, proxy route, session cookie, page redirect
+                    # screen states, BFF origin check, proxy route (binary pass-through), session cookie,
+                    # page redirect, dashboard filters and trends, grounded answer, document upload,
+                    # notifications bell, list and outbox, report download
 npm run build
 ```
 
@@ -143,6 +151,13 @@ tests in jsdom. None of them needs the API.
 evidence file, runs the AI investigation, checks the labelled AI panels and approves a proposed action with a
 reason; then the auditor signs in and sees the same incident read-only, with no Approve, Run AI investigation or
 Upload evidence controls, and the unauthorized state on the report form.
+
+`e2e/knowledge-reports-notifications.spec.ts` covers the knowledge, report, notification and dashboard screens: a
+grounded answer citing the excavation procedure (title, version, section) and an insufficient-evidence answer; a
+Markdown upload that reaches Ready and is found by search with its version, page and section; a Markdown report
+download whose bytes hash to the SHA-256 the page shows; a critical incident reported by the project manager that
+reaches the HSE manager's bell and is marked read (the project manager sees no outbox); the administrator retrying a
+skipped email delivery; and the dashboard refusing an inverted range and applying a range with a weekly trend.
 
 ```bash
 make run                                   # API with demo data on :8000
@@ -157,7 +172,7 @@ npm run e2e                                # or: make web-e2e
 | `E2E_PASSWORD` | `siteguard-demo` | Demo account password. |
 | `PW_CHROMIUM_PATH` | unset | Use a preinstalled Chromium instead of the one `playwright install` downloads. |
 
-The test creates a new incident on each run, so it can run repeatedly against the same database. CI runs it
+The tests create new incidents and documents on each run, so it can run repeatedly against the same database. CI runs it
 against a fresh SQLite database with the offline rules provider (`.github/workflows/ci.yml`, job `e2e`).
 
 ## Known limitations
@@ -169,3 +184,8 @@ against a fresh SQLite database with the offline rules provider (`.github/workfl
   IDs, because member names come from `GET /projects/{id}/members`.
 - Citations to knowledge chunks show the document title when the compliance agent reported it; otherwise a short
   chunk ID (there is no chunk lookup endpoint).
+- The delivery outbox shows the organization of the selected project only; switch project to see another
+  organization's outbox. Recipient names resolve only for members of the selected project (others show as user IDs).
+- There is no button to run the notification jobs; they run on a schedule (`python -m app.jobs all`) or through
+  `POST /notifications/run`.
+- Dashboard dates are UTC calendar days of when the incident occurred, not the viewer's local days.

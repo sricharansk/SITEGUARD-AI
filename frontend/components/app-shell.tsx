@@ -8,6 +8,7 @@ import { roleLabel } from "@/lib/format";
 import { meCan } from "@/lib/permissions";
 import { useAppContext } from "./app-context";
 import { HardHatIcon } from "./icons";
+import { NotificationBell } from "./notifications/bell";
 import { ErrorState, LoadingState, EmptyState } from "./states";
 
 const NAV = [
@@ -118,6 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex flex-wrap items-center gap-4">
             <ProjectSwitcher />
+            <NotificationBell />
             <UserMenu />
           </div>
         </div>

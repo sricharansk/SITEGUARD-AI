@@ -249,21 +249,53 @@ export interface InvestigationResult {
   flags: string[];
 }
 
+export type TrendInterval = "month" | "week";
+
+/** One trend period: the incidents that occurred in it (backend/app/services/analytics.py). */
+export interface TrendBucket {
+  period: string;
+  start: string;
+  end: string;
+  incidents: number;
+  closed: number;
+  open: number;
+  responded: number;
+  median_response_hours: number | null;
+  mean_response_hours: number | null;
+  median_days_to_close: number | null;
+  mean_days_to_close: number | null;
+}
+
 export interface Dashboard {
+  filters: {
+    project_id: string | null;
+    projects: number;
+    date_from: string | null;
+    date_to: string | null;
+    interval: TrendInterval;
+  };
   totals: {
     incidents: number;
     open: number;
     open_critical: number;
+    closed: number;
     awaiting_review: number;
     actions_open: number;
     actions_overdue: number;
     mean_days_to_close: number | null;
+    median_days_to_close: number | null;
+    responded: number;
+    awaiting_response: number;
+    mean_response_hours: number | null;
+    median_response_hours: number | null;
   };
   by_status: Record<string, number>;
   by_severity: Record<string, number>;
   by_domain: Record<string, number>;
   by_month: Record<string, number>;
+  trends: { interval: TrendInterval; truncated: boolean; buckets: TrendBucket[] };
   top_hazards: [string, number][];
+  top_defects: [string, number][];
   capa_by_status: Record<string, number>;
   capa_work: Record<string, number>;
   agents: {
@@ -278,17 +310,35 @@ export interface Dashboard {
   recent: Incident[];
 }
 
+export type DocumentStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
+
 export interface KnowledgeDocument {
   id: string;
+  organization_id: string;
+  project_id: string | null;
+  scope: "project" | "organization";
   title: string;
   doc_type: string;
   source: string;
   version: string;
+  effective_date: string | null;
+  tags: string[];
   domain: Domain;
-  project_id: string | null;
+  status: DocumentStatus;
+  /** Why processing failed (FAILED only); safe to show. */
+  error: string | null;
+  file_name: string | null;
+  content_type: string | null;
+  size_bytes: number | null;
+  page_count: number | null;
+  parser: string | null;
   chunks: number;
   suspicious_chunks: number;
   sha256: string;
+  processed_at: string | null;
+  created_at: string;
+  /** Present on ingest responses: true when the same content, version and scope already existed. */
+  duplicate?: boolean;
 }
 
 export interface SearchHit {
@@ -299,10 +349,88 @@ export interface SearchHit {
   domain: Domain;
   source: string;
   section: string;
+  page: number | null;
+  version: string;
+  effective_date: string | null;
+  tags: string[];
+  scope: "project" | "organization";
+  project_id: string | null;
   text: string;
   score: number;
+  scores: Record<string, number>;
   suspicious: boolean;
 }
+
+export type AnswerStatus = "ANSWERED" | "INSUFFICIENT_EVIDENCE" | "CONFLICTING_EVIDENCE";
+
+export interface AnswerCitation {
+  ref: string;
+  document_id: string;
+  document_title: string;
+  section: string;
+  page: number | null;
+  version: string;
+  effective_date: string | null;
+}
+
+/** POST /knowledge/answer (backend/app/services/answer.py). */
+export interface KnowledgeAnswer {
+  status: AnswerStatus;
+  answer: string;
+  statements: { text: string; citations: string[] }[];
+  citations: AnswerCitation[];
+  confidence: number;
+  uncertainty: string;
+  unsupported_claims: string[];
+  conflicts: string[];
+  excluded_sources: { ref: string; reason: string }[];
+  needs_human_review: boolean;
+  provider: string;
+  retrieval: { sources: number; best_rerank: number; question_coverage: number };
+  disclaimer: string;
+}
+
+export type NotificationPriority = "INFO" | "HIGH" | "CRITICAL";
+
+export interface AppNotification {
+  id: string;
+  organization_id: string;
+  project_id: string | null;
+  incident_id: string | null;
+  kind: string;
+  priority: NotificationPriority | string;
+  title: string;
+  body: string;
+  entity_type: string;
+  entity_id: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface NotificationList {
+  unread: number;
+  items: AppNotification[];
+}
+
+export type DeliveryStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
+export const DELIVERY_STATUSES: readonly DeliveryStatus[] = ["PENDING", "SENT", "FAILED", "SKIPPED"];
+
+export interface NotificationDelivery {
+  id: string;
+  notification_id: string;
+  kind: string;
+  title: string;
+  recipient_id: string;
+  channel: string;
+  status: DeliveryStatus;
+  attempts: number;
+  last_error: string | null;
+  next_attempt_at: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
+
+export type ReportFormat = "md" | "docx" | "pdf";
 
 export interface AuditEvent {
   id: string;
