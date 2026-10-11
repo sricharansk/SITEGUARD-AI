@@ -122,7 +122,10 @@ jobs:
           API_APP: ${{ steps.resources.outputs.api }}
           WEB_APP: ${{ steps.resources.outputs.web }}
         run: |
-          test -n "$API_APP" && test -n "$WEB_APP" || { echo "::error::apps not found (run Bicep phase 2)"; exit 1; }
+          if [ -z "$API_APP" ] || [ -z "$WEB_APP" ]; then
+            echo "::error::apps not found (run Bicep phase 2)"
+            exit 1
+          fi
           api="$(az containerapp show -n "$API_APP" -g "$RESOURCE_GROUP" --query 'properties.template.containers[0].image' -o tsv)"
           web="$(az containerapp show -n "$WEB_APP" -g "$RESOURCE_GROUP" --query 'properties.template.containers[0].image' -o tsv)"
           restore_point="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
