@@ -65,8 +65,39 @@ and the run's provider reads `rules (fallback from anthropic)`. Seeding always u
 
 Retrieved documents and incident text are data. Incident text and evidence descriptions are also scanned; a match
 flags every run for review. Chunks matching instruction-like patterns are marked
-`suspicious` at ingestion; agents never cite them and the run is flagged. The Claude provider wraps the pack in
-`<evidence_pack>` tags with an instruction not to follow anything inside it.
+`suspicious` at ingestion (title, heading and text are checked); agents never cite them and the run is flagged.
+The Claude provider wraps the pack in `<evidence_pack>` tags with an instruction not to follow anything inside it,
+and escapes `<` and `>` in the pack so its content cannot close the tag.
+
+## Retrieval
+
+`services/rag.py`, used by the `search_knowledge` tool, `GET /search` and knowledge answers. Documents are parsed
+(PDF pages, DOCX headings and tables, Markdown), split into chunks that keep their section heading and PDF page,
+and embedded. Access filters (organization, then organization-wide or this project's documents, `READY` only) are
+applied in the database query before any scoring. BM25 and vector similarity rank the allowed chunks, reciprocal
+rank fusion combines them, and a deterministic reranker (query coverage, heading match, phrase match) orders the
+top candidates. The embedder is offline and deterministic (`hashing-bow` v1, Decision 017); a semantic model plugs
+in behind the `Embedder` interface. `SITEGUARD_RETRIEVAL_MODE=lexical` uses BM25 only.
+
+## Knowledge answers (`POST /knowledge/answer`)
+
+A bounded RAG answer, separate from the incident workflow (`services/answer.py`):
+
+1. Retrieve up to 6 hits through the hybrid search, scoped to the caller's organization and project (plus
+   organization-wide documents). With an `incident_id`, the incident title is added to the query.
+2. Drop suspicious (instruction-like) chunks and list them under `excluded_sources`.
+3. If no source contains at least a third of the question's terms, return `INSUFFICIENT_EVIDENCE` without calling
+   any model.
+4. The answerer drafts statements, each citing `chunk:` refs: `rules` extracts the best-matching source sentences;
+   `anthropic` uses Claude with the sources wrapped in `<sources>` as untrusted data and the `AnswerDraft` schema.
+   A provider failure falls back to `rules` (`provider` reads `rules (fallback from anthropic)`).
+5. Every statement must cite a retrieved ref and share at least half of its terms with a cited chunk; anything else
+   moves to `unsupported_claims` and is not part of the answer.
+6. Statements from different documents that give different values in the same unit for the same requirement are
+   reported in `conflicts`; the status becomes `CONFLICTING_EVIDENCE` and confidence is capped at 0.4.
+
+`needs_human_review` is true unless the status is `ANSWERED`, nothing was unsupported and confidence ≥ 0.5. Every
+answer carries the decision-support disclaimer and is audited as `knowledge.answer`.
 
 ## Risk engine
 

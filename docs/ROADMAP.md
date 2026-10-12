@@ -12,6 +12,12 @@ notifications and two-level escalation of overdue actions; investigation reports
 taxonomy coverage (11 safety + 9 quality classes); evaluation set with held-out split and red-team suite; dataset
 registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single image serving API + web app.
 
+## IN PROGRESS — rebuilding PR #2 on main
+
+Done: A hardening, Azure IaC and deploy workflow, staging, operations; B document parsing (PDF, DOCX), embeddings,
+hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox. Next: D vision, knowledge
+graph, resumable workflows and conflicts; E web screens for these.
+
 ## NOW
 
 Run the OSHA SIR pipeline on the real 2024-2026 file and publish the report; score the Claude provider on the gold
@@ -20,9 +26,9 @@ Flexible Server, Blob Storage for evidence, Key Vault).
 
 ## NEXT
 
-pgvector hybrid retrieval; vision (PPE and defect detection, licensed datasets only); Neo4j knowledge graph;
-email/Teams notification adapters; OIDC (Entra ID) with httpOnly cookies; BLS CFOI and HSE benchmarks on the
-dashboard; load tests.
+A semantic embedding model (owner decision: data residency, cost); vision (PPE and defect detection, licensed
+datasets only); Neo4j knowledge graph; Teams notification adapter and per-user email preferences; OIDC (Entra ID) with httpOnly cookies;
+BLS CFOI and HSE benchmarks on the dashboard; load tests.
 
 ## LATER
 

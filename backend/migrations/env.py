@@ -27,6 +27,12 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    passed = config.attributes.get("connection")  # app.core.db.run_migrations passes an open connection
+    if passed is not None:
+        context.configure(connection=passed, target_metadata=target_metadata, render_as_batch=True)
+        with context.begin_transaction():
+            context.run_migrations()
+        return
     engine = create_engine(_url())
     with engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, render_as_batch=True)

@@ -50,7 +50,10 @@ def _envelope(request: Request, status: int, code: str, message: str) -> JSONRes
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(request: Request, exc: AppError):
-        return _envelope(request, exc.status_code, exc.code, exc.message)
+        response = _envelope(request, exc.status_code, exc.code, exc.message)
+        if retry := getattr(exc, "retry_after", None):
+            response.headers["Retry-After"] = str(retry)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError):

@@ -7,8 +7,11 @@ retrieve the procedures that apply, propose corrective and preventive actions (C
 verified closure. AI agents do the first pass; qualified people approve every action and close every incident.
 
 > Status: **0.2.0 pilot.** Web app, API, six bounded agents, human approval workflow, escalation, reports,
-> evaluation and red-team suite, migrations, Docker and CI are working. Not yet built: pgvector hybrid retrieval,
-> vision, knowledge graph, OIDC, Azure resources ([ROADMAP](docs/ROADMAP.md)).
+> evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
+> deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
+> Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
+> vectors), grounded answers with citations, Word/PDF reports and an email outbox; still being ported: vision,
+> knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -35,8 +38,13 @@ flowchart LR
   automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the person who
   did the work cannot verify it, and an incident cannot close until every approved action is verified effective.
-- **Workflow:** action queue, notifications, two-level escalation of overdue actions, Markdown investigation report
-  per incident with AI sections labelled and every human decision named.
+- **Workflow:** action queue, notifications with an email outbox (off by default; retries and dead letters), two-level
+  escalation of overdue actions, investigation report per incident in Markdown, Word or PDF with AI sections
+  labelled and every human decision named.
+- **Knowledge base:** upload procedures, ITPs and specifications as PDF, DOCX or Markdown (parsed in an isolated,
+  resource-limited process, with page and section provenance); hybrid search (BM25 + vectors, pgvector in
+  PostgreSQL); `POST /knowledge/answer` returns cited answers, or says plainly that the evidence is insufficient or
+  conflicting.
 - **Enterprise basics:** nine roles with server-side RBAC, tenant isolation, evidence validation and SHA-256
   provenance, audit trail with correlation IDs, Alembic migrations, consistent error envelope.
 
@@ -83,7 +91,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 88 backend tests (incl. evaluation and red-team gates)
+make test            # 203 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker
@@ -105,7 +113,8 @@ frontend/        Next.js + TypeScript + Tailwind web app (static export served b
 backend/app/
   agents/        framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/           FastAPI routes
-  services/      risk, lifecycle, CAPA/approval/verification, notifications/escalation, reports, RAG, evidence, audit
+  services/      risk, lifecycle, CAPA/approval/verification, notifications/escalation, reports, document parsing,
+                 embeddings, hybrid retrieval, grounded answers, evidence, audit
   datasets/      public dataset pipelines (OSHA Severe Injury Reports)
   evaluation.py  gold-set evaluation and red-team suite
   jobs.py        scheduled jobs (escalate overdue actions)
@@ -122,8 +131,8 @@ scripts/         resolve_all.py (results run), demo_walkthrough.py (single incid
 ## Tech stack
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK; Next.js 16,
-React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions. Planned: Azure Container Apps, pgvector
-hybrid search, Neo4j, vision models, Entra ID.
+React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; Azure Bicep. Planned: Neo4j, vision models,
+Entra ID.
 
 ## Data and datasets
 

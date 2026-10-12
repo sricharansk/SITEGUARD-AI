@@ -19,6 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.core.vector import VectorType
 
 
 def _uuid() -> str:
@@ -185,6 +186,13 @@ class Evidence(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class DocumentStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    READY = "READY"
+    FAILED = "FAILED"
+
+
 class Document(Timestamped, Base):
     """Knowledge document for retrieval (procedure, ITP, spec, guidance). Content is untrusted."""
 
@@ -198,7 +206,24 @@ class Document(Timestamped, Base):
     version: Mapped[str] = mapped_column(String(40), default="1")
     domain: Mapped[Domain] = mapped_column(Enum(Domain, native_enum=False), default=Domain.BOTH)
     sha256: Mapped[str] = mapped_column(String(64))
-    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document", lazy="selectin")
+    # Processing state: PENDING -> PROCESSING -> READY | FAILED (docs/DATABASE.md).
+    status: Mapped[DocumentStatus] = mapped_column(
+        Enum(DocumentStatus, native_enum=False), default=DocumentStatus.READY, server_default="READY"
+    )
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    storage_key: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parser: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
+    uploaded_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
+        back_populates="document", lazy="selectin", order_by="DocumentChunk.ordinal"
+    )
 
 
 class DocumentChunk(Base):
@@ -207,9 +232,26 @@ class DocumentChunk(Base):
     document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"), index=True)
     ordinal: Mapped[int] = mapped_column(Integer)
     section: Mapped[str] = mapped_column(String(300))
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)
     text: Mapped[str] = mapped_column(Text)
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     suspicious: Mapped[bool] = mapped_column(Boolean, default=False)
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+class ChunkEmbedding(Base):
+    """One vector per chunk and embedding model version. Re-embedding the same content is a no-op."""
+
+    __tablename__ = "chunk_embeddings"
+    __table_args__ = (UniqueConstraint("chunk_id", "model", "model_version"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("document_chunks.id", ondelete="CASCADE"), index=True)
+    model: Mapped[str] = mapped_column(String(80))
+    model_version: Mapped[str] = mapped_column(String(40))
+    dim: Mapped[int] = mapped_column(Integer)
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    vector: Mapped[list] = mapped_column(VectorType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class AgentRun(Base):
@@ -305,7 +347,7 @@ class AuditEvent(Base):
 
 
 class Notification(Base):
-    """In-app notification for one user. Delivery adapters (email, Teams) can read from this table later."""
+    """In-app notification for one user. External delivery (email) goes through `notification_deliveries`."""
 
     __tablename__ = "notifications"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
@@ -317,3 +359,32 @@ class Notification(Base):
     capa_id: Mapped[str | None] = mapped_column(ForeignKey("capa_actions.id"), nullable=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    deliveries: Mapped[list["NotificationDelivery"]] = relationship(
+        back_populates="notification", cascade="all, delete-orphan"
+    )
+
+
+class DeliveryStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"  # dead letter: every attempt failed; an administrator can retry it
+    SKIPPED = "SKIPPED"  # external delivery disabled when the job ran; an administrator can retry it
+
+
+class NotificationDelivery(Base):
+    """Outbox row for sending one notification on one channel, with bounded retries (docs/API.md#notifications)."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (UniqueConstraint("notification_id", "channel"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    notification_id: Mapped[str] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))  # EMAIL
+    status: Mapped[DeliveryStatus] = mapped_column(
+        Enum(DeliveryStatus, native_enum=False), default=DeliveryStatus.PENDING, index=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    notification: Mapped[Notification] = relationship(back_populates="deliveries")

@@ -1,0 +1,206 @@
+name: Deploy
+
+# Manual only. Builds the image (API + web app) for the selected commit, pushes it to the environment's Azure
+# Container Registry, runs the database migrations as a Container Apps job, rolls out the app and the scheduled job,
+# and smoke-tests the result. Azure access is OpenID Connect federation (no stored cloud credentials); the GitHub
+# environment's protection rules (required reviewers, main-only for production) gate every run.
+# Setup, first deployment and rollback: docs/DEPLOYMENT.md#azure.
+#
+# GitHub environment variables (Settings > Environments > <environment>): AZURE_CLIENT_ID, AZURE_TENANT_ID,
+# AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, optional SITEGUARD_PUBLIC_ORIGIN (custom domain, https://host).
+# Optional environment secrets: SMOKE_TEST_EMAIL and SMOKE_TEST_PASSWORD (a least-privilege account for the smoke test).
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+      push_only:
+        description: Only build and push the image (first deployment, before Bicep phase 2)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for azure/login
+  actions: read # check that CI passed for this commit
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.web.outputs.url }}
+    env:
+      TARGET: ${{ inputs.environment }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      PUBLIC_ORIGIN: ${{ vars.SITEGUARD_PUBLIC_ORIGIN }}
+    steps:
+      - name: Production deploys only from main
+        if: inputs.environment == 'production' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::production deploys only from main (this run: $GITHUB_REF)"
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: CI passed for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&status=success" \
+            --jq '.total_count')"
+          if [ "$passed" -lt 1 ]; then
+            echo "::error::no successful CI run for $GITHUB_SHA; deploy only commits that passed CI"
+            exit 1
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Find the environment's resources
+        id: resources
+        run: |
+          test -n "$RESOURCE_GROUP" || { echo "::error::set the AZURE_RESOURCE_GROUP environment variable"; exit 1; }
+          az extension add --name containerapp --upgrade --only-show-errors
+          registry="$(az resource list -g "$RESOURCE_GROUP" --resource-type Microsoft.ContainerRegistry/registries \
+            --query '[0].name' -o tsv)"
+          test -n "$registry" || { echo "::error::no container registry in $RESOURCE_GROUP (run Bicep phase 1)"; exit 1; }
+          {
+            echo "registry=$registry"
+            echo "login_server=$(az acr show -n "$registry" --query loginServer -o tsv)"
+            for role in api jobs migrate; do
+              echo "$role=$(az resource list -g "$RESOURCE_GROUP" --tag "siteguard-role=$role" --query '[0].name' -o tsv)"
+            done
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the image
+        id: images
+        env:
+          REGISTRY: ${{ steps.resources.outputs.registry }}
+          LOGIN_SERVER: ${{ steps.resources.outputs.login_server }}
+        run: |
+          az acr login --name "$REGISTRY"
+          docker build -f backend/Dockerfile -t "$LOGIN_SERVER/siteguard-api:$GITHUB_SHA" .
+          docker push "$LOGIN_SERVER/siteguard-api:$GITHUB_SHA"
+          # Deploy by digest, so a re-pushed tag can never change what runs.
+          image="$(docker image inspect -f '{{index .RepoDigests 0}}' "$LOGIN_SERVER/siteguard-api:$GITHUB_SHA")"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          # shellcheck disable=SC2016  # the backticks are Markdown for the job summary
+          printf '## Image for %s (%s)\n- API + web app: `%s`\n' "$TARGET" "$GITHUB_SHA" "$image" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop after pushing (first deployment)
+        if: inputs.push_only
+        run: |
+          echo "Image pushed. Run Bicep phase 2 with deployApps=true and the image reference above." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record rollback point
+        if: ${{ !inputs.push_only }}
+        id: before
+        env:
+          API_APP: ${{ steps.resources.outputs.api }}
+        run: |
+          if [ -z "$API_APP" ]; then
+            echo "::error::app not found (run Bicep phase 2)"
+            exit 1
+          fi
+          image="$(az containerapp show -n "$API_APP" -g "$RESOURCE_GROUP" --query 'properties.template.containers[0].image' -o tsv)"
+          restore_point="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          # shellcheck disable=SC2016  # the backticks are Markdown for the job summary
+          printf '## Rollback point\n- Previous image: `%s`\n- Database point-in-time restore target (before migrations): `%s`\n' \
+            "$image" "$restore_point" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run database migrations (new image, before the rollout)
+        if: ${{ !inputs.push_only }}
+        env:
+          MIGRATE_JOB: ${{ steps.resources.outputs.migrate }}
+          IMAGE: ${{ steps.images.outputs.image }}
+        run: |
+          az containerapp job update -n "$MIGRATE_JOB" -g "$RESOURCE_GROUP" --image "$IMAGE" --only-show-errors -o none
+          execution="$(az containerapp job start -n "$MIGRATE_JOB" -g "$RESOURCE_GROUP" --query name -o tsv)"
+          echo "migration execution: $execution"
+          for _ in $(seq 1 120); do
+            status="$(az containerapp job execution show -n "$MIGRATE_JOB" -g "$RESOURCE_GROUP" \
+              --job-execution-name "$execution" --query properties.status -o tsv)"
+            case "$status" in
+              Succeeded) echo "migrations applied"; exit 0 ;;
+              Failed|Stopped|Degraded)
+                echo "::error::migration $execution ended $status; the running app was not changed"
+                echo "Migration failed: the app still runs the previous image. See the job logs in Log Analytics." \
+                  >> "$GITHUB_STEP_SUMMARY"
+                exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::migration $execution did not finish in 30 minutes"
+          exit 1
+
+      - name: Roll out the app and the scheduled job
+        if: ${{ !inputs.push_only }}
+        env:
+          API_APP: ${{ steps.resources.outputs.api }}
+          JOBS: ${{ steps.resources.outputs.jobs }}
+          IMAGE: ${{ steps.images.outputs.image }}
+        run: |
+          az containerapp update -n "$API_APP" -g "$RESOURCE_GROUP" --image "$IMAGE" --only-show-errors -o none
+          az containerapp job update -n "$JOBS" -g "$RESOURCE_GROUP" --image "$IMAGE" --only-show-errors -o none
+
+      - name: Public origin
+        if: ${{ !inputs.push_only }}
+        id: web
+        env:
+          API_APP: ${{ steps.resources.outputs.api }}
+        run: |
+          origin="$PUBLIC_ORIGIN"
+          if [ -z "$origin" ]; then
+            origin="https://$(az containerapp show -n "$API_APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)"
+          fi
+          echo "origin=$origin" >> "$GITHUB_OUTPUT"
+          echo "url=$origin/app/" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: ${{ !inputs.push_only }}
+        with:
+          python-version: "3.12"
+
+      - name: Smoke test
+        if: ${{ !inputs.push_only }}
+        env:
+          ORIGIN: ${{ steps.web.outputs.origin }}
+          SITEGUARD_SMOKE_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SITEGUARD_SMOKE_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+        run: |
+          pip install httpx==0.28.1
+          python scripts/smoke_test.py --api-url "$ORIGIN" --web-url "$ORIGIN" --wait 300
+
+      - name: Rollback instructions
+        if: ${{ failure() && !inputs.push_only }}
+        env:
+          API_APP: ${{ steps.resources.outputs.api }}
+          JOBS: ${{ steps.resources.outputs.jobs }}
+          OLD_IMAGE: ${{ steps.before.outputs.image }}
+        run: |
+          {
+            echo "## Deployment failed: rollback (owner decision, not automatic)"
+            echo "Image, if the new release must be withdrawn and the schema is still compatible:"
+            echo '```'
+            echo "az containerapp update -n $API_APP -g $RESOURCE_GROUP --image $OLD_IMAGE"
+            echo "az containerapp job update -n $JOBS -g $RESOURCE_GROUP --image $OLD_IMAGE"
+            echo '```'
+            echo "If a migration must be undone, restore the database to the rollback point above as a new server"
+            echo "(docs/DEPLOYMENT.md#azure-rollback). Never downgrade the schema in place without the owner's approval."
+          } >> "$GITHUB_STEP_SUMMARY"

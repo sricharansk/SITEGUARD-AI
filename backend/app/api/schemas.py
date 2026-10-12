@@ -74,6 +74,15 @@ class DocumentIn(_In):
     domain: Domain = Domain.BOTH
     project_id: str | None = None
     version: str = Field(default="1", max_length=40)
+    effective_date: date | None = None
+    tags: list[str] = Field(default_factory=list, max_length=20)
+
+
+class AnswerIn(_In):
+    project_id: str
+    question: str = Field(min_length=3, max_length=1000)
+    incident_id: str | None = None
+    domain: Domain | None = None
 
 
 class CapaIn(_In):
