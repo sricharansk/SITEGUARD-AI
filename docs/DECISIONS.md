@@ -79,7 +79,7 @@ port #2's additional features onto main stage by stage, each with tests and gree
 Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
 Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019).
 Stage C: Word and PDF reports, email delivery outbox (Decisions 020–021).
-Stage D: vision evidence analysis (Decision 022).
+Stage D: vision evidence analysis (Decision 022), knowledge graph (Decision 023).
 
 ## Decision 016 — One container on Azure
 
@@ -142,3 +142,13 @@ default `baseline` analyzer detects nothing and says so, rather than pretending;
 adapter with self-reported confidence. A failed analysis is stored as `FAILED`, never as "nothing found". Agents only
 treat observations a person CONFIRMED as findings; unreviewed ones become open questions, and no observation is
 ever read as "no hazard".
+
+## Decision 023 — The knowledge graph is an optional, rebuildable projection of PostgreSQL
+
+Reason: Playbook Prompt 28 asks for a Neo4j knowledge graph, while PostgreSQL stays the system of record (Decision
+002) and Neo4j is not needed to run the pilot. The graph is derived: `graph-sync` rebuilds one organization's nodes
+and relationships from stored rows, idempotently, and deletes what PostgreSQL no longer has, so it can be dropped and
+rebuilt at any time. Every node and relationship names its source row and field, whether it came from AI output and
+its review status. Reads go through the same incident authorization (404 out of scope) and are limited to the
+caller's organization and projects. The store is `disabled` by default, `memory` for tests and demos, or `neo4j`.
+Agents do not read the graph yet; graph-aware retrieval is a later owner decision.

@@ -44,6 +44,14 @@ and leaves the old ones until they are deleted. The API embeds missing chunks at
 `POST /documents/reindex`. No ANN index yet: exact distance is fine at pilot scale; add HNSW when a semantic model
 is chosen (DECISIONS 017).
 
+## Knowledge graph (derived, no tables)
+
+The optional knowledge graph (docs/ARCHITECTURE.md#knowledge-graph) adds no tables and no migration. `graph-sync`
+reads organizations, projects, sites, memberships, users, incidents, evidence, documents, document_chunks (to resolve
+cited `chunk:` refs), agent_runs, capa_actions, approval_events and verification_records, and never writes to them.
+The graph can be dropped and rebuilt from PostgreSQL at any time; each node and relationship names its source row in
+`source_table` / `source_id`.
+
 ## Scoping
 
 Every incident, document and audit event has `organization_id`. `memberships` give a role per organization, either

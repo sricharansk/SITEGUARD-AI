@@ -20,6 +20,7 @@ dependencies = [
   "pgvector>=0.3",
   "fpdf2>=2.8",
   "pillow>=11.0",
+  "neo4j>=5.0",
 ]
 
 [project.optional-dependencies]

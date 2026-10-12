@@ -204,6 +204,13 @@ SITEGUARD_POSTGRES_ADMIN_PASSWORD=dummy-for-validation az bicep build-params --f
 
 CI runs these, `actionlint` (with shellcheck) and the staging compose check in the `infrastructure` job.
 
+## Knowledge graph
+
+Optional; keep `SITEGUARD_GRAPH_BACKEND=disabled` until a Neo4j host is chosen (an owner decision; the Azure templates
+do not create one). When it is enabled: use `bolt+s://` or `neo4j+s://` (the API refuses plain Bolt in staging and
+production), keep `SITEGUARD_NEO4J_PASSWORD` in Key Vault, and schedule `python -m app.jobs graph-sync` after the other
+jobs. The graph holds no data that PostgreSQL does not, so it needs no backup of its own: rebuild it with `graph-sync`.
+
 ## Known gaps
 
 - **Evidence storage** is a file path, so Azure uses an Azure Files (SMB) share; a Blob Storage adapter, retention and

@@ -11,7 +11,7 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
 > Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
 > vectors), grounded answers with citations, Word/PDF reports, an email outbox and photo analysis with engineer
-> review; still being ported: knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
+> review, an optional knowledge graph with provenance; still being ported: resumable workflows ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -91,7 +91,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 222 backend tests (incl. evaluation and red-team gates)
+make test            # 236 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker
@@ -131,8 +131,8 @@ scripts/         resolve_all.py (results run), demo_walkthrough.py (single incid
 ## Tech stack
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK; Next.js 16,
-React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; Azure Bicep. Planned: Neo4j, vision models,
-Entra ID.
+React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; optional Neo4j
+knowledge graph; Azure Bicep. Planned: a trained vision detection model, Entra ID.
 
 ## Data and datasets
 

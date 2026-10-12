@@ -57,6 +57,18 @@
   unreviewed ones into open questions. The investigation report lists photo observations with their review state.
 - Migration `0004`; `GET /vision/taxonomy`, `GET /incidents/{id}/vision`, `GET/PUT /projects/{id}/vision/calibration`.
 
+### Stage D2: knowledge graph
+
+- Optional knowledge graph built as a projection of PostgreSQL (`services/graph.py`): organizations, projects,
+  sites, locations, people, incidents, evidence, documents, investigations, hazards, RCAs, causes, requirements and
+  actions, with provenance (source table, row, field, agent run, AI-derived, review status) on every node and
+  relationship. In-memory or Neo4j store; fixed, allowlisted, parameterized Cypher.
+- `python -m app.jobs graph-sync` / `make graph-sync` and `POST /graph/sync` (organization-wide `MANAGE_PROJECTS`,
+  audited) rebuild it idempotently and remove deleted records; `GET /incidents/{id}/graph` returns an incident's
+  neighbourhood limited to the caller's organization and projects. Off by default (`SITEGUARD_GRAPH_BACKEND`).
+- Startup refuses unsafe Neo4j settings (no password, wrong scheme, no TLS in staging and production). Optional
+  `neo4j` compose service (`graph` profile) and a CI `neo4j` job against Neo4j 5.26.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

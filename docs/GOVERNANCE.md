@@ -36,6 +36,7 @@ owner sets periods.
 | Application logs (Log Analytics) | `logRetentionDays`, default 30 days | Period; archive if longer is required |
 | PostgreSQL automated backups (Azure) | `postgresBackupRetentionDays`, default 7 days (7–35) | Period; geo-redundant backups for production |
 | Logical backups (`scripts/backup.py`) | Kept where the operator stores them | Period and storage location |
+| Knowledge graph (optional Neo4j) | A derived copy, rebuilt by `graph-sync`; deleted rows leave it on the next sync | None needed beyond PostgreSQL's |
 
 A data-subject or customer deletion request needs a reviewed manual procedure until a retention feature exists;
 deleting an incident would break its audit trail, so prefer redaction agreed with the owner.
