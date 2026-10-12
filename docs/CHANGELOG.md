@@ -2,6 +2,20 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Accuracy: new held-out set, second tuning round
+
+- Evaluation protocol (Decision 025): the old test split had been seen, so it is now dev (`origin: test-v1`). A new
+  held-out set `data/eval/heldout_v2.yaml` (46 cases, separate author) was frozen before tuning. 72 more dev cases
+  (`data/eval/dev_v2.yaml`) were added.
+- Triage rules tuned on dev errors only: weighted keyword evidence, object-fell / person-fell / person-struck
+  patterns, a measured-deviation cue, broader construction vocabulary, stricter BOTH, no class from one ambiguous
+  word, a reported BOTH is kept while both sides have evidence.
+- Demo knowledge procedures filled out (fragile roofs and dropped objects, task PPE, temporary supplies and buried
+  services, crane set-up, plant and deliveries, concrete, formwork, steelwork and goods-in checks).
+- Held-out results (one measurement before and after): class 67% → 89%, domain 80% → 93%, severity within one
+  96% → 98%, retrieval hit@3 67% → 93%, CRITICAL under-rated 0, red-team 100%. Every pilot target is met. CI floors
+  raised to just under these values.
+
 ### Stage A: hardening and deployment
 
 - Login throttle (429 `RATE_LIMITED`, `Retry-After`), security headers, CSP on the web app, `no-store` on API responses.

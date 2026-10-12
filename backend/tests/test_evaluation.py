@@ -20,10 +20,10 @@ def test_safety_critical_gates(result):
 def test_accuracy_regression_floor(result):
     test = result["summary"]["test"]
     # Floors sit just under the measured held-out numbers; raise them when the agents improve.
-    assert test["class_accuracy"] >= 0.75
-    assert test["domain_accuracy"] >= 0.80
-    assert test["severity_within_one"] >= 0.85
-    assert test["retrieval_hit_at_3"] >= 0.85
+    assert test["class_accuracy"] >= 0.87
+    assert test["domain_accuracy"] >= 0.91
+    assert test["severity_within_one"] >= 0.95
+    assert test["retrieval_hit_at_3"] >= 0.91
 
 
 def test_every_class_is_in_the_gold_set(result):
