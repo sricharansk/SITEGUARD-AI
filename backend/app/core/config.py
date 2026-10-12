@@ -16,8 +16,12 @@ class Settings(BaseSettings):
     evidence_dir: Path = Path("./evidence_store")
     evidence_max_bytes: int = 10 * 1024 * 1024
     seed_demo_data: bool = True
+    # create_all at startup for local runs and tests. Deployed images run `alembic upgrade head` and set this false.
+    auto_create_schema: bool = True
     seed_dir: Path = REPO_ROOT / "data" / "seed"
     cors_origins: str = "http://localhost:3000"
+    # Built web app (frontend/out). Served at /app when the directory exists.
+    web_dir: Path = REPO_ROOT / "frontend" / "out"
 
     # AI provider: "rules" (deterministic, offline) or "anthropic".
     ai_provider: str = "rules"

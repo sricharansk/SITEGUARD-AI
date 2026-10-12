@@ -28,12 +28,16 @@ Test → Build → Scan → Push → Staging → Migrate → Smoke test → Appr
 
 Use versioned container image and database migration strategy. Never perform destructive rollback blindly.
 
-## What exists today (0.1.0)
+## What exists today (0.2.0)
 
-- `backend/Dockerfile`: non-root image, health check, seed data baked in (disable with
-  `SITEGUARD_SEED_DEMO_DATA=false`).
+- `backend/Dockerfile`: two stages. Node builds the web app; the Python image serves the API and the web app at
+  `/app`, runs `alembic upgrade head` on start, runs as a non-root user and has a health check. Seed data is baked in
+  (disable with `SITEGUARD_SEED_DEMO_DATA=false`).
+- Daily job for overdue actions: `python -m app.jobs escalate-overdue` (Azure Container Apps job or cron) using the
+  same image.
 - `docker-compose.yml`: PostgreSQL 16 with pgvector + API, verified locally with the walkthrough script.
-- `.github/workflows/ci.yml`: lint, type check, tests, image build and an end-to-end smoke run.
+- `.github/workflows/ci.yml`: backend lint/types/tests, frontend typecheck/build/audit, image build, browser tests
+  and a full resolution run against the container.
 
 ## Azure pilot steps (next milestone)
 

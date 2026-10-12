@@ -45,3 +45,28 @@ stays the same when vector and hybrid retrieval are added.
 
 Reason: the sandbox used to build the pilot cannot download the public datasets in DATASETS.md, and incident data
 from real companies cannot be published. Seed incidents carry `is_synthetic = true`.
+
+## Decision 011 — Web app as a static export served by the API
+
+Reason: one container serves the API and the UI, so deployment, CORS and TLS stay simple for the pilot. Next.js with
+`output: "export"` under `/app`; incident pages use `?id=` because static export cannot pre-render unknown IDs. A
+separate Node server can come later if server rendering is needed.
+
+## Decision 012 — Held-out evaluation split and safety-first gates
+
+Reason: tuning keyword rules against the cases you report on inflates results. The gold set has a dev split for
+tuning and a test split that was written first and never tuned on. CI enforces the safety gates (no CRITICAL case
+rated LOW/MEDIUM, workflow invariants, red-team containment) and a regression floor for accuracy; accuracy targets
+that are not yet met are reported, not hidden.
+
+## Decision 013 — Alembic migrations run at container start
+
+Reason: the schema must survive releases once staging holds data (Decision 006). The image runs `alembic upgrade
+head` before uvicorn; `create_all` remains for local runs and tests, and a test fails on model changes without a
+migration.
+
+## Decision 014 — Escalation as an idempotent job, notifications in-app first
+
+Reason: overdue CAPA escalation must be safe to run repeatedly from a scheduler. Each action records its escalation
+level, so each level is sent once. Notifications are stored in the database; email or Teams adapters can read the
+same table later.

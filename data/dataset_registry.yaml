@@ -1,0 +1,221 @@
+# Site Guard AI dataset registry (docs/DATASETS.md). Every dataset must be registered here, with licence and
+# allowed use, before it enters a pipeline. Raw and processed files live under data/raw and data/processed, which
+# are git-ignored: download them yourself under the source's terms.
+#
+# status values: pipeline-ready (code exists and is tested), planned, reference-only.
+# acquired: whether this repository's published results used the dataset. On 12 October 2026 the build sandbox's
+# network policy blocked osha.gov, bls.gov, hse.gov.uk and huggingface.co, so no public dataset was downloaded;
+# all published results use synthetic data.
+
+- id: osha_severe_injury_reports
+  name: OSHA Severe Injury Reports
+  publisher: US Department of Labor, OSHA
+  source_url: https://www.osha.gov/severeinjury
+  observation_period: "2015 onwards; use 2024-2026 records"
+  modality: tabular (narratives + OIICS codes)
+  license: US federal government data; see source terms
+  commercial_use: review-required
+  purpose: [evaluation, taxonomy, analytics]
+  raw_location: data/raw/government/osha/
+  processed_location: data/processed/government/osha_sir/
+  extraction_method: "python -m app.datasets.osha_sir: checksum -> column validation -> NAICS 23 filter -> dedupe -> triage evaluation"
+  limitations: Federal-jurisdiction employers that reported; not a census. Never rank or judge employers.
+  status: pipeline-ready
+  acquired: false
+
+- id: osha_ita_2025
+  name: OSHA Injury Tracking Application 2025
+  publisher: OSHA
+  source_url: https://www.osha.gov/itadata
+  release_date: "2026"
+  observation_period: "2025"
+  access_date: "09 October 2026"
+  version: current-2025-release
+  modality: tabular
+  license: see source terms
+  commercial_use: review-required
+  purpose: [analytics, evaluation, taxonomy]
+  raw_location: data/raw/government/osha/
+  processed_location: data/processed/government/osha/
+  extraction_method: official CSV/XLSX -> schema validation -> normalization
+  limitations: Not fully representative of all employers; submitted data can contain unresolved errors.
+  status: planned
+  acquired: false
+
+- id: bls_cfoi_2024
+  name: BLS Census of Fatal Occupational Injuries (2024 results)
+  publisher: US Bureau of Labor Statistics
+  source_url: https://www.bls.gov/iif/fatal-injuries-tables.htm
+  release_date: "February 2026"
+  observation_period: "2024"
+  modality: aggregate tables
+  license: US federal government data; see source terms
+  commercial_use: review-required
+  purpose: [benchmark, taxonomy]
+  raw_location: data/raw/government/bls/
+  processed_location: data/processed/government/bls/
+  extraction_method: XLSX tables -> keep table name and year -> normalized dimensions
+  limitations: Aggregate statistics; never turn counts into incident facts.
+  status: planned
+  acquired: false
+
+- id: hse_fatal_injuries
+  name: HSE work-related fatal injuries and construction statistics
+  publisher: Health and Safety Executive (UK)
+  source_url: https://www.hse.gov.uk/statistics/
+  observation_period: "2024/25 and 2025/26 (provisional)"
+  modality: aggregate tables / PDF
+  license: see source terms
+  commercial_use: review-required
+  purpose: [benchmark, taxonomy]
+  raw_location: data/raw/government/hse/
+  processed_location: data/processed/government/hse/
+  extraction_method: supporting XLSX tables -> preserve provisional/revised status
+  limitations: Provisional figures change; label them.
+  status: planned
+  acquired: false
+
+- id: niosh_face
+  name: NIOSH Fatality Assessment and Control Evaluation (FACE) reports
+  publisher: NIOSH
+  source_url: https://www.cdc.gov/niosh/face/
+  modality: PDF narratives with recommendations
+  license: subject to publisher terms
+  commercial_use: review-required
+  purpose: [rag-knowledge, rca-evaluation]
+  raw_location: data/raw/government/niosh_face/
+  processed_location: data/processed/government/niosh_face/
+  extraction_method: page-aware text extraction -> chunk with title/date/page -> knowledge ingestion
+  limitations: Case-specific; do not claim universal applicability.
+  status: planned
+  acquired: false
+
+- id: dgfasli_srn_2024
+  name: DGFASLI Standard Reference Note 2024
+  publisher: Directorate General Factory Advice Service & Labour Institutes (India)
+  source_url: https://dgfasli.gov.in/en/Standard-reference-notes
+  release_date: "2024"
+  modality: PDF
+  license: government reference; see source terms
+  commercial_use: review-required
+  purpose: [taxonomy, reference]
+  raw_location: data/raw/government/dgfasli/
+  processed_location: data/processed/government/dgfasli/
+  extraction_method: page-aware PDF extraction with section/page provenance
+  limitations: Reference context, not incident ground truth.
+  status: reference-only
+  acquired: false
+
+- id: constructionsite_10k
+  name: ConstructionSite 10k
+  publisher: Chen/Zou
+  source_url: https://huggingface.co/datasets/LouisChen15/ConstructionSite
+  release_date: "2026"
+  access_date: "09 October 2026"
+  version: recorded-repository-revision
+  modality: image+text
+  license: CC BY-NC 4.0 (dataset card)
+  commercial_use: not-allowed-unless-permission
+  purpose: [vision-evaluation, VLM-research]
+  raw_location: data/raw/vision/constructionsite_10k/
+  processed_location: data/processed/vision/constructionsite_10k/
+  extraction_method: Hugging Face datasets -> schema validation -> split-preserving export
+  limitations: Research dataset; not sufficient to establish real-world safety compliance.
+  status: planned
+  acquired: false
+
+- id: consynth_x
+  name: ConSynth-X
+  publisher: see dataset card
+  source_url: https://huggingface.co/datasets/openconstruction/ConSynth-X
+  release_date: "2026"
+  modality: synthetic images
+  license: non-commercial / gated (dataset card)
+  commercial_use: not-allowed-unless-permission
+  purpose: [vision-red-team, robustness]
+  raw_location: data/raw/vision/consynth_x/
+  processed_location: data/processed/vision/consynth_x/
+  extraction_method: documented reconstruction flow; keep condition labels and attribution
+  limitations: Synthetic imagery.
+  status: planned
+  acquired: false
+
+- id: sh17
+  name: SH17 PPE dataset
+  publisher: see repository
+  source_url: https://github.com/ahmadmughees/SH17dataset
+  release_date: "2024 (dataset), 2025 (publication)"
+  modality: images + boxes (17 classes)
+  license: CC BY-NC-SA 4.0 (repository)
+  commercial_use: not-allowed-unless-permission
+  purpose: [ppe-detection-evaluation]
+  raw_location: data/raw/vision/sh17/
+  processed_location: data/processed/vision/sh17/
+  extraction_method: repository instructions -> YOLO/COCO labels -> keep splits
+  limitations: Research/evaluation only.
+  status: planned
+  acquired: false
+
+- id: cubit
+  name: CUBIT-Det / CUBIT-Seg
+  publisher: see repository
+  source_url: https://github.com/BenyunZhao/CUBIT
+  release_date: "2024"
+  modality: images + boxes/masks (cracks, spalling, moisture)
+  license: CC BY 4.0 stated for CUBIT-Det; verify every component
+  commercial_use: review-required
+  purpose: [quality-vision-baseline]
+  raw_location: data/raw/vision/cubit/
+  processed_location: data/processed/vision/cubit/
+  extraction_method: keep original split; versioned conversion scripts
+  limitations: Verify component licences before commercial use.
+  status: planned
+  acquired: false
+
+- id: concrete_crack_2025
+  name: 2025 beam/column concrete crack dataset
+  publisher: Data in Brief (Elsevier)
+  source_url: https://doi.org/10.1016/j.dib.2025.111643
+  release_date: "2025"
+  modality: images + labels (five failure classes)
+  license: open-access article; verify repository licence
+  commercial_use: review-required
+  purpose: [quality-defect-classification]
+  raw_location: data/raw/vision/concrete_crack_2025/
+  processed_location: data/processed/vision/concrete_crack_2025/
+  extraction_method: preserve image/label pairs; parse box fields; record lab provenance
+  limitations: Laboratory images.
+  status: planned
+  acquired: false
+
+- id: pagg_net_crack
+  name: PAGG-Net concrete crack dataset
+  publisher: see record
+  source_url: https://zenodo.org/records/18010179
+  release_date: "December 2025"
+  modality: high-resolution images + pixel masks
+  license: copyright (no blanket commercial licence on the record)
+  commercial_use: not-allowed-unless-permission
+  purpose: [crack-segmentation-research]
+  raw_location: data/raw/vision/pagg_net/
+  processed_location: data/processed/vision/pagg_net/
+  extraction_method: keep image/mask pairing, split and MD5 hashes
+  limitations: Research only unless permission obtained.
+  status: planned
+  acquired: false
+
+- id: siteguard_synthetic
+  name: Site Guard AI synthetic incidents, procedures and evaluation set
+  publisher: Site Guard AI project
+  source_url: data/seed/ and data/eval/ in this repository
+  release_date: "October 2026"
+  modality: YAML + Markdown
+  license: project licence
+  commercial_use: allowed
+  purpose: [demo, evaluation, red-team]
+  raw_location: data/seed/, data/eval/
+  processed_location: database seed at startup
+  extraction_method: app/seed.py and app/evaluation.py
+  limitations: Written by the project team; not real events and not expert-panel labelled.
+  status: pipeline-ready
+  acquired: true

@@ -669,7 +669,7 @@ def to_markdown(result: dict) -> str:
         "- Scores are for the offline `rules` provider. Run with `SITEGUARD_AI_PROVIDER=anthropic` and an API key to "
         "score the Claude provider on the same set.",
         "- Public datasets (OSHA Severe Injury Reports, OSHA ITA case detail) can be scored with "
-        "`scripts/datasets/osha_severe_injury.py` once downloaded; see docs/DATASETS.md.",
+        "`python -m app.datasets.osha_sir` once downloaded; see docs/DATASETS.md.",
         "",
     ]
     return "\n".join(md)

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api import serializers as ser
@@ -7,7 +7,7 @@ from app.api.deps import load_project, ok
 from app.api.schemas import ProjectIn
 from app.core.db import get_db
 from app.core.security import Permission, Principal, current_principal
-from app.models import Project, Site
+from app.models import Membership, Project, Site, User
 from app.services import audit
 
 router = APIRouter(tags=["projects"])
@@ -53,3 +53,20 @@ def create_project(body: ProjectIn, p: Principal = Depends(current_principal), d
 @router.get("/projects/{project_id}")
 def get_project(project_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     return ok(ser.project(load_project(db, p, project_id)))
+
+
+@router.get("/projects/{project_id}/people")
+def project_people(project_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+    """People with a role on the project (names for assignees and history). No emails or permissions."""
+    project = load_project(db, p, project_id)
+    rows = db.execute(
+        select(Membership, User)
+        .join(User, Membership.user_id == User.id)
+        .where(
+            Membership.organization_id == project.organization_id,
+            or_(Membership.project_id.is_(None), Membership.project_id == project.id),
+            User.is_active,
+        )
+        .order_by(User.full_name)
+    ).all()
+    return ok([{"id": u.id, "full_name": u.full_name, "role": m.role} for m, u in rows])

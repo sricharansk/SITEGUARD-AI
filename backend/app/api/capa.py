@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api import serializers as ser
@@ -7,10 +8,58 @@ from app.api.schemas import ApproveIn, CapaIn, ProgressIn, ReviewIn, VerifyIn
 from app.core.db import get_db
 from app.core.errors import AppError, Conflict
 from app.core.security import Permission, Principal, current_principal
-from app.models import ApprovalStatus, CapaAction, Evidence, IncidentStatus
+from app.models import ApprovalStatus, CapaAction, Evidence, Incident, IncidentStatus, WorkStatus
 from app.services import audit, capa, lifecycle
 
 router = APIRouter(tags=["capa"])
+
+
+@router.get("/capa")
+def list_actions(
+    project_id: str | None = None,
+    approval_status: ApprovalStatus | None = None,
+    work_status: WorkStatus | None = None,
+    mine: bool = False,
+    limit: int = Query(default=200, ge=1, le=500),
+    p: Principal = Depends(current_principal),
+    db: Session = Depends(get_db),
+):
+    """Actions across the caller's projects: the review queue (approval_status=PENDING_REVIEW) and 'my actions'."""
+    visible = p.visible_project_filter(db)
+    if project_id:
+        if project_id not in visible:
+            raise AppError("Project not found", "NOT_FOUND", 404)
+        visible = [project_id]
+    if not visible:
+        return ok([])
+    stmt = (
+        select(CapaAction, Incident)
+        .join(Incident, CapaAction.incident_id == Incident.id)
+        .where(Incident.project_id.in_(visible))
+    )
+    if approval_status:
+        stmt = stmt.where(CapaAction.approval_status == approval_status)
+    if work_status:
+        stmt = stmt.where(CapaAction.work_status == work_status)
+    if mine:
+        stmt = stmt.where(CapaAction.assignee_id == p.id)
+    rows = db.execute(stmt.order_by(desc(CapaAction.created_at)).limit(limit)).all()
+    return ok(
+        [
+            {
+                **ser.capa(a),
+                "incident_reference": i.reference,
+                "incident_title": i.title,
+                "incident_status": i.status,
+                "can_review": p.can(
+                    Permission.APPROVE_CRITICAL if a.critical else Permission.APPROVE_CAPA,
+                    i.organization_id,
+                    i.project_id,
+                ),
+            }
+            for a, i in rows
+        ]
+    )
 
 
 @router.post("/incidents/{incident_id}/capa", status_code=201)

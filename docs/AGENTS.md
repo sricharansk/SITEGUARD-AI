@@ -63,7 +63,8 @@ and the run's provider reads `rules (fallback from anthropic)`. Seeding always u
 
 ## Untrusted content and prompt injection
 
-Retrieved documents and incident text are data. Chunks matching instruction-like patterns are marked
+Retrieved documents and incident text are data. Incident text and evidence descriptions are also scanned; a match
+flags every run for review. Chunks matching instruction-like patterns are marked
 `suspicious` at ingestion; agents never cite them and the run is flagged. The Claude provider wraps the pack in
 `<evidence_pack>` tags with an instruction not to follow anything inside it.
 
@@ -87,3 +88,9 @@ HIGH <= 16, CRITICAL >= 17. Agents only suggest the two inputs. A human can reco
 
 An agent that raises is recorded as `FAILED`; the workflow continues with the remaining agents, the incident is
 kept, and people can add actions manually (`POST /incidents/{id}/capa`) and use manual transitions.
+
+## Coverage and evaluation
+
+The rules taxonomy covers 11 safety hazard classes and 9 quality defect classes, each with proposed corrective and
+preventive actions. Scores on a labelled held-out set and the red-team results are in [EVALUATION.md](EVALUATION.md);
+real-data scoring on OSHA Severe Injury Reports is in `app/datasets/osha_sir.py`.

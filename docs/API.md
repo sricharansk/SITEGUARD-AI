@@ -46,6 +46,13 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /capa/{id}/verify | VERIFY_CAPA | Not by the assignee; failed verification reopens work |
 | GET/POST | /documents | READ / MANAGE_DOCUMENTS | Ingest text/Markdown into chunks |
 | GET | /search | READ | BM25 over org-wide and project documents |
-| GET | /dashboard | READ | Totals, status/severity/domain/month breakdowns, top hazards, CAPA and agent stats |
+| GET | /dashboard | READ | Totals (incl. overdue and escalated actions), status/severity/domain/month breakdowns, top hazards, CAPA and agent stats |
+| GET | /capa | READ | Actions across visible projects. Filters: project_id, approval_status, work_status, mine. Each row says whether the caller `can_review` it |
+| POST | /capa/escalate-overdue | APPROVE_CAPA | Escalate overdue approved actions (level 1 owner, level 2 after 7 days PM + HSE). Idempotent |
+| GET | /notifications | any | The caller's notifications (`unread_only`) |
+| POST | /notifications/{id}/read | recipient | Mark read |
+| GET | /incidents/{id}/report | READ | Investigation report, `text/markdown`, AI sections labelled, human decisions named; audited |
+| GET | /projects/{id}/people | READ | Names and roles on the project (no emails) |
+| GET | /app/ | - | The web app (static build served by the API) |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
 | GET | /health | - | |

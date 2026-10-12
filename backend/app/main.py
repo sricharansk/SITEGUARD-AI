@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects
 from app.core import db as dbmod
@@ -16,7 +18,8 @@ def init_db() -> None:
     from app import models  # noqa: F401  (register tables)
     from app.seed import seed_if_empty
 
-    dbmod.Base.metadata.create_all(dbmod.engine)
+    if get_settings().auto_create_schema:
+        dbmod.Base.metadata.create_all(dbmod.engine)
     if get_settings().seed_demo_data:
         with dbmod.SessionLocal() as session:
             seed_if_empty(session)
@@ -35,7 +38,7 @@ def create_app() -> FastAPI:
         raise RuntimeError("Set SITEGUARD_JWT_SECRET to a random value of at least 32 characters")
     app = FastAPI(
         title=TITLE,
-        version="0.1.0",
+        version="0.2.0",
         description="Agentic AI-powered Construction Safety & Quality Decision-Support and Workflow Platform. "
         "AI output is decision support; humans approve every action.",
         lifespan=lifespan,
@@ -51,6 +54,13 @@ def create_app() -> FastAPI:
     install_error_handlers(app)
     for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications):
         app.include_router(r.router)
+
+    if s.web_dir.is_dir():
+        app.mount("/app", StaticFiles(directory=s.web_dir, html=True), name="web")
+
+        @app.get("/", include_in_schema=False)
+        def root():
+            return RedirectResponse("/app/")
 
     @app.get("/health", tags=["ops"])
     def health():

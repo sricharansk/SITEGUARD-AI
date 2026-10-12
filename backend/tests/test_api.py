@@ -268,3 +268,20 @@ def test_investigation_report(client, project_id):
     assert "AI-generated" in body and "not a legal compliance determination" in body
     assert "PENDING_REVIEW" in body and "Not yet closable" in body
     assert client.get(f"/incidents/{inc['id']}/report", headers=auth(client, "other")).status_code == 404
+
+
+def test_action_list_and_people(client, project_id):
+    inc = _new_incident(client, project_id)
+    client.post(f"/incidents/{inc['id']}/investigate", headers=auth(client, "safety"))
+    queue = client.get("/capa", params={"approval_status": "PENDING_REVIEW"}, headers=auth(client, "hse")).json()
+    mine = [a for a in queue["data"] if a["incident_id"] == inc["id"]]
+    assert mine and all(a["can_review"] for a in mine)
+    pm_view = client.get("/capa", params={"approval_status": "PENDING_REVIEW"}, headers=auth(client, "pm")).json()
+    assert not any(a["can_review"] for a in pm_view["data"] if a["incident_id"] == inc["id"])  # critical
+    assert client.get("/capa", headers=auth(client, "other")).json()["data"] == [] or all(
+        a["incident_id"] != inc["id"] for a in client.get("/capa", headers=auth(client, "other")).json()["data"]
+    )
+    people = client.get(f"/projects/{project_id}/people", headers=auth(client, "site")).json()["data"]
+    assert {"HSE_MANAGER", "SITE_ENGINEER"} <= {x["role"] for x in people}
+    assert all("email" not in x for x in people)
+    assert client.get(f"/projects/{project_id}/people", headers=auth(client, "other")).status_code == 404
