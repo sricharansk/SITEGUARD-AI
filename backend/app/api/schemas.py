@@ -110,3 +110,7 @@ class VerifyIn(_In):
     effective: bool
     notes: str = Field(min_length=1, max_length=5000)
     evidence_id: str | None = None
+
+
+class EscalateIn(_In):
+    project_id: str | None = None

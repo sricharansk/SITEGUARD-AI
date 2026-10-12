@@ -55,6 +55,7 @@ def dashboard(project_id: str | None = None, p: Principal = Depends(current_prin
                 "awaiting_review": sum(1 for a in actions if a.approval_status == ApprovalStatus.PENDING_REVIEW),
                 "actions_open": sum(1 for a in active_actions if a.work_status != WorkStatus.VERIFIED),
                 "actions_overdue": len(overdue),
+                "actions_escalated": sum(1 for a in overdue if a.escalation_level > 0),
                 "mean_days_to_close": round(sum(days) / len(days), 1) if days else None,
             },
             "by_status": Counter(i.status.value for i in incidents),

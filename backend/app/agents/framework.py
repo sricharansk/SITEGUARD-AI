@@ -16,6 +16,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from app.agents.schemas import AGENT_OUTPUTS
+from app.services.rag import looks_like_injection
 
 
 class ToolNotAllowed(Exception):
@@ -124,6 +125,12 @@ def run_agent(spec: AgentSpec, tools: dict[str, Callable[..., Any]], provider: P
         reasons.append("No supporting evidence was cited.")
     if output.confidence < 0.5:  # type: ignore[attr-defined]
         reasons.append(f"Low confidence ({output.confidence:.2f}).")  # type: ignore[attr-defined]
+    inc = pack.get("incident", {})
+    reported = [inc.get("title"), inc.get("description"), inc.get("immediate_actions")]
+    reported += [e.get("description") for e in pack.get("evidence", [])]
+    if any(looks_like_injection(t) for t in reported if t):
+        reasons.append("The incident report contains instruction-like text; it was treated as data only.")
+        ctx.trace.append({"type": "suspicious_incident_text"})
     suspicious = [h["ref"] for h in pack.get("knowledge", []) if h.get("suspicious")]
     if suspicious:
         reasons.append("Retrieved content contained instruction-like text and was treated as data only.")

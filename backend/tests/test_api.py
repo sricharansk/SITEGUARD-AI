@@ -256,3 +256,15 @@ def test_dashboard_and_search(client, project_id):
     assert hits and "Height" in hits[0]["document_title"]
     agents = client.get("/agents").json()["data"]
     assert {a["name"] for a in agents} == {"triage", "safety", "quality", "rca", "compliance", "capa"}
+
+
+def test_investigation_report(client, project_id):
+    inc = _new_incident(client, project_id)
+    client.post(f"/incidents/{inc['id']}/investigate", headers=auth(client, "safety"))
+    r = client.get(f"/incidents/{inc['id']}/report", headers=auth(client, "auditor"))
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/markdown")
+    body = r.text
+    assert body.startswith(f"# Investigation report {inc['reference']}")
+    assert "AI-generated" in body and "not a legal compliance determination" in body
+    assert "PENDING_REVIEW" in body and "Not yet closable" in body
+    assert client.get(f"/incidents/{inc['id']}/report", headers=auth(client, "other")).status_code == 404

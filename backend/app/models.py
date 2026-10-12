@@ -264,6 +264,7 @@ class CapaAction(Timestamped, Base):
     original_ai_output: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     source_run_id: Mapped[str | None] = mapped_column(ForeignKey("agent_runs.id"), nullable=True)
     evidence_refs: Mapped[list] = mapped_column(JSON, default=list)
+    escalation_level: Mapped[int] = mapped_column(Integer, default=0)  # 0 none, 1 owner, 2 management
 
 
 class ApprovalEvent(Base):
@@ -300,4 +301,19 @@ class AuditEvent(Base):
     entity_id: Mapped[str] = mapped_column(String(36), index=True)
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class Notification(Base):
+    """In-app notification for one user. Delivery adapters (email, Teams) can read from this table later."""
+
+    __tablename__ = "notifications"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    message: Mapped[str] = mapped_column(Text)
+    incident_id: Mapped[str | None] = mapped_column(ForeignKey("incidents.id"), nullable=True)
+    capa_id: Mapped[str | None] = mapped_column(ForeignKey("capa_actions.id"), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)

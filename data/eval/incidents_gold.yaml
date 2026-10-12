@@ -1,0 +1,460 @@
+# Site Guard AI evaluation set: labelled SYNTHETIC incident reports (not real events).
+#
+# split: dev  = may be used when tuning the rules taxonomy
+#        test = held out; written before any tuning and never used to tune. Report test numbers.
+#
+# Labelling guide (worst credible outcome, the same idea as the 5x5 matrix consequence):
+#   CRITICAL  fatality or permanent disability, or a realistic potential for it to several people
+#   HIGH      hospital / lost-time injury, high-energy near miss, or a defect in a structural element
+#   MEDIUM    first-aid or minor injury, or a non-structural defect needing rework
+#   LOW       no injury and no realistic potential for one; cosmetic issue
+# class: the primary hazard/defect class from the Site Guard taxonomy (backend/app/agents/rules.py)
+# also_ok: other classes a competent reviewer would accept as primary
+# expected_doc: substring of the knowledge document a reviewer would expect to be retrieved
+cases:
+# ---------------------------------------------------------------- dev split
+- id: D01
+  split: dev
+  title: Roofer slipped on fragile roof sheet
+  description: A roofer stepped onto a fragile rooflight while fixing sheets and fell through it, landing on the mezzanine 3 m below. He was taken to hospital with a broken leg. There were no covers over the rooflights.
+  people_involved: 1
+  class: Fall from height
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: D02
+  split: dev
+  title: Ladder kicked out while painter was on it
+  description: A painter was on an unsecured ladder at about 2.5 m when it slid on the wet floor. He grabbed a pipe and climbed down. Near miss, no injury.
+  people_involved: 1
+  class: Fall from height
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: D03
+  split: dev
+  title: Bolt dropped from steel erection fell onto hard hat
+  description: A bolt was dropped by a steel erector two floors above and hit a labourer on his hard hat. He had a headache and was checked by the first aider. There was no exclusion zone below the erection work.
+  people_involved: 1
+  class: Struck by falling or moving object
+  also_ok: [Missing or incorrect PPE]
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: D04
+  split: dev
+  title: Trench side caved in near pipe layer
+  description: The side of a 2 m deep trench caved in while a pipe layer was working at the far end. He was not buried. The trench had no trench box and the spoil heap was at the edge.
+  people_involved: 1
+  class: Excavation collapse / caught-in
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Excavation
+- id: D05
+  split: dev
+  title: Excavator bucket struck buried power cable
+  description: While digging for a foundation the excavator struck an underground 11 kV cable, causing a flash and a power cut to the site. Services drawings had not been checked and no cable avoidance tool was used.
+  people_involved: 1
+  class: Electrical contact
+  also_ok: [Mobile plant / vehicle, Excavation collapse / caught-in]
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Excavation
+- id: D06
+  split: dev
+  title: Precast panel swung into scaffold during lift
+  description: A precast panel being lifted by the mobile crane swung into the scaffold when a tag line was not used. The slinger was standing under the suspended load. Nobody was hurt.
+  people_involved: 2
+  class: Lifting operation / crane
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Lifting Operations
+- id: D07
+  split: dev
+  title: Dumper overturned on haul road ramp
+  description: A site dumper overturned on the steep ramp of the haul road. The driver was thrown clear because he was not wearing the seat belt and bruised his shoulder.
+  people_involved: 1
+  class: Mobile plant / vehicle
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Site Traffic
+- id: D08
+  split: dev
+  title: Gas cylinder left next to welding bay caught fire
+  description: A propane gas cylinder hose leaked near the cutting bay and caught fire. The hot work had no permit and the extinguisher was empty. The fire service attended.
+  people_involved: 0
+  class: Fire / hot work
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Hot Work
+- id: D09
+  split: dev
+  title: Workers on deck without hard hats under crane
+  description: During a safety walk three formwork carpenters were seen working on the deck without hard hats while the tower crane was lifting overhead.
+  people_involved: 3
+  class: Missing or incorrect PPE
+  also_ok: [Lifting operation / crane]
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE
+- id: D10
+  split: dev
+  title: Operative collapsed inside sewer chamber
+  description: An operative went into a sewer chamber to unblock a pipe and collapsed. A colleague who went in after him also became unconscious. Both were rescued by the fire service. There was no gas monitor or permit.
+  people_involved: 2
+  class: Confined space
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Confined Space
+- id: D11
+  split: dev
+  title: Hand cut on sheet metal ductwork
+  description: An installer cut his hand on the sharp edge of a ductwork section. He needed stitches. Gloves were not worn.
+  people_involved: 1
+  class: Cuts / sharp objects
+  also_ok: [Missing or incorrect PPE]
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE
+- id: D12
+  split: dev
+  title: Strain injury lifting kerbs by hand
+  description: A groundworker felt a strain in his lower back while lifting kerb stones by hand. A vacuum lifter was on site but not used. He was off work for three days.
+  people_involved: 1
+  class: Manual handling / musculoskeletal
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Manual Handling
+- id: D13
+  split: dev
+  title: Voids at base of retaining wall after stripping
+  description: Honeycombing and voids up to 50 mm deep were found along the base of the retaining wall kicker after the formwork was stripped. Grout had leaked from a gap in the shutter.
+  people_involved: 0
+  class: Concrete honeycombing / voids
+  also_ok: [Formwork defect]
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: D14
+  split: dev
+  title: Shrinkage cracks in ground floor slab
+  description: Plastic shrinkage cracks were found across the ground floor slab the day after the pour. Curing compound had not been applied and it was hot and windy.
+  people_involved: 0
+  class: Cracking
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Tolerances
+- id: D15
+  split: dev
+  title: Lap lengths short on level 2 wall starter bars
+  description: The pre-pour check found that lap lengths of the starter bars for the level 2 wall were 300 mm against 600 mm on the drawing.
+  people_involved: 0
+  class: Reinforcement / cover nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: D16
+  split: dev
+  title: Slump test failed on delivered truck
+  description: A slump test on a concrete truck for the podium slab gave 180 mm against a specified 100 mm. The truck was rejected. Two earlier trucks had not been tested.
+  people_involved: 0
+  class: Concrete strength / mix nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: D17
+  split: dev
+  title: Column formwork moved during pour
+  description: Column formwork moved by about 20 mm during the pour because the push-pull props were not fixed. The column is now out of line.
+  people_involved: 0
+  class: Formwork defect
+  also_ok: [Dimensional / alignment tolerance]
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: D18
+  split: dev
+  title: Lift shaft walls out of tolerance
+  description: The lift installer reports that the lift shaft walls are out of tolerance by up to 30 mm, which may stop the lift rails being fixed. Setting-out was not independently checked.
+  people_involved: 0
+  class: Dimensional / alignment tolerance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Tolerances
+- id: D19
+  split: dev
+  title: Roof terrace leaking into apartment below
+  description: Water is leaking through the ceiling of apartment 12.04 from the roof terrace above. The membrane upstand at the door threshold was not lapped and no flood test was carried out.
+  people_involved: 0
+  class: Water ingress / waterproofing
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Waterproofing
+- id: D20
+  split: dev
+  title: Unmarked bolts found on beam splice
+  description: Inspection of a beam splice found that half the bolts had no torque mark and two were finger tight. The connection had been signed as complete.
+  people_involved: 0
+  class: Welding / steelwork defect
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Structural Steel
+- id: D21
+  split: dev
+  title: Unapproved fire stopping product installed
+  description: Fire stopping sealant installed in the level 5 risers is a different product from the approved submittal. No certificate is available for the substitute.
+  people_involved: 0
+  class: Material nonconformance
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Structural Steel
+- id: D22
+  split: dev
+  title: Edge protection removed and worker struck by falling board
+  description: Edge protection was removed for a delivery and not replaced. A scaffold board was knocked off the edge and hit a worker below on the shoulder. He went to hospital for an X-ray.
+  people_involved: 1
+  class: Struck by falling or moving object
+  also_ok: [Fall from height]
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: D23
+  split: dev
+  title: Electrician received shock from live board
+  description: An electrician received a shock from a distribution board he believed was isolated. No lockout was applied and the circuit was not proved dead.
+  people_involved: 1
+  class: Electrical contact
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Electrical
+- id: D24
+  split: dev
+  title: Telehandler drove through pedestrian walkway
+  description: A telehandler carrying blocks drove through the marked pedestrian walkway with no banksman. Two workers stepped aside. Near miss.
+  people_involved: 2
+  class: Mobile plant / vehicle
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Site Traffic
+# ---------------------------------------------------------------- held-out test split
+- id: T01
+  split: test
+  title: Worker fell through unprotected stair void
+  description: A worker fell about 3 m through an unprotected stair void on level 2 and fractured his wrist. The void cover had been lifted to get materials up and was not replaced.
+  people_involved: 1
+  class: Fall from height
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: T02
+  split: test
+  title: MEWP basket hit beam, operator not clipped on
+  description: The basket of a scissor lift MEWP struck a beam while being raised and the operator, who was not clipped on, was thrown against the guardrail. Bruising only.
+  people_involved: 1
+  class: Fall from height
+  also_ok: [Mobile plant / vehicle]
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: T03
+  split: test
+  title: Brick fell from hoist platform near labourer
+  description: A brick fell off the loading platform at level 6 and landed next to a labourer at ground level. Toe boards were missing on the platform. Nobody was hurt.
+  people_involved: 1
+  class: Struck by falling or moving object
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: T04
+  split: test
+  title: Worker buried to the waist in collapsing pit
+  description: A worker was buried up to his waist when the wall of a 2.4 m deep lift pit excavation gave way. He was dug out by colleagues and taken to hospital. The pit had not been shored or battered.
+  people_involved: 1
+  class: Excavation collapse / caught-in
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Excavation
+- id: T05
+  split: test
+  title: Damaged cable on site saw caused tingling
+  description: A carpenter felt a tingling shock from a site saw with a damaged power cable. The supply was not RCD protected. He did not need treatment.
+  people_involved: 1
+  class: Electrical contact
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Electrical
+- id: T06
+  split: test
+  title: Crane lifted load over occupied canteen
+  description: The tower crane slewed a skip of concrete over the occupied welfare canteen against the lift plan. The appointed person was not on site.
+  people_involved: 12
+  class: Lifting operation / crane
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Lifting Operations
+- id: T07
+  split: test
+  title: Forklift reversed into worker's foot
+  description: A forklift reversing in the material yard ran over a worker's foot. His safety boots took most of the force but he had a suspected broken toe. The reversing alarm was not working.
+  people_involved: 1
+  class: Mobile plant / vehicle
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Site Traffic
+- id: T08
+  split: test
+  title: Smouldering insulation after pipe brazing
+  description: Insulation around a copper pipe was found smouldering an hour after brazing work had finished. There had been no fire watch after the hot work and the permit was not closed.
+  people_involved: 0
+  class: Fire / hot work
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Hot Work
+- id: T09
+  split: test
+  title: Concrete splashed into eye at pump line
+  description: Concrete splashed into a labourer's eye when the pump line was cleared. He was not wearing safety glasses. Eyewash was used and he went to the eye clinic.
+  people_involved: 1
+  class: Missing or incorrect PPE
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: PPE
+- id: T10
+  split: test
+  title: Tank entry without permit to clean sump
+  description: Two cleaners entered the basement sump tank to remove water without a permit, gas test or standby person. They came out after feeling short of breath.
+  people_involved: 2
+  class: Confined space
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Confined Space
+- id: T11
+  split: test
+  title: Laceration from Stanley knife while cutting membrane
+  description: A waterproofing operative suffered a laceration to his thumb from a Stanley knife while cutting membrane. He went to hospital for stitches. He was not using cut-resistant gloves.
+  people_involved: 1
+  class: Cuts / sharp objects
+  also_ok: [Missing or incorrect PPE]
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE
+- id: T12
+  split: test
+  title: Shoulder injury moving heavy pump by hand
+  description: Two fitters carried a 90 kg pump up a stair because no lifting equipment was planned. One injured his shoulder and was off work for a week.
+  people_involved: 2
+  class: Manual handling / musculoskeletal
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Manual Handling
+- id: T13
+  split: test
+  title: Large voids found in core wall after striking
+  description: After striking the core wall formwork, large voids with exposed reinforcement were found near the base where the concrete had not been compacted.
+  people_involved: 0
+  class: Concrete honeycombing / voids
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: T14
+  split: test
+  title: Diagonal cracks in transfer slab near column
+  description: Diagonal cracks up to 0.5 mm were found in the transfer slab around column C-4 a week after props were removed. The crack width limit is 0.3 mm.
+  people_involved: 0
+  class: Cracking
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Tolerances
+- id: T15
+  split: test
+  title: Missing spacers on bottom mat before pour
+  description: QA/QC found that spacers were missing under large areas of the bottom reinforcement mat in the raft foundation an hour before the pour, giving almost zero cover.
+  people_involved: 0
+  class: Reinforcement / cover nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: T16
+  split: test
+  title: 7-day cylinder strengths low for shear walls
+  description: The 7-day cylinder results for the shear walls are 40% of the specified 28-day strength, lower than the supplier's usual 65%. The mix design submitted may not be the one supplied.
+  people_involved: 0
+  class: Concrete strength / mix nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: T17
+  split: test
+  title: Slab edge shutter failed during pour
+  description: The slab edge shutter failed during the pour, causing a blowout and concrete loss over the edge. The edge form had not been inspected.
+  people_involved: 0
+  class: Formwork defect
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Cast-in-place Concrete
+- id: T18
+  split: test
+  title: Anchor bolts cast in wrong position
+  description: Holding-down anchor bolts for the steel columns on gridline 7 were cast 40 mm off their setting-out position. The steel cannot be erected without modification.
+  people_involved: 0
+  class: Dimensional / alignment tolerance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Tolerances
+- id: T19
+  split: test
+  title: Damp patches on basement car park ceiling
+  description: Damp patches and white staining have appeared on the basement car park ceiling under the landscaped podium. Water may be getting through the podium waterproofing.
+  people_involved: 0
+  class: Water ingress / waterproofing
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Waterproofing
+- id: T20
+  split: test
+  title: Cracked fillet weld on cantilever bracket
+  description: Magnetic particle testing found a crack in a fillet weld on a facade cantilever bracket. The welder used had no record of qualification for the procedure.
+  people_involved: 0
+  class: Welding / steelwork defect
+  also_ok: [Cracking]
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Structural Steel
+- id: T21
+  split: test
+  title: Non-certified blockwork delivered and laid
+  description: Blocks delivered for the stair core firewall have no certificate and do not match the approved submittal. About 40 m2 has already been laid.
+  people_involved: 0
+  class: Material nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Structural Steel
+- id: T22
+  split: test
+  title: Scaffold collapse after ties removed
+  description: A section of the facade scaffold collapsed after ties were removed by a subcontractor to fit windows. No one was on that section. Debris fell onto the street hoarding.
+  people_involved: 0
+  class: Fall from height
+  also_ok: [Struck by falling or moving object]
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Working at Height
+- id: T23
+  split: test
+  title: Rebar cage toppled during crane lift and damaged formwork
+  description: A rebar cage being lifted by crane toppled when one sling slipped and hit the column formwork, knocking it out of plumb. The rigging had not been inspected. Nobody was hurt.
+  people_involved: 0
+  class: Lifting operation / crane
+  also_ok: [Formwork defect, Dimensional / alignment tolerance]
+  domain: BOTH
+  severity: HIGH
+  expected_doc: Lifting Operations
+- id: T24
+  split: test
+  title: Minor housekeeping issue in site office
+  description: Boxes of drawings left on the floor of the site office corridor. Tidied up the same day. No one was affected.
+  people_involved: 0
+  class: Unclassified
+  domain: SAFETY
+  severity: LOW
+  expected_doc: Incident Reporting

@@ -126,3 +126,151 @@
   immediate_actions: First aid, toolbox talk planned.
   days_ago: 30
   stage: closed
+- title: Labourer received electric shock from damaged extension lead
+  description: >-
+    A labourer received an electric shock when he picked up a damaged extension lead in the basement. The lead
+    had a split in the outer sheath and the temporary supply board was not protected by an RCD. The weekly
+    electrical inspection had not been done. He was checked at hospital and released the same day.
+  domain: SAFETY
+  severity: HIGH
+  site: Podium & Basement
+  location: Basement B1, temporary distribution board DB-4
+  activity: Housekeeping
+  people_involved: 1
+  immediate_actions: Board isolated and locked off, lead removed from use, electrician called.
+  days_ago: 25
+  stage: closed
+- title: Back strain while carrying plasterboard up the stairs
+  description: >-
+    A dryliner strained his back carrying plasterboard sheets up two flights of stairs because the goods lift
+    was out of service. No manual handling assessment covered the task. He took two days off work (lost time).
+  domain: SAFETY
+  severity: MEDIUM
+  site: Tower A
+  location: Core stair 2, levels 3 to 5
+  activity: Drylining
+  people_involved: 1
+  immediate_actions: Task stopped, material moved by goods lift once repaired.
+  days_ago: 40
+  stage: closed
+- title: Grit in eye while grinding without eye protection
+  description: >-
+    A worker got grit in his eye while grinding a bracket without goggles. Eye protection was available in the
+    store but not worn. Eyewash given by the first aider; he returned to work the same shift.
+  domain: SAFETY
+  severity: LOW
+  site: Tower A
+  location: Level 6 east
+  activity: Facade bracket preparation
+  people_involved: 1
+  immediate_actions: First aid eyewash, goggles issued to the crew.
+  days_ago: 18
+  stage: closed
+- title: Grinding sparks started a small fire in stored packaging
+  description: >-
+    Sparks from grinding on level 3 ignited cardboard packaging stored next to the work. Hot work had started
+    without a permit and no fire watch was posted. A worker put the fire out with an extinguisher. No injuries.
+  domain: SAFETY
+  severity: MEDIUM
+  site: Tower A
+  location: Level 3 west, riser area
+  activity: Services bracket installation
+  people_involved: 1
+  immediate_actions: Fire put out, area ventilated, packaging removed, hot work stopped.
+  days_ago: 8
+  stage: in_progress
+- title: Column out of plumb by 25 mm at level 4
+  description: >-
+    A survey of level 4 shows column C-12 is out of plumb by 25 mm against a 10 mm tolerance. The setting-out
+    was not checked by an independent survey before the formwork was closed and the column was poured.
+  domain: QUALITY
+  severity: MEDIUM
+  site: Tower A
+  location: Level 4, column C-12
+  activity: Column construction
+  people_involved: 0
+  immediate_actions: NCR raised; no loading above C-12 until the engineer reviews it.
+  days_ago: 11
+  stage: in_progress
+- title: Cracks above the limit in level 3 slab soffit after early prop removal
+  description: >-
+    Cracking up to 0.4 mm wide was found on the level 3 slab soffit after the props were removed early to meet
+    the programme. The crack width is above the 0.3 mm limit in the specification. No striking approval was
+    recorded.
+  domain: QUALITY
+  severity: MEDIUM
+  site: Tower A
+  location: Level 3 slab, bays A-B/1-3
+  activity: Formwork striking
+  people_involved: 0
+  immediate_actions: Back-props reinstated, cracks photographed and marked.
+  days_ago: 4
+  stage: investigated
+- title: Porosity and undercut found on roof truss site welds
+  description: >-
+    Visual inspection of the roof transfer truss found porosity and undercut on four site welds. One welder's
+    qualification was out of date. NDT had not been carried out on the connections before the deck was loaded.
+  domain: QUALITY
+  severity: HIGH
+  site: Tower A
+  location: Roof level, transfer truss T-2
+  activity: Structural steel erection
+  people_involved: 0
+  immediate_actions: Loading on the truss stopped, welds marked, welder stood down.
+  days_ago: 6
+  stage: investigated
+- title: Worker entered drainage manhole without a gas test
+  description: >-
+    A drainage operative entered a 3 m deep manhole to clear a blockage without a confined space permit or a gas
+    test. He felt dizzy and was helped out by a colleague; it could have been serious. No standby person or
+    rescue equipment was in place.
+  domain: SAFETY
+  severity: HIGH
+  site: Podium & Basement
+  location: External works, manhole MH-7
+  activity: Drainage maintenance
+  people_involved: 1
+  immediate_actions: Entry stopped, manhole covered, operative checked by first aider.
+  days_ago: 1
+  stage: reported
+- title: 28-day cube results below specified strength for level 6 columns
+  description: >-
+    28-day cube results for the level 6 columns averaged 32 MPa against the specified C40/50. Delivery tickets
+    show water was added on site to improve slump. The columns are load-bearing.
+  domain: QUALITY
+  severity: HIGH
+  site: Tower A
+  location: Level 6 columns C-1 to C-8
+  activity: Concrete testing
+  people_involved: 0
+  immediate_actions: No further loading above level 6 columns; structural engineer informed.
+  days_ago: 2
+  stage: reported
+- title: Core wall formwork blowout during pour
+  description: >-
+    During the pour of core wall CW-2 a formwork tie failed and the shutter bulged, causing grout loss and a
+    blowout of concrete. A worker on the deck was struck by a falling waler and bruised his arm. The formwork had
+    not been signed off by the temporary works coordinator.
+  domain: BOTH
+  severity: HIGH
+  site: Tower A
+  location: Core wall CW-2, level 8
+  activity: Concrete placement
+  people_involved: 1
+  immediate_actions: Pour stopped, area below barricaded, first aid given.
+  days_ago: 1
+  stage: reported
+- title: Wrong grade of rebar fixed in level 8 slab
+  description: >-
+    Wrong material: grade B500A rebar was delivered and fixed in part of the level 8 slab instead of the
+    specified B500B. The batch certificate was not checked against the approved submittal on delivery. Found
+    before the pour.
+  domain: QUALITY
+  severity: HIGH
+  site: Tower A
+  location: Level 8 slab, bays E-F/4-6
+  activity: Reinforcement fixing
+  people_involved: 0
+  immediate_actions: Pour on hold, affected bars tagged.
+  days_ago: 0
+  stage: reported
