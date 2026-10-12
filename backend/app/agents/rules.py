@@ -45,6 +45,24 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "fragile",
         "rooflight",
         "skylight",
+        "edge protection",
+        "fall arrest",
+        "scaffold",
+        "stepladder",
+        "step ladder",
+        "hop-up",
+        "podium steps",
+        "toppled off",
+        "safety net",
+        "netting",
+        "stair void",
+        "lift shaft",
+        "hole below",
+        "open edge",
+        "leading edge",
+        "went through",
+        "fragile roof",
+        "roof sheet",
     ],
     "Struck by falling or moving object": [
         "dropped",
@@ -52,6 +70,26 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "struck",
         "hit by",
         "landed near",
+        "falling",
+        "kicked off",
+        "knocked off",
+        "came down",
+        "toe board",
+        "brick guard",
+        "struck by",
+        "hit him",
+        "hit her",
+        "hit them",
+        "whipped",
+        "flew",
+        "debris",
+        "tool lanyard",
+        "tethered",
+        "drop zone",
+        "dropped object",
+        "rolled off",
+        "fell onto",
+        "fell on",
     ],
     "Excavation collapse / caught-in": [
         "trench",
@@ -61,6 +99,19 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "cave in",
         "caved in",
         "shoring",
+        "slumped",
+        "slumping",
+        "ran in",
+        "run in",
+        "spoil",
+        "trench box",
+        "battered",
+        "buried",
+        "engulf",
+        "sheet pil",
+        "dig",
+        "gave way",
+        "groundworks",
     ],
     "Electrical contact": [
         "electric shock",
@@ -78,6 +129,25 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "underground cable",
         "kv",
         "high voltage",
+        "lv cable",
+        "hv cable",
+        "cable strike",
+        "flashover",
+        "110v",
+        "240v",
+        "230v",
+        "extension lead",
+        "festoon",
+        "exposed copper",
+        "copper showing",
+        "rcd",
+        "distribution board",
+        "live wire",
+        "overhead line",
+        "power line",
+        "cat scan",
+        "cat and genny",
+        "electrical",
     ],
     "Lifting operation / crane": [
         "crane lift",
@@ -88,6 +158,21 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "suspended load",
         "hoist",
         "load swung",
+        "crane",
+        "outrigger",
+        "spreader mat",
+        "slinger",
+        "signaller",
+        "tag line",
+        "on the hook",
+        "shackle",
+        "lifting anchor",
+        "lifting chain",
+        "loler",
+        "swl",
+        "safe working load",
+        "lifting accessor",
+        "lifting beam",
     ],
     "Mobile plant / vehicle": [
         "excavator",
@@ -98,6 +183,22 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "telehandler",
         "mobile plant",
         "banksman",
+        "slew",
+        "roller",
+        "haul road",
+        "run over",
+        "ran over",
+        "overturn",
+        "tipped over",
+        "rops",
+        "seat belt",
+        "digger",
+        "loader",
+        "lorry",
+        "wagon",
+        "tipper",
+        "plant operator",
+        "reversing",
     ],
     "Fire / hot work": [
         "caught fire",
@@ -114,6 +215,20 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "welding spark",
         "flammable",
         "gas cylinder",
+        "fire",
+        "torch",
+        "scorch",
+        "smoke",
+        "extinguisher",
+        "propane",
+        "lpg",
+        "blowtorch",
+        "fire brigade",
+        "muster",
+        "charred",
+        "sparks",
+        "burning",
+        "fire alarm",
     ],
     "Missing or incorrect PPE": [
         "helmet",
@@ -125,9 +240,76 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "goggles",
         "safety boots",
         "eye protection",
+        "safety glasses",
+        "glasses",
+        "visor",
+        "face shield",
+        "respirator",
+        "dust mask",
+        "ear defenders",
+        "hearing protection",
+        "not wearing",
+        "eyewash",
+        "arc eye",
+        "rpe",
+        "ffp3",
+        "face-fit",
+        "face fit",
+        "cut-resistant",
+        "chin strap",
+        "no gloves",
+        "welding mask",
+        "welding helmet",
+        "hearing",
     ],
-    "Confined space": ["confined space", "manhole", "tank entry", "oxygen", "sewer", "chamber", "gas monitor", "fumes"],
-    "Cuts / sharp objects": ["cut his", "cut her", "cut their", "laceration", "stitches", "sharp edge"],
+    "Confined space": [
+        "confined space",
+        "manhole",
+        "tank entry",
+        "oxygen",
+        "sewer",
+        "chamber",
+        "gas monitor",
+        "fumes",
+        "lift pit",
+        "tank",
+        "sump",
+        "overcome",
+        "dizzy",
+        "ventilation",
+        "h2s",
+        "carbon monoxide",
+        "gas test",
+        "attenuation",
+        "solvent",
+        "inspection chamber",
+    ],
+    "Cuts / sharp objects": [
+        "cut his",
+        "cut her",
+        "cut their",
+        "laceration",
+        "stitches",
+        "sharp edge",
+        "nicked",
+        "blade",
+        "knife",
+        "stanley",
+        "sharp",
+        "rebar cap",
+        "protruding",
+        "uncapped",
+        "sliced",
+        "gash",
+        "cut to",
+        "cut on",
+        "cut himself",
+        "cut herself",
+        "cut themselves",
+        "cut hand",
+        "cut finger",
+        "first aid box",
+    ],
     "Manual handling / musculoskeletal": [
         "manual handling",
         "back injury",
@@ -135,12 +317,52 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "lifting by hand",
         "by hand",
         "lower back",
+        "pulled his back",
+        "pulled her back",
+        "pulled their back",
+        "hurt his back",
+        "hurt her back",
+        "back pain",
+        "lugging",
+        "carrying",
+        "heavy",
+        "kg bag",
+        "twisted",
+        "hernia",
+        "musculoskeletal",
+        "sprain",
+        "shoulder",
+        "team lift",
+        "awkward load",
+        "repetitive",
     ],
 }
 
 QUALITY_DEFECTS: dict[str, list[str]] = {
-    "Concrete honeycombing / voids": ["honeycomb", "void", "segregation", "blowhole"],
-    "Cracking": ["crack", "cracking", "spalling"],
+    "Concrete honeycombing / voids": [
+        "honeycomb",
+        "void",
+        "segregation",
+        "blowhole",
+        "exposed aggregate",
+        "poor compaction",
+        "compaction",
+        "poker",
+        "vibrat",
+        "air pocket",
+        "blow hole",
+        "scabby",
+    ],
+    "Cracking": [
+        "crack",
+        "cracking",
+        "spalling",
+        "crazing",
+        "craze",
+        "hairline",
+        "fissure",
+        "shrinkage",
+    ],
     "Reinforcement / cover nonconformance": [
         "concrete cover",
         "cover meter",
@@ -149,6 +371,24 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "bar spacing",
         "lap length",
         "reinforcement inspection",
+        "covermeter",
+        "low cover",
+        "cover to",
+        "cover on",
+        "rebar",
+        "reinforcement",
+        "bar size",
+        "bar bending",
+        "starter bars",
+        "bottom mat",
+        "top mat",
+        "links",
+        "chairs",
+        "laps",
+        "bars sitting",
+        "steel fixer",
+        "steelfixer",
+        "fixers",
     ],
     "Concrete strength / mix nonconformance": [
         "cube",
@@ -156,12 +396,37 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "cylinder strength",
         "test cylinder",
         "compressive strength",
-        "slump",
+        "slump test",
+        "mm slump",
+        "slump of",
+        "slump class",
+        "slump was",
+        "slump result",
         "mix design",
         "w/c ratio",
+        "delivery ticket",
+        "concrete grade",
+        "lower grade",
+        "wrong grade",
+        "c25",
+        "c28",
+        "c30",
+        "c32",
+        "c35",
+        "c40",
+        "stiff mix",
+        "wet mix",
+        "added water",
+        "water added",
+        "retarder",
+        "mix",
+        "cylinders",
+        "cubes",
     ],
     "Formwork defect": [
         "formwork failure",
+        "formwork failed",
+        "formwork collapse",
         "formwork movement",
         "shuttering failure",
         "bulge",
@@ -171,6 +436,23 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "shutter",
         "formwork moved",
         "push-pull prop",
+        "formwork",
+        "table form",
+        "wall form",
+        "tie failed",
+        "failed tie",
+        "waler",
+        "falsework",
+        "back-prop",
+        "backprop",
+        "props",
+        "propped",
+        "deflect",
+        "struck early",
+        "early striking",
+        "plywood",
+        "form face",
+        "shuttering",
     ],
     "Dimensional / alignment tolerance": [
         "misalign",
@@ -181,6 +463,27 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "setting-out error",
         "out of line",
         "out of position",
+        "wrong position",
+        "setting-out position",
+        "off their setting-out",
+        "off line",
+        "off level",
+        "not plumb",
+        "out of square",
+        "wrong level",
+        "gridline",
+        "grid line",
+        "cast-in",
+        "holding-down bolt",
+        "holding down bolt",
+        "survey",
+        "total station",
+        "too high",
+        "too low",
+        "deviation",
+        "tolerance",
+        "setting out",
+        "line and level",
     ],
     "Water ingress / waterproofing": [
         "leaking",
@@ -191,6 +494,22 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "moisture",
         "waterproof",
         "ingress",
+        "water coming through",
+        "water through",
+        "water was coming",
+        "leak",
+        "tanking",
+        "membrane",
+        "waterstop",
+        "hydrophilic",
+        "construction joint",
+        "kicker joint",
+        "flashing",
+        "upstand",
+        "puddl",
+        "drip",
+        "wet patch",
+        "flood test",
     ],
     "Welding / steelwork defect": [
         "welds",
@@ -204,6 +523,19 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "finger tight",
         "splice",
         "steel connection",
+        "weld",
+        "lack of fusion",
+        "spatter",
+        "ndt",
+        "mpi",
+        "ultrasonic",
+        "galvanis",
+        "intumescent",
+        "base plate",
+        "bolted connection",
+        "column splice",
+        "steelwork",
+        "steel erector",
     ],
     "Material nonconformance": [
         "wrong material",
@@ -214,6 +546,22 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "submittal",
         "different product",
         "unapproved",
+        "wrong spec",
+        "wrong product",
+        "wrong colour",
+        "wrong color",
+        "wrong size",
+        "delivery note",
+        "mill cert",
+        "certificate",
+        "heat number",
+        "quarantin",
+        "goods-in",
+        "goods in",
+        "not to spec",
+        "specification",
+        "instead of",
+        "spec",
     ],
 }
 
@@ -275,7 +623,8 @@ def _text(pack: dict) -> str:
     inc = pack["incident"]
     parts = [inc["title"], inc["description"], inc.get("activity") or "", inc.get("immediate_actions") or ""]
     parts += [e.get("description") or "" for e in pack.get("evidence", [])]
-    return " ".join(parts).lower()
+    # Sentence breaks between fields, so a phrase cannot run from the title into the description.
+    return ". ".join(p.strip().rstrip(".") for p in parts if p and p.strip()).lower()
 
 
 def _has(text: str, word: str) -> bool:
@@ -283,10 +632,167 @@ def _has(text: str, word: str) -> bool:
     return re.search(r"\b" + re.escape(word), text) is not None
 
 
-def _match(text: str, taxonomy: dict[str, list[str]]) -> list[str]:
-    """Labels ordered by how many of their keywords appear (ties keep taxonomy order)."""
-    scored = [(sum(_has(text, w) for w in words), i, name) for i, (name, words) in enumerate(taxonomy.items())]
-    return [name for n, _, name in sorted(scored, key=lambda t: (-t[0], t[1])) if n > 0]
+# Keywords that also appear in unrelated contexts ("stair void", "struck a pipe", "kept dry") count half.
+WEAK_WORDS = {
+    "void",
+    "collapse",
+    "struck",
+    "shock",
+    "strain",
+    "by hand",
+    "damp",
+    "moisture",
+    "batch",
+    "chamber",
+    "oxygen",
+    "fumes",
+    "position",
+    "dropped",
+    "fell off",
+    "fell through",
+    "edge",
+    "gloves",
+    "hoist",
+    "slab edge",
+    "roof edge",
+    "not wearing",
+    "formwork",
+    "glasses",
+    "lift shaft",
+    "quarantin",
+    "fire",
+    "falling",
+    "scaffold",
+    "dig",
+    "mix",
+    "spec",
+    "instead of",
+    "heavy",
+    "carrying",
+    "shoulder",
+    "sharp",
+    "tank",
+    "leak",
+    "rebar",
+    "reinforcement",
+    "electrical",
+    "sparks",
+    "smoke",
+    "certificate",
+    "survey",
+    "props",
+    "links",
+    "chairs",
+    "fixers",
+    "flew",
+    "debris",
+    "laps",
+    "specification",
+    "roller",
+    "loader",
+    "lorry",
+    "burning",
+    "blade",
+    "membrane",
+    "weld",
+    "steelwork",
+    "netting",
+    "went through",
+    "spoil",
+    "buried",
+    "compaction",
+    "vibrat",
+    "propped",
+    "deflect",
+    "plywood",
+    "solvent",
+    "ventilation",
+    "drip",
+    "cubes",
+    "cylinders",
+    "starter bars",
+    "repetitive",
+    "knife",
+    "first aid box",
+    "overcome",
+    "dizzy",
+    "flashing",
+    "upstand",
+    "hearing",
+}
+# An object (not a person) falling or being dropped: "a brick fell off the platform", "bolt dropped from".
+_OBJECT_FELL = re.compile(
+    r"\b(brick|block|bolt|nut|tool|hammer|spanner|wrench|scaffold board|board|plank|pipe|tube|clip|coupler|fitting|"
+    r"debris|material|panel|sheet|bucket|load|object|kerb|stone|tile|timber|bar|rebar|bracket|drill|grinder|"
+    r"glass|pane|slate|batten|bag|pallet|beam|section)s?\b[^.]{0,60}?\b(fell|dropped|falling|came down|"
+    r"came loose|landed|toppled|slid off|blew off)"
+)
+# "12 mm off line", "40mm low", "15 mm out": a measured deviation is a tolerance problem.
+_DEVIATION = re.compile(r"\b\d+(?:\.\d+)? ?mm\b[^.]{0,25}?\b(off|out|low|high|short|over|proud|too|outside|beyond)\b")
+# A person hit by something: "striking a labourer on the leg", "hit the fixer".
+_PERSON_STRUCK = re.compile(
+    r"\b(struck|striking|hit|hitting|knocked)\b (?:a |the |his |her |their |one |another )?"
+    r"(he|she|him|her|them|worker|operative|man|labourer|laborer|fixer|fitter|carpenter|joiner|electrician|"
+    r"apprentice|engineer|banksman|slinger|driver|operator|colleague|hose man|lad)\b"
+)
+# A person falling or nearly falling.
+_PERSON_FELL = re.compile(
+    r"\b(he|she|they|worker|operative|man|labourer|laborer|roofer|scaffolder|carpenter|joiner|electrician|painter|"
+    r"fixer|erector|apprentice|engineer|plumber|bricklayer|brickie|driver|operator|someone|colleague|lad)\b[^.]{0,50}?"
+    r"\b(fell|slipped|tripped|toppled|went over|went through|lost (?:his|her|their) (?:footing|balance)|"
+    r"dropped (?:about|around|roughly|some)? ?\d)"
+)
+
+
+def _scores(text: str, taxonomy: dict[str, list[str]], title: str = "") -> dict[str, float]:
+    """Weighted keyword evidence per label: title matches count double, ambiguous words count half."""
+    out: dict[str, float] = {}
+    for name, words in taxonomy.items():
+        s = 0.0
+        for w in words:
+            if _has(text, w):
+                s += (0.5 if w in WEAK_WORDS else 1.0) * (2.0 if title and _has(title, w) else 1.0)
+        if s:
+            out[name] = s
+    if taxonomy is SAFETY_HAZARDS:
+        objects, people = _OBJECT_FELL.search(text), _PERSON_FELL.search(text)
+        if objects or _PERSON_STRUCK.search(text):
+            out["Struck by falling or moving object"] = out.get("Struck by falling or moving object", 0.0) + 2.0
+        if people:
+            out["Fall from height"] = out.get("Fall from height", 0.0) + 2.0
+        elif objects and "Fall from height" in out:
+            out["Fall from height"] = max(0.0, out["Fall from height"] - 1.5)  # the object fell, not a person
+            if not out["Fall from height"]:
+                del out["Fall from height"]
+    if taxonomy is QUALITY_DEFECTS and _DEVIATION.search(text):
+        out["Dimensional / alignment tolerance"] = out.get("Dimensional / alignment tolerance", 0.0) + 1.5
+    return out
+
+
+def _ranked(scores: dict[str, float], taxonomy: dict[str, list[str]]) -> list[str]:
+    order = list(taxonomy)
+    return [n for n in sorted(scores, key=lambda n: (-scores[n], order.index(n))) if scores[n] > 0]
+
+
+def _match(text: str, taxonomy: dict[str, list[str]], title: str = "") -> list[str]:
+    """Labels ordered by weighted keyword evidence (ties keep taxonomy order)."""
+    return _ranked(_scores(text, taxonomy, title), taxonomy)
+
+
+def classify(pack: dict) -> tuple[list[str], list[str], Domain | None]:
+    """Safety labels, quality labels and the domain the evidence supports (None when nothing matched).
+
+    BOTH needs real evidence on both sides; a single incidental word ("stair void", "waterproofing operative")
+    does not turn a safety event into a quality one or the reverse."""
+    text, title = _text(pack), pack["incident"]["title"].lower()
+    s, q = _scores(text, SAFETY_HAZARDS, title), _scores(text, QUALITY_DEFECTS, title)
+    top_s, top_q = max(s.values(), default=0.0), max(q.values(), default=0.0)
+    hazards, defects = _ranked(s, SAFETY_HAZARDS), _ranked(q, QUALITY_DEFECTS)
+    if max(top_s, top_q) < 1.0:  # one ambiguous word is not enough to classify
+        return [], [], None
+    if min(top_s, top_q) >= 1.5 and min(top_s, top_q) >= max(top_s, top_q) / 3:
+        return hazards, defects, Domain.BOTH
+    return hazards, defects, (Domain.SAFETY if top_s >= top_q else Domain.QUALITY)
 
 
 def _base_refs(pack: dict, k: int = 3) -> list[str]:
@@ -381,16 +887,10 @@ def _severity_for(consequence: int) -> Severity:
 def triage(pack: dict) -> TriageOutput:
     inc = pack["incident"]
     text = _text(pack)
-    hazards = _match(text, SAFETY_HAZARDS)
-    defects = _match(text, QUALITY_DEFECTS)
-    if hazards and defects:
-        domain = Domain.BOTH
-    elif defects:
-        domain = Domain.QUALITY
-    elif hazards:
-        domain = Domain.SAFETY
-    else:
-        domain = Domain(inc["domain"])
+    hazards, defects, found = classify(pack)
+    domain = found or Domain(inc["domain"])
+    if inc["domain"] == Domain.BOTH and hazards and defects:
+        domain = Domain.BOTH  # never narrow a reported BOTH while both sides have some evidence
     consequence = _consequence(text, inc.get("people_involved", 0), hazards)
     if defects:
         consequence = max(consequence, _quality_consequence(text))
@@ -413,7 +913,8 @@ def triage(pack: dict) -> TriageOutput:
     if len(inc["description"].split()) < 15:
         missing.append("A fuller description: sequence of events, equipment, people and conditions.")
 
-    labels = hazards + defects
+    # The primary class comes from the domain the evidence supports; the other side's labels follow as secondary.
+    labels = defects + hazards if domain == Domain.QUALITY else hazards + defects
     incident_class = labels[0] if labels else "Unclassified site event"
     nxt: list = []
     if domain in (Domain.SAFETY, Domain.BOTH):

@@ -86,6 +86,10 @@ Every output carries `confidence`, `evidence_refs` and `open_questions`.
 ## Providers
 
 - `rules` (default): offline, deterministic, uses an explicit construction hazard/defect taxonomy (`rules.py`).
+  Triage weighs keyword evidence (title words count double, ambiguous words half), recognises an object falling, a
+  person falling and a person being struck, and treats a measured deviation ("15 mm out") as a tolerance cue. It
+  reports BOTH only with real evidence on both sides, never narrows a reported BOTH while both sides have evidence,
+  and leaves a report unclassified (for a person to classify) when only one ambiguous word matched.
 - `anthropic`: Claude (`SITEGUARD_ANTHROPIC_MODEL`, default `claude-opus-5-5`) reads the evidence pack and returns
   the agent's schema through structured outputs. The model gets no tools and no write access.
 

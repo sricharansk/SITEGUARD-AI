@@ -1,7 +1,9 @@
 # Site Guard AI evaluation set: labelled SYNTHETIC incident reports (not real events).
 #
-# split: dev  = may be used when tuning the rules taxonomy
-#        test = held out; written before any tuning and never used to tune. Report test numbers.
+# split: dev  = may be used when tuning the rules taxonomy. Every case in this file is dev.
+#   origin: test-v1 marks the cases that were the held-out test split until 12 October 2026. Their results had been
+#   seen during development, so they were moved to dev; the held-out test split is now data/eval/heldout_v2.yaml,
+#   written by an independent author before the next round of tuning.
 #
 # Labelling guide (worst credible outcome, the same idea as the 5x5 matrix consequence):
 #   CRITICAL  fatality or permanent disability, or a realistic potential for it to several people
@@ -236,9 +238,10 @@ cases:
   domain: SAFETY
   severity: HIGH
   expected_doc: Site Traffic
-# ---------------------------------------------------------------- held-out test split
+# --------------------------------------------- former held-out test split (origin: test-v1), now dev
 - id: T01
-  split: test
+  split: dev
+  origin: test-v1
   title: Worker fell through unprotected stair void
   description: A worker fell about 3 m through an unprotected stair void on level 2 and fractured his wrist. The void cover had been lifted to get materials up and was not replaced.
   people_involved: 1
@@ -247,7 +250,8 @@ cases:
   severity: HIGH
   expected_doc: Working at Height
 - id: T02
-  split: test
+  split: dev
+  origin: test-v1
   title: MEWP basket hit beam, operator not clipped on
   description: The basket of a scissor lift MEWP struck a beam while being raised and the operator, who was not clipped on, was thrown against the guardrail. Bruising only.
   people_involved: 1
@@ -257,7 +261,8 @@ cases:
   severity: HIGH
   expected_doc: Working at Height
 - id: T03
-  split: test
+  split: dev
+  origin: test-v1
   title: Brick fell from hoist platform near labourer
   description: A brick fell off the loading platform at level 6 and landed next to a labourer at ground level. Toe boards were missing on the platform. Nobody was hurt.
   people_involved: 1
@@ -266,7 +271,8 @@ cases:
   severity: HIGH
   expected_doc: Working at Height
 - id: T04
-  split: test
+  split: dev
+  origin: test-v1
   title: Worker buried to the waist in collapsing pit
   description: A worker was buried up to his waist when the wall of a 2.4 m deep lift pit excavation gave way. He was dug out by colleagues and taken to hospital. The pit had not been shored or battered.
   people_involved: 1
@@ -275,7 +281,8 @@ cases:
   severity: CRITICAL
   expected_doc: Excavation
 - id: T05
-  split: test
+  split: dev
+  origin: test-v1
   title: Damaged cable on site saw caused tingling
   description: A carpenter felt a tingling shock from a site saw with a damaged power cable. The supply was not RCD protected. He did not need treatment.
   people_involved: 1
@@ -284,7 +291,8 @@ cases:
   severity: HIGH
   expected_doc: Electrical
 - id: T06
-  split: test
+  split: dev
+  origin: test-v1
   title: Crane lifted load over occupied canteen
   description: The tower crane slewed a skip of concrete over the occupied welfare canteen against the lift plan. The appointed person was not on site.
   people_involved: 12
@@ -293,7 +301,8 @@ cases:
   severity: CRITICAL
   expected_doc: Lifting Operations
 - id: T07
-  split: test
+  split: dev
+  origin: test-v1
   title: Forklift reversed into worker's foot
   description: A forklift reversing in the material yard ran over a worker's foot. His safety boots took most of the force but he had a suspected broken toe. The reversing alarm was not working.
   people_involved: 1
@@ -302,7 +311,8 @@ cases:
   severity: HIGH
   expected_doc: Site Traffic
 - id: T08
-  split: test
+  split: dev
+  origin: test-v1
   title: Smouldering insulation after pipe brazing
   description: Insulation around a copper pipe was found smouldering an hour after brazing work had finished. There had been no fire watch after the hot work and the permit was not closed.
   people_involved: 0
@@ -311,7 +321,8 @@ cases:
   severity: HIGH
   expected_doc: Hot Work
 - id: T09
-  split: test
+  split: dev
+  origin: test-v1
   title: Concrete splashed into eye at pump line
   description: Concrete splashed into a labourer's eye when the pump line was cleared. He was not wearing safety glasses. Eyewash was used and he went to the eye clinic.
   people_involved: 1
@@ -320,7 +331,8 @@ cases:
   severity: HIGH
   expected_doc: PPE
 - id: T10
-  split: test
+  split: dev
+  origin: test-v1
   title: Tank entry without permit to clean sump
   description: Two cleaners entered the basement sump tank to remove water without a permit, gas test or standby person. They came out after feeling short of breath.
   people_involved: 2
@@ -329,7 +341,8 @@ cases:
   severity: CRITICAL
   expected_doc: Confined Space
 - id: T11
-  split: test
+  split: dev
+  origin: test-v1
   title: Laceration from Stanley knife while cutting membrane
   description: A waterproofing operative suffered a laceration to his thumb from a Stanley knife while cutting membrane. He went to hospital for stitches. He was not using cut-resistant gloves.
   people_involved: 1
@@ -339,7 +352,8 @@ cases:
   severity: MEDIUM
   expected_doc: PPE
 - id: T12
-  split: test
+  split: dev
+  origin: test-v1
   title: Shoulder injury moving heavy pump by hand
   description: Two fitters carried a 90 kg pump up a stair because no lifting equipment was planned. One injured his shoulder and was off work for a week.
   people_involved: 2
@@ -348,7 +362,8 @@ cases:
   severity: HIGH
   expected_doc: Manual Handling
 - id: T13
-  split: test
+  split: dev
+  origin: test-v1
   title: Large voids found in core wall after striking
   description: After striking the core wall formwork, large voids with exposed reinforcement were found near the base where the concrete had not been compacted.
   people_involved: 0
@@ -357,7 +372,8 @@ cases:
   severity: HIGH
   expected_doc: Cast-in-place Concrete
 - id: T14
-  split: test
+  split: dev
+  origin: test-v1
   title: Diagonal cracks in transfer slab near column
   description: Diagonal cracks up to 0.5 mm were found in the transfer slab around column C-4 a week after props were removed. The crack width limit is 0.3 mm.
   people_involved: 0
@@ -366,7 +382,8 @@ cases:
   severity: HIGH
   expected_doc: Tolerances
 - id: T15
-  split: test
+  split: dev
+  origin: test-v1
   title: Missing spacers on bottom mat before pour
   description: QA/QC found that spacers were missing under large areas of the bottom reinforcement mat in the raft foundation an hour before the pour, giving almost zero cover.
   people_involved: 0
@@ -375,7 +392,8 @@ cases:
   severity: HIGH
   expected_doc: Cast-in-place Concrete
 - id: T16
-  split: test
+  split: dev
+  origin: test-v1
   title: 7-day cylinder strengths low for shear walls
   description: The 7-day cylinder results for the shear walls are 40% of the specified 28-day strength, lower than the supplier's usual 65%. The mix design submitted may not be the one supplied.
   people_involved: 0
@@ -384,7 +402,8 @@ cases:
   severity: HIGH
   expected_doc: Cast-in-place Concrete
 - id: T17
-  split: test
+  split: dev
+  origin: test-v1
   title: Slab edge shutter failed during pour
   description: The slab edge shutter failed during the pour, causing a blowout and concrete loss over the edge. The edge form had not been inspected.
   people_involved: 0
@@ -393,7 +412,8 @@ cases:
   severity: HIGH
   expected_doc: Cast-in-place Concrete
 - id: T18
-  split: test
+  split: dev
+  origin: test-v1
   title: Anchor bolts cast in wrong position
   description: Holding-down anchor bolts for the steel columns on gridline 7 were cast 40 mm off their setting-out position. The steel cannot be erected without modification.
   people_involved: 0
@@ -402,7 +422,8 @@ cases:
   severity: HIGH
   expected_doc: Tolerances
 - id: T19
-  split: test
+  split: dev
+  origin: test-v1
   title: Damp patches on basement car park ceiling
   description: Damp patches and white staining have appeared on the basement car park ceiling under the landscaped podium. Water may be getting through the podium waterproofing.
   people_involved: 0
@@ -411,7 +432,8 @@ cases:
   severity: MEDIUM
   expected_doc: Waterproofing
 - id: T20
-  split: test
+  split: dev
+  origin: test-v1
   title: Cracked fillet weld on cantilever bracket
   description: Magnetic particle testing found a crack in a fillet weld on a facade cantilever bracket. The welder used had no record of qualification for the procedure.
   people_involved: 0
@@ -421,7 +443,8 @@ cases:
   severity: HIGH
   expected_doc: Structural Steel
 - id: T21
-  split: test
+  split: dev
+  origin: test-v1
   title: Non-certified blockwork delivered and laid
   description: Blocks delivered for the stair core firewall have no certificate and do not match the approved submittal. About 40 m2 has already been laid.
   people_involved: 0
@@ -430,7 +453,8 @@ cases:
   severity: HIGH
   expected_doc: Structural Steel
 - id: T22
-  split: test
+  split: dev
+  origin: test-v1
   title: Scaffold collapse after ties removed
   description: A section of the facade scaffold collapsed after ties were removed by a subcontractor to fit windows. No one was on that section. Debris fell onto the street hoarding.
   people_involved: 0
@@ -440,7 +464,8 @@ cases:
   severity: CRITICAL
   expected_doc: Working at Height
 - id: T23
-  split: test
+  split: dev
+  origin: test-v1
   title: Rebar cage toppled during crane lift and damaged formwork
   description: A rebar cage being lifted by crane toppled when one sling slipped and hit the column formwork, knocking it out of plumb. The rigging had not been inspected. Nobody was hurt.
   people_involved: 0
@@ -450,7 +475,8 @@ cases:
   severity: HIGH
   expected_doc: Lifting Operations
 - id: T24
-  split: test
+  split: dev
+  origin: test-v1
   title: Minor housekeeping issue in site office
   description: Boxes of drawings left on the floor of the site office corridor. Tidied up the same day. No one was affected.
   people_involved: 0

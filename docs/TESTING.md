@@ -42,9 +42,12 @@ resolution run).
 ## Evaluation
 
 `make eval` (or `cd backend && python -m app.evaluation --out ../docs/EVALUATION.md`) scores the agents on
-`data/eval/incidents_gold.yaml` (24 dev + 24 held-out test cases, synthetic, covering all 20 classes) and runs the
-10-case red-team suite. Results: [EVALUATION.md](EVALUATION.md). The rules were tuned once on dev errors only; the
-test split is the headline number.
+120 dev cases (`data/eval/incidents_gold.yaml`, `data/eval/dev_v2.yaml`) and 46 held-out test cases
+(`data/eval/heldout_v2.yaml`), all synthetic and covering all 20 classes, and runs the 10-case red-team suite.
+Results: [EVALUATION.md](EVALUATION.md). Tune only on dev errors; the held-out split is the headline number and
+must never be used for tuning (Decision 025). Its per-case results are now published, so the next tuning round
+needs a new held-out set written and committed before tuning starts. `tests/test_evaluation.py` fails CI if the
+held-out scores drop below floors just under the measured values or any safety gate breaks.
 
 ## Browser tests
 

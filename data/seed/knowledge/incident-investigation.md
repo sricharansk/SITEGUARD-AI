@@ -3,7 +3,7 @@ title: Incident Reporting and Investigation Procedure (HSE-PRO-001)
 doc_type: PROCEDURE
 domain: BOTH
 source: Synthetic demo procedure - Site Guard AI pilot
-version: "6"
+version: "7"
 ---
 # Incident Reporting and Investigation Procedure
 
@@ -23,3 +23,8 @@ management factors.
 Every action must have an owner, a due date and a verification criterion. Actions for high and critical
 incidents must be approved by the HSE manager. An incident shall not be closed until all actions are verified
 as effective.
+
+## Other site events
+Events that are not a safety hazard or quality defect, such as welfare facilities faults, security and theft,
+complaints from neighbours, parking, site induction and sign-in records, are still logged and reviewed by the
+site manager so that trends are visible.

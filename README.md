@@ -57,22 +57,26 @@ The incidents and procedures are **synthetic** and labelled as such; see [Data](
 
 **Every incident resolved** ([docs/RESULTS.md](docs/RESULTS.md), one report per incident in
 [docs/reports/](docs/reports/)): a project with 20 incidents (11 safety, 8 quality, 1 both) had 13 open. The agents
-investigated the ones still at REPORTED and a person reviewed every proposal (65 decisions on record across the
-project: 51 approved, 14 rejected with a reason). The escalation job flagged 3 overdue actions (one at management
-level, 8 days late), one quality action failed verification and was reworked, and all 21 incidents (including one
-reported during the run) ended CLOSED, with 106 agent runs and 0 failures.
+investigated the ones still at REPORTED and a person reviewed every proposal (99 decisions on record across the
+project: 81 approved, 18 rejected with a reason). The escalation job flagged 6 overdue actions (two at management
+level, up to 9 days late), one quality action failed verification and was reworked, and all 21 incidents (including
+one reported during the run) ended CLOSED, with 107 agent runs and 0 failures.
 
-**Agent quality** ([docs/EVALUATION.md](docs/EVALUATION.md)) on a labelled held-out set of 24 cases that was never
-used for tuning:
+**Agent quality** ([docs/EVALUATION.md](docs/EVALUATION.md)) on a held-out set of 46 synthetic cases. A separate
+author wrote the set before tuning, it was frozen in a commit, never used for tuning and measured once afterwards.
+Tuning used 120 dev cases only (Decision 025):
 
 | Held-out metric | Before tuning | Now | Target |
 |---|---|---|---|
-| Hazard/defect class (top-1) | 67% | 79% | 85% (not yet met) |
-| Domain (safety / quality / both) | 79% | 83% | 90% (not yet met) |
-| Severity within one level | 78% | 91% | 90% |
-| CRITICAL cases rated LOW or MEDIUM | 2 | 0 | 0 |
-| Expected procedure in top-3 retrieved | 96% | 96% | 85% |
+| Hazard/defect class (top-1) | 67% | 89% | 85% |
+| Domain (safety / quality / both) | 80% | 93% | 90% |
+| Severity within one level | 96% | 98% | 90% |
+| CRITICAL cases rated LOW or MEDIUM | 0 | 0 | 0 |
+| Expected procedure in top-3 retrieved | 67% | 93% | 85% |
 | Red-team attacks contained (10 cases) | | 100% | 100% |
+
+These are scores for the offline rules provider on synthetic, AI-assisted cases; they are not a substitute for a
+pilot on expert-labelled reports (limits in EVALUATION.md).
 
 The red-team suite covers prompt injection in reports and documents, fabricated citations, model timeouts and
 out-of-schema output, a fatal incident reported as LOW, cross-tenant retrieval and undeclared tool calls. One

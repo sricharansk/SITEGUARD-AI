@@ -167,3 +167,15 @@ on. A lease marks crashed runs. Only one active workflow per incident is allowed
 Disagreements (severity, domain, risk above reported, safety versus quality, cited documents with different values,
 vision analyses or reviews that disagree) are stored as `agent_conflicts` with both sides, people with
 `APPROVE_CAPA` are notified, and closure is blocked until a person records a decision.
+
+## Decision 025 — Accuracy is claimed only on a held-out set frozen before tuning
+
+Reason: the first test split had been read while improving the rules, so a higher score on it would not show that
+the agents generalise. It became dev data (`origin: test-v1`). Before the second tuning round a separate author
+wrote a new held-out set (`heldout_v2.yaml`, 46 cases), committed it (2403a8c) and measured it once as a baseline.
+Tuning then used only dev cases (`incidents_gold.yaml` and the new `dev_v2.yaml`, 120 cases); the held-out cases
+were not opened. After tuning was frozen in a commit, the held-out set was measured once. Results are reported
+whether or not they meet the targets. One gap is disclosed: before tuning, the held-out author's hand-back named
+the topics of its four BOTH cases and two unclassifiable cases; no rule was written for them. Because the held-out
+per-case results are now published, the next tuning round needs a new held-out set.
+

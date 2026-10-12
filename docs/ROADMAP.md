@@ -19,10 +19,13 @@ hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery
 and recorded conflicts; E web screens for documents, grounded answers, photo review, workflows, the graph and the
 email outbox. With this, every feature of PR #2 is rebuilt on main.
 
+Done: held-out accuracy targets met by the rules provider on a new held-out set (class 89%, domain 93%, retrieval
+hit@3 93%; Decision 025).
+
 ## NOW
 
 Run the OSHA SIR pipeline on the real 2024-2026 file and publish the report; score the Claude provider on the gold
-set; raise held-out class/domain accuracy to the 85% / 90% targets; Azure staging (Container Apps, PostgreSQL
+set; expert-labelled pilot cases and a new held-out set (v3) before any further tuning; Azure staging (Container Apps, PostgreSQL
 Flexible Server, Blob Storage for evidence, Key Vault).
 
 ## NEXT
