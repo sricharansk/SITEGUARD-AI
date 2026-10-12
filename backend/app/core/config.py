@@ -58,6 +58,14 @@ class Settings(BaseSettings):
     parser_timeout_seconds: int = Field(default=60, ge=5, le=600)
     parser_memory_mb: int = Field(default=1024, ge=256, le=8192)
 
+    # Vision (docs/AGENTS.md#vision). "baseline" runs image-quality checks only; no detection model is chosen yet.
+    vision_provider: Literal["baseline", "anthropic"] = "baseline"
+    vision_max_pixels: int = Field(default=40_000_000, ge=1_000_000, le=200_000_000)
+    vision_max_side: int = Field(default=1568, ge=256, le=4096)
+    vision_timeout_seconds: int = Field(default=30, ge=5, le=300)
+    vision_memory_mb: int = Field(default=1024, ge=256, le=8192)
+    vision_rate_limit_per_minute: int = Field(default=30, ge=1, le=1000)  # analyses per user
+
     @model_validator(mode="after")
     def _resolve_seed_default(self) -> "Settings":
         if self.seed_demo_data is None:

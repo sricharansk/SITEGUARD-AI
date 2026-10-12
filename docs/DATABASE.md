@@ -4,7 +4,7 @@
 
 PostgreSQL (`pgvector/pgvector:pg16` image) for deployed environments; SQLite for local runs and tests. Models in
 `backend/app/models.py`. Schema changes go through Alembic (`backend/migrations/`, revisions `0001` initial
-schema, `0002` knowledge documents and embeddings, `0003` notification email outbox). The Docker image runs `alembic upgrade head` before starting
+schema, `0002` knowledge documents and embeddings, `0003` notification email outbox, `0004` vision analyses). The Docker image runs `alembic upgrade head` before starting
 and sets `SITEGUARD_AUTO_CREATE_SCHEMA=false`; local runs and tests still use `create_all`. `tests/test_migrations.py` fails if a model change has no migration.
 
 ```bash
@@ -17,7 +17,11 @@ alembic upgrade head
 organizations, users, memberships, projects, sites, incidents, incident_events, evidence, documents,
 document_chunks, chunk_embeddings, agent_runs, risk_assessments, capa_actions (with `escalation_level`), approval_events,
 verification_records, audit_events, notifications, notification_deliveries (email outbox: channel, status,
-attempts, last_error, next_attempt_at, sent_at; one row per notification and channel).
+attempts, last_error, next_attempt_at, sent_at; one row per notification and channel), vision_analyses (one
+analyzer run over one image: evidence SHA-256, task, analyzer, model, model and taxonomy versions, status,
+preprocessing, image-quality flags, thresholds used, limitations), vision_observations (label, category, confidence,
+threshold, `above_threshold`, normalized box/polygon, analyzer note, review status with reviewer, time and note) and
+vision_calibrations (detection threshold per label for a project or one of its sites, with reason and author).
 
 RCA and compliance outputs are stored as structured JSON in `agent_runs.output` for the pilot rather than in
 separate rca_cases / compliance_findings tables.

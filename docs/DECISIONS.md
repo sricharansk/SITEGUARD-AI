@@ -79,6 +79,7 @@ port #2's additional features onto main stage by stage, each with tests and gree
 Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
 Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019).
 Stage C: Word and PDF reports, email delivery outbox (Decisions 020–021).
+Stage D: vision evidence analysis (Decision 022).
 
 ## Decision 016 — One container on Azure
 
@@ -129,3 +130,15 @@ notification gets a delivery row in the same transaction; a job sends due rows w
 and failures end as visible dead letters an administrator can retry. Email is `disabled` by default and `smtp` is
 refused in local and test, because it sends incident details outside the system (an owner decision, GOVERNANCE.md).
 Disabled deliveries are marked `SKIPPED`, so turning email on later does not send a backlog of old notifications.
+
+## Decision 022 — Vision is an observation pipeline with a pluggable analyzer and engineer validation
+
+Reason: the detection model is not chosen (an owner decision) and the public PPE and defect datasets are research-only, so the
+milestone builds everything around the model and keeps the model swappable. One `VisionAnalyzer` interface
+(`agents/vision.py`) reports detections against a versioned taxonomy; the service checks the evidence hash, decodes
+the image in a resource-limited child process (as for documents, Decision 019), applies project/site calibrated
+thresholds and stores every detection with the analyzer, model version, taxonomy version and thresholds used. The
+default `baseline` analyzer detects nothing and says so, rather than pretending; Claude vision is available as an
+adapter with self-reported confidence. A failed analysis is stored as `FAILED`, never as "nothing found". Agents only
+treat observations a person CONFIRMED as findings; unreviewed ones become open questions, and no observation is
+ever read as "no hazard".

@@ -9,7 +9,11 @@ from app.models import (
     Project,
     RiskAssessment,
     VerificationRecord,
+    VisionAnalysis,
+    VisionCalibration,
+    VisionObservation,
 )
+from app.services.vision import BY_LABEL, DISCLAIMER
 
 
 def project(p: Project) -> dict:
@@ -166,4 +170,67 @@ def audit_event(a: AuditEvent) -> dict:
         "details": a.details,
         "correlation_id": a.correlation_id,
         "created_at": a.created_at,
+    }
+
+
+def vision_observation(o: VisionObservation) -> dict:
+    cls = BY_LABEL.get(o.label)
+    return {
+        "id": o.id,
+        "ref": f"vision:{o.id}",
+        "kind": "OBSERVATION",
+        "analysis_id": o.analysis_id,
+        "evidence_id": o.evidence_id,
+        "category": o.category,
+        "label": o.label,
+        "name": cls.name if cls else o.label,
+        "maps_to": cls.maps_to if cls else None,
+        "confidence": o.confidence,
+        "threshold": o.threshold,
+        "above_threshold": o.above_threshold,
+        "box": o.box,
+        "polygon": o.polygon,
+        "note": o.note,
+        "review_status": o.review_status,
+        "reviewed_by": o.reviewed_by,
+        "reviewed_at": o.reviewed_at,
+        "review_note": o.review_note,
+    }
+
+
+def vision_analysis(a: VisionAnalysis) -> dict:
+    return {
+        "id": a.id,
+        "incident_id": a.incident_id,
+        "evidence_id": a.evidence_id,
+        "evidence_sha256": a.evidence_sha256,
+        "task": a.task,
+        "analyzer": a.analyzer,
+        "model": a.model,
+        "model_version": a.model_version,
+        "taxonomy_version": a.taxonomy_version,
+        "status": a.status,
+        "error": a.error,
+        "preprocessing": a.preprocessing,
+        "image_quality": a.image_quality,
+        "thresholds": a.thresholds,
+        "limitations": a.limitations,
+        "duration_ms": a.duration_ms,
+        "requested_by": a.requested_by,
+        "created_at": a.created_at,
+        "disclaimer": DISCLAIMER,
+        "observations": [vision_observation(o) for o in a.observations],
+    }
+
+
+def calibration(c: VisionCalibration) -> dict:
+    return {
+        "id": c.id,
+        "project_id": c.project_id,
+        "site_id": c.site_id,
+        "label": c.label,
+        "threshold": c.threshold,
+        "reason": c.reason,
+        "updated_by": c.updated_by,
+        "updated_at": c.updated_at,
     }

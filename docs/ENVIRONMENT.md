@@ -47,6 +47,10 @@ seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
 | `SITEGUARD_RETRIEVAL_MODE` | `hybrid` | `hybrid` (BM25 + vector) or `lexical` (BM25 only) |
 | `SITEGUARD_PARSER_TIMEOUT_SECONDS` | 60 | Wall-clock and CPU limit for parsing one PDF or DOCX (5–600) |
 | `SITEGUARD_PARSER_MEMORY_MB` | 1024 | Address-space limit of the parser child process (256–8192) |
+| `SITEGUARD_VISION_PROVIDER` | `baseline` | `baseline` (image-quality checks only, no detection model) or `anthropic` (Claude vision; sends the re-encoded photo to Anthropic) |
+| `SITEGUARD_VISION_MAX_PIXELS`, `_MAX_SIDE` | 40000000, 1568 | Largest decodable image (decompression-bomb limit) and the longest side sent to an analyzer |
+| `SITEGUARD_VISION_TIMEOUT_SECONDS`, `_MEMORY_MB` | 30, 1024 | Limits of the image decoder child process |
+| `SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE` | 30 | Vision analyses each user may start per minute (429 above) |
 | `SITEGUARD_NOTIFICATION_EMAIL_ADAPTER` | `disabled` | `disabled`, `log` (no address or content logged) or `smtp` (refused in local and test) |
 | `SITEGUARD_NOTIFICATION_MAX_ATTEMPTS` | 3 | Send attempts before a delivery becomes `FAILED` (1–10) |
 | `SITEGUARD_SMTP_HOST`, `_PORT`, `_USERNAME`, `_PASSWORD`, `_FROM`, `_STARTTLS` | `localhost`, 587, empty, empty, `siteguard@localhost`, true | SMTP server for `smtp`; STARTTLS is required in staging and production |

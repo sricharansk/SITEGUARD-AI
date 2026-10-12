@@ -15,8 +15,8 @@ registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single imag
 ## IN PROGRESS — rebuilding PR #2 on main
 
 Done: A hardening, Azure IaC and deploy workflow, staging, operations; B document parsing (PDF, DOCX), embeddings,
-hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox. Next: D vision, knowledge
-graph, resumable workflows and conflicts; E web screens for these.
+hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox; D1 vision evidence analysis. Next: D2 knowledge graph,
+D3 resumable workflows and conflicts; E web screens for these.
 
 ## NOW
 

@@ -64,10 +64,11 @@ UI does not access the database directly. Agents use approved service/tool inter
 | API, RBAC, tenant scoping | `backend/app/api`, `backend/app/core` |
 | Agents, orchestrator, rules and Claude providers | `backend/app/agents` |
 | Risk, lifecycle, CAPA, notifications/escalation, email outbox, reports (Markdown, Word, PDF), evidence, audit | `backend/app/services` |
+| Vision evidence analysis (image decoding in an isolated child process, pluggable analyzer, engineer review) | `backend/app/services/vision.py`, `backend/app/agents/vision.py` |
 | Document parsing (isolated child process), chunking, embeddings, hybrid retrieval, grounded answers | `backend/app/services/{parsing,chunking,embeddings,rag,answer}.py` |
 | Migrations | `backend/migrations` (Alembic) |
 | Evaluation and red-team | `backend/app/evaluation.py`, `data/eval/` |
 | Dataset pipelines | `backend/app/datasets/`, `data/dataset_registry.yaml` |
 | Scheduled jobs | `backend/app/jobs.py` |
 
-Not built yet: Neo4j, vision, OIDC; Azure is defined in Bicep but no environment exists yet (ROADMAP.md).
+Not built yet: Neo4j, a trained vision detection model, OIDC; Azure is defined in Bicep but no environment exists yet (ROADMAP.md).

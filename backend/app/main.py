@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
-from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects
+from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects, vision
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
@@ -135,7 +135,7 @@ def create_app() -> FastAPI:
         expose_headers=["X-Correlation-ID"],
     )
     install_error_handlers(app)
-    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications):
+    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, vision):
         app.include_router(r.router)
 
     if s.web_dir.is_dir():

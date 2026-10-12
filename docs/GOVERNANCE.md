@@ -79,6 +79,9 @@ For security incidents affecting Site Guard AI itself (not construction incident
   `python -m app.evaluation` (EVALUATION.md).
 - **Human control** does not depend on the provider: AI output is never an approved action, high and critical
   actions need APPROVE_CRITICAL, and no incident closes without verified actions.
+- **Vision** (`SITEGUARD_VISION_PROVIDER=anthropic`) sends a re-encoded copy of photo evidence (no EXIF/GPS metadata)
+  to Anthropic; photos can show people's faces, so turning it on is an owner decision like the AI provider. The default
+  `baseline` analyzer sends nothing anywhere.
 - **Email** (`SITEGUARD_NOTIFICATION_EMAIL_ADAPTER=smtp`) sends notification text to people's mailboxes through the
   SMTP provider; turning it on is an owner decision like the AI provider. The outbox lists recipients by name only.
 - **No legal certification:** outputs cite requirements for review; they never certify compliance.

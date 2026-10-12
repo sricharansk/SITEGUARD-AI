@@ -45,6 +45,18 @@
 - Startup refuses `smtp` in local and test and SMTP without STARTTLS in staging and production. Azure Bicep and the
   staging stack pass email settings, with `smtp-password` in Key Vault; the scheduled job runs both jobs.
 
+### Stage D1: vision analysis of photo evidence
+
+- `POST /evidence/{id}/vision` (`PPE_HAZARD` or `DEFECT`): checks the stored file against its SHA-256, decodes the
+  image in a resource-limited child process (orientation, metadata removed, size and decompression-bomb limits),
+  measures image quality and runs the configured analyzer: `baseline` (no detection model; says so) or Claude vision.
+  Every detection is stored as an observation with analyzer, model and taxonomy versions and the thresholds used;
+  a failed analysis is stored as `FAILED`, never as "nothing found". Rate limited per user.
+- Engineers confirm or reject observations (`POST /vision/observations/{id}/review`); thresholds per label can be
+  calibrated per project or site. Safety and quality agents cite only confirmed observations (`vision:` refs) and turn
+  unreviewed ones into open questions. The investigation report lists photo observations with their review state.
+- Migration `0004`; `GET /vision/taxonomy`, `GET /incidents/{id}/vision`, `GET/PUT /projects/{id}/vision/calibration`.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

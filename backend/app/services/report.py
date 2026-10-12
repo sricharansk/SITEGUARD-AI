@@ -12,13 +12,18 @@ from app.models import (
     Evidence,
     Incident,
     IncidentEvent,
+    ObservationReview,
     Project,
     RiskAssessment,
     User,
     VerificationRecord,
+    VisionAnalysis,
+    VisionObservation,
     utcnow,
 )
 from app.services import capa as capa_service
+from app.services.vision import BY_LABEL
+from app.services.vision import DISCLAIMER as VISION_DISCLAIMER
 
 DISCLAIMER = (
     "Site Guard AI is decision support. AI-generated sections are recommendations that were reviewed by the named "
@@ -96,6 +101,7 @@ def build(db: Session, inc: Incident) -> str:
         if evidence
         else ["No evidence files attached.", ""]
     )
+    md += _vision_section(db, inc, evidence, names)
 
     md += ["## 3. AI investigation (AI-generated, reviewed by people)", ""]
     if not runs:
@@ -224,3 +230,35 @@ def build(db: Session, inc: Incident) -> str:
     )
     md += [f"Audit events for this incident and its actions: {audit_count}.", ""]
     return "\n".join(md)
+
+
+def _vision_section(db: Session, inc: Incident, evidence: list[Evidence], names: dict[str, str]) -> list[str]:
+    """Photo observations above threshold or confirmed, with their review state. Machine output, labelled as such."""
+    every = db.execute(
+        select(VisionObservation, VisionAnalysis)
+        .join(VisionAnalysis, VisionAnalysis.id == VisionObservation.analysis_id)
+        .where(VisionObservation.incident_id == inc.id)
+        .order_by(VisionAnalysis.created_at, VisionObservation.ordinal)
+    ).all()
+    if not every:
+        return []
+    files = {e.id: e.filename for e in evidence}
+    rows = [(o, a) for o, a in every if o.above_threshold or o.review_status == ObservationReview.CONFIRMED]
+    md = ["**Photo observations (machine-generated, for human review):**", "", f"_{VISION_DISCLAIMER}_", ""]
+    if rows:
+        md += _table(
+            ["File", "Observation", "Confidence", "Review", "Analyzer"],
+            [
+                [
+                    files.get(o.evidence_id, o.evidence_id),
+                    BY_LABEL[o.label].name if o.label in BY_LABEL else o.label,
+                    f"{o.confidence:.2f} (threshold {o.threshold:.2f})",
+                    o.review_status.value + (f" by {names.get(o.reviewed_by, '')}" if o.reviewed_by else ""),
+                    f"{a.analyzer} {a.model_version}, taxonomy {a.taxonomy_version}",
+                ]
+                for o, a in rows
+            ],
+        )
+    if hidden := len(every) - len(rows):
+        md += [f"{hidden} unconfirmed observation(s) below their detection threshold are not listed.", ""]
+    return md

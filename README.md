@@ -10,8 +10,8 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
 > Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
-> vectors), grounded answers with citations, Word/PDF reports and an email outbox; still being ported: vision,
-> knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
+> vectors), grounded answers with citations, Word/PDF reports, an email outbox and photo analysis with engineer
+> review; still being ported: knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -91,7 +91,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 203 backend tests (incl. evaluation and red-team gates)
+make test            # 222 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker
