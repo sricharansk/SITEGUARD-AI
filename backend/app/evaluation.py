@@ -1,11 +1,13 @@
 """Offline evaluation and red-team suite (docs/EVALUATION.md).
 
 Runs the real agents, orchestrator, retrieval and workflow guards against an isolated in-memory database seeded
-with the demo knowledge base, then scores them against the labelled set in data/eval/incidents_gold.yaml.
+with the demo knowledge base, then scores them against the labelled sets in data/eval/: incidents_gold.yaml (dev,
+used for tuning) and heldout_v2.yaml (test, written by an independent author and never used for tuning).
 
     python -m app.evaluation --out ../docs/EVALUATION.md --json ../docs/evaluation.json
 
-The `test` split is held out: it was written before any tuning of the rules taxonomy. Report its numbers.
+The `test` split is held out: it was written before the tuning it measures and is never used to tune. Report its
+numbers.
 """
 
 import argparse
@@ -75,6 +77,18 @@ BEFORE_TUNING_TEST = {
 
 def gold_path() -> Path:
     return get_settings().seed_dir.parent / "eval" / "incidents_gold.yaml"
+
+
+def heldout_path() -> Path:
+    return get_settings().seed_dir.parent / "eval" / "heldout_v2.yaml"
+
+
+def gold_cases() -> list[dict]:
+    """Dev cases (incidents_gold.yaml) followed by the held-out test cases (heldout_v2.yaml)."""
+    dev = yaml.safe_load(gold_path().read_text())["cases"]
+    test = yaml.safe_load(heldout_path().read_text())["cases"]
+    assert all(c["split"] == "dev" for c in dev) and all(c["split"] == "test" for c in test)
+    return dev + test
 
 
 def isolated_session() -> Session:
@@ -502,7 +516,7 @@ def run_redteam(ctx: Ctx) -> list[dict]:
 
 
 def run(cases: list[dict] | None = None) -> dict:
-    gold = cases if cases is not None else yaml.safe_load(gold_path().read_text())["cases"]
+    gold = cases if cases is not None else gold_cases()
     db = isolated_session()
     ctx = _ctx(db)
     rows = [evaluate_case(ctx, c) for c in gold]

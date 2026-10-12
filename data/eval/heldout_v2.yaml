@@ -1,0 +1,423 @@
+# Held-out evaluation set v2: labelled SYNTHETIC incident reports (not real events).
+# Written 2026-10-12 by an independent author who did not see the triage rules, the earlier gold set or any
+# evaluation results. Never use these cases to tune the rules.
+cases:
+- id: V01
+  split: test
+  title: Roofer dropped through rooflight on warehouse roof
+  description: Roofer fixing sheets on the unit 3 warehouse roof stepped back onto an unguarded rooflight which gave way. He dropped roughly 7 m to the ground-floor slab and was airlifted to hospital with multiple fractures. He had a harness on but was not clipped to the running line.
+  people_involved: 1
+  class: Fall from height
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Working at Height
+- id: V02
+  split: test
+  title: Plasterer came off hop-up in corridor
+  description: Plasterer skimming the corridor ceiling on level 1 lost his footing when the hop-up rocked on the uneven screed and he came down about 600 mm onto the floor. Grazed shin and bruised elbow, treated by the first aider and he carried on after a break.
+  people_involved: 1
+  class: Fall from height
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: Working at Height
+- id: V03
+  split: test
+  title: Coupler dropped from top lift near groundworkers
+  description: During a scaffold adaptation on the east elevation a loose coupler fell from the top lift, about 18 m up, and landed roughly a metre from two groundworkers in the loading bay. No exclusion zone or signage had been set up below the alteration. Nobody hurt, both wearing helmets.
+  people_involved: 2
+  class: Struck by falling or moving object
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Working at Height
+- id: V04
+  split: test
+  title: Bucket of fixings knocked off scaffold board
+  description: A bucket of wall ties was kicked off the second lift where a toe board was missing and hit a labourer on the shoulder as he walked past underneath. Bruising only, first aid given and an ice pack. Brickies had been told to keep materials back from the edge earlier in the week.
+  people_involved: 1
+  class: Struck by falling or moving object
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: Working at Height
+- id: V05
+  split: test
+  title: Pipelayer buried to waist when trench sides slumped
+  description: The side of a 1.8 m deep drainage run slumped in after the overnight rain and buried the pipelayer up to his waist. The trench had no support as the trench box was still on the other job. Gang dug him out by hand and he went to hospital with a crushed leg for checks.
+  people_involved: 1
+  class: Excavation collapse / caught-in
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Excavation
+- id: V06
+  split: test
+  title: Operatives working in unsupported service pit
+  description: Site engineer found two operatives at the bottom of a 2.4 m deep service pit with vertical sides, no shoring or battering, and the spoil heaped right up at the edge. Work stopped and the men brought out until the pit was stepped back and a ladder access put in.
+  people_involved: 2
+  class: Excavation collapse / caught-in
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Excavation
+- id: V07
+  split: test
+  title: Shock off damaged extension lead
+  description: Electrician's mate got a belt through his hand picking up a 230 V extension lead with the outer sheath cut through, plugged into a socket that should not have been used on site. The RCD did not trip. First aider sent him to A&E for an ECG as a precaution.
+  people_involved: 1
+  class: Electrical contact
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: PPE and Temporary Electrical
+- id: V08
+  split: test
+  title: Dry-liner drilled into live lighting circuit
+  description: Dry-liner putting fixings into a stud partition on level 3 hit a live lighting cable that was not shown on the services drawings. The drill flashed and the breaker on the floor board went. No injury, the drill was double insulated, but the circuit had not been isolated or scanned beforehand.
+  people_involved: 1
+  class: Electrical contact
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: PPE and Temporary Electrical
+- id: V09
+  split: test
+  title: Rebar bundle slipped out of sling over deck
+  description: A bundle of 16 mm bars slid out of a single-leg choke hitch while the tower crane was slewing over the level 6 deck and fell about 8 m onto the slab. Fixers had been tying the area a few minutes earlier and had just gone on break. Lift plan called for two-leg slinging.
+  people_involved: 4
+  class: Lifting operation / crane
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Lifting Operations
+- id: V10
+  split: test
+  title: Mobile crane outrigger punched through backfill
+  description: While setting up the 60 t mobile for the plant room lift, the rear outrigger pad punched through the tarmac into an old backfilled service trench and the crane went out of level. Nothing on the hook at the time. Appointed person aborted the lift and ground bearing is being re-assessed.
+  people_involved: 3
+  class: Lifting operation / crane
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Lifting Operations
+- id: V11
+  split: test
+  title: Reversing dumper knocked over banksman
+  description: Forward-tip dumper reversing out of the compound clipped the banksman guiding it and knocked him to the ground. The reversing bleeper was not working and it was raining heavily. He was taken to hospital with a broken ankle.
+  people_involved: 2
+  class: Mobile plant / vehicle
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Site Traffic
+- id: V12
+  split: test
+  title: Telehandler tipped over on haul road slope
+  description: Telehandler carrying a pack of blocks with the boom part raised went onto its side while crossing the cross-fall on the temporary haul road. Operator was belted in and climbed out unhurt. Ground was soft after the week's rain.
+  people_involved: 1
+  class: Mobile plant / vehicle
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Site Traffic
+- id: V13
+  split: test
+  title: Cutting sparks set insulation boards alight
+  description: Sparks from a disc cutter used to trim steel angle on level 3 dropped through a riser and set fire to stacked EPS insulation boards on level 2. Put out with a foam extinguisher by a nearby ganger. No permit had been issued for the cutting and nobody was keeping watch below.
+  people_involved: 2
+  class: Fire / hot work
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Hot Work
+- id: V14
+  split: test
+  title: Flashback at torch-on roofing burner
+  description: Roofer's propane hose was leaking at the regulator coupling and the flame flashed back along it when he lit the burner. Singed eyebrows and a small burn on the back of his hand, cooled and dressed at the first aid point. Hose and regulator taken out of service.
+  people_involved: 1
+  class: Fire / hot work
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: Hot Work
+- id: V15
+  split: test
+  title: Grit in eye while chasing brickwork
+  description: Electrician chasing out brickwork for conduit with a wall chaser was not wearing goggles and caught grit in his left eye. Eye irrigated at the first aid station, no further treatment needed. Goggles were available in the stores.
+  people_involved: 1
+  class: Missing or incorrect PPE
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE and Temporary Electrical
+- id: V16
+  split: test
+  title: Cladding gang under loading platform without helmets
+  description: On the morning walk round, five of the cladding subcontractor's operatives were found working underneath the loading platform with no hard hats, and two were in trainers rather than safety boots. They were stood down and sent to get the right kit before being allowed back.
+  people_involved: 5
+  class: Missing or incorrect PPE
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE and Temporary Electrical
+- id: V17
+  split: test
+  title: Operative went down foul manhole without gas check
+  description: Drainage operative climbed down a 3 m deep foul water manhole to clear a blockage without a gas monitor, permit or anyone stood at the top. He came back up after a few minutes feeling dizzy and sick and recovered in the fresh air. Supervisor was on another part of the site.
+  people_involved: 1
+  class: Confined space
+  domain: SAFETY
+  severity: CRITICAL
+  expected_doc: Hot Work
+- id: V18
+  split: test
+  title: Low oxygen alarm inside attenuation tank
+  description: Two operatives sealing joints inside the underground attenuation tank had their personal monitors go off for low oxygen. They got out as per the entry permit and the top man raised the alarm. The forced-air fan had been switched off at the generator to refuel and was not restarted.
+  people_involved: 2
+  class: Confined space
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Hot Work
+- id: V19
+  split: test
+  title: Palm sliced on aluminium flashing
+  description: Roofer carrying lengths of aluminium flashing across the roof caught the edge as a gust took it and it sliced his palm just below the glove cuff. Cleaned and closed with steri-strips by the first aider, back at work after lunch.
+  people_involved: 1
+  class: Cuts / sharp objects
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: PPE and Temporary Electrical
+- id: V20
+  split: test
+  title: Knife slipped trimming plasterboard
+  description: Dry-liner trimming a plasterboard sheet resting on his knee with a retractable knife, the blade skidded off the edge and went into his thigh. Deep wound, taken to hospital for stitches and did not return that day.
+  people_involved: 1
+  class: Cuts / sharp objects
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: PPE and Temporary Electrical
+- id: V21
+  split: test
+  title: Groundworker hurt back laying kerbs by hand
+  description: Groundworker felt something go in his lower back lifting a precast kerb unit into place by hand. The vacuum lifter had broken that morning and the gang carried on to keep up with the programme. He has been signed off for four days.
+  people_involved: 1
+  class: Manual handling / musculoskeletal
+  domain: SAFETY
+  severity: HIGH
+  expected_doc: Hot Work
+- id: V22
+  split: test
+  title: Shoulder and neck pain from overhead drilling
+  description: M&E fitter reported shoulder and neck pain after two full days drilling anchors overhead into the soffit for pipe hangers off a stepladder. No rotation of tasks and no drill rig used. Referred to occupational health for assessment.
+  people_involved: 1
+  class: Manual handling / musculoskeletal
+  domain: SAFETY
+  severity: MEDIUM
+  expected_doc: Hot Work
+- id: V23
+  split: test
+  title: Stone pockets at base of column C4
+  description: After striking the shutters on column C4, level 2, there is a patch about 300 mm high at the base with exposed aggregate and no fines, running round two faces. Looks like grout leaked at the kicker joint and the pour was not compacted properly at the bottom. Engineer to assess before any repair.
+  people_involved: 0
+  class: Concrete honeycombing / voids
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Concrete
+- id: V24
+  split: test
+  title: Rough voided edges on plant plinth
+  description: The concrete plinth for the rooftop air handling unit has open, bony patches along the arrises and a couple of air pockets on the top surface where the poker was not used. Plinth is non-structural and needs patch repair before the unit is set down.
+  people_involved: 0
+  class: Concrete honeycombing / voids
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Concrete
+- id: V25
+  split: test
+  title: Cracks in transfer slab soffit after back-props removed
+  description: Structural engineer's walk-round found several transverse cracks up to 0.4 mm wide in the soffit of the level 1 transfer slab close to the column heads, which appeared after the back-props were taken out. Crack widths are being monitored with tell-tales and the designer has been informed.
+  people_involved: 0
+  class: Cracking
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Concrete
+- id: V26
+  split: test
+  title: Crazing on warehouse floor slab after hot pour
+  description: Hairline map cracking appeared across bay 4 of the ground-bearing floor within a couple of hours of finishing. It was a hot, windy afternoon and the curing membrane went on late as the sprayer was blocked. Floor contractor to propose treatment.
+  people_involved: 0
+  class: Cracking
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Concrete
+- id: V27
+  split: test
+  title: Low cover on retaining wall earth face
+  description: Covermeter survey on the basement retaining wall shows 20 to 25 mm to the outer bars on the soil face against 50 mm specified, over a length of about 6 m. Spacers appear to have been knocked out during the pour. NCR raised and designer consulted.
+  people_involved: 0
+  class: Reinforcement / cover nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Concrete
+- id: V28
+  split: test
+  title: Pre-pour check failed on level 5 slab steel
+  description: At the pre-pour inspection the U-bars at the slab edge were missing on one bay, several laps were short of the scheduled length, and the bottom mat was sitting directly on the deck with no chairs. Pour postponed until the fixers have corrected it and it is re-inspected.
+  people_involved: 0
+  class: Reinforcement / cover nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Concrete
+- id: V29
+  split: test
+  title: Pile cap cubes failed at 28 days
+  description: The 28-day cube results for the pile caps on grid lines A to C came back at an average of 32 N/mm2 against a C40/50 specification. Supplier has been asked for batch records and cores are being considered.
+  people_involved: 0
+  class: Concrete strength / mix nonconformance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Concrete
+- id: V30
+  split: test
+  title: Wet load turned away at ground beam pour
+  description: Ready-mix wagon arrived over two hours after batching and the slump test came out at 180 mm against 75 plus or minus 25. Driver admitted adding water at the gate to get it out of the drum. Load rejected before any was discharged into the ground beam.
+  people_involved: 0
+  class: Concrete strength / mix nonconformance
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Concrete
+- id: V31
+  split: test
+  title: Core wall shutter bowed during pour
+  description: Halfway up the pour on the lift core, the wall shutter on the north face started bowing out between ties, about 40 mm at mid-height. Pour was stopped and the gang added walings and extra ties before carrying on. Two tie cones were found to be the wrong size.
+  people_involved: 0
+  class: Formwork defect
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Formwork
+- id: V32
+  split: test
+  title: Open joints and damaged ply on slab deck
+  description: Pre-pour check of the level 3 deck found gaps of up to 5 mm between plywood sheets, a few sheets with torn faces from previous use, and no release agent applied on one bay. Carpenters to tape or replace before sign-off.
+  people_involved: 0
+  class: Formwork defect
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Formwork
+- id: V33
+  split: test
+  title: Column on D/7 out of plumb
+  description: As-built survey shows the column on grid D/7 at level 4 leaning 28 mm over the storey height, well outside the 10 mm allowed. The column above has not been cast yet. Engineer to advise whether it can stay or needs breaking out.
+  people_involved: 0
+  class: Dimensional / alignment tolerance
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Formwork
+- id: V34
+  split: test
+  title: Door openings built undersize on level 2
+  description: Blockwork partitions on level 2 have been set out from the wrong grid line and four of the door openings are around 50 mm narrower than the drawing, so the doorsets will not fit. Walls to be partially taken down and rebuilt.
+  people_involved: 0
+  class: Dimensional / alignment tolerance
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Formwork
+- id: V35
+  split: test
+  title: Basement wall weeping at kicker joint
+  description: After the weekend's heavy rain, water is seeping through the horizontal construction joint along the basement wall on the car park side, with puddles forming on the slab. The hydrophilic strip looks to have been displaced when the wall was poured. Injection repair to be priced.
+  people_involved: 0
+  class: Water ingress / waterproofing
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Waterproofing
+- id: V36
+  split: test
+  title: Podium flood test showed leak at parapet
+  description: Flood test on the podium roof had to be stopped when water came through into the ceiling void of the retail unit below. Membrane upstand at the parapet is only about 50 mm high and the side laps at the corner were not sealed.
+  people_involved: 0
+  class: Water ingress / waterproofing
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Waterproofing
+- id: V37
+  split: test
+  title: Cracked fillet welds on beam end plates
+  description: Magnetic particle testing at the level 2 beam-to-column connections found linear indications at the toe of the fillet welds on three end plates, plus visible undercut. Connections quarantined and the fabricator called back to investigate.
+  people_involved: 0
+  class: Welding / steelwork defect
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Waterproofing
+- id: V38
+  split: test
+  title: Rafter splice with half the bolts missing
+  description: Inspection of the portal frame found the ridge splice on frame 6 with only four of the eight preload bolts fitted, and those only hand tight with no washers. Erectors had moved on to the next frame to keep up with the crane booking.
+  people_involved: 0
+  class: Welding / steelwork defect
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Waterproofing
+- id: V39
+  split: test
+  title: Unapproved membrane rolls delivered
+  description: The basement tanking delivery turned out to be a different manufacturer's membrane to the approved submittal, with no batch certificates, and three rolls had crushed ends. Rolls quarantined in the compound and the supplier asked to replace them.
+  people_involved: 0
+  class: Material nonconformance
+  domain: QUALITY
+  severity: MEDIUM
+  expected_doc: Waterproofing
+- id: V40
+  split: test
+  title: Columns delivered in lower steel grade
+  description: Check of the mill certificates for the last delivery shows the 254 UC sections are S275 when the drawings call for S355. Two of them have already been erected on the east side. Erection of the remaining sections stopped pending the engineer's review.
+  people_involved: 0
+  class: Material nonconformance
+  also_ok: [Welding / steelwork defect]
+  domain: QUALITY
+  severity: HIGH
+  expected_doc: Waterproofing
+- id: V41
+  split: test
+  title: Wall shutter burst and hit carpenter
+  description: During the pour of a 3.5 m high wall a form tie snapped and the shutter burst open. Concrete and a ply panel came out and struck the carpenter on the working platform, knocking him off it onto the ground. He went to hospital with a broken wrist and the pour was lost.
+  people_involved: 2
+  class: Formwork defect
+  also_ok: [Struck by falling or moving object]
+  domain: BOTH
+  severity: HIGH
+  expected_doc: Formwork
+- id: V42
+  split: test
+  title: Lifting anchor pulled out of precast panel
+  description: As the crane took the weight of a precast wall panel off the trailer, one cast-in lifting anchor pulled out and the panel dropped back about a metre, cracking across its width. The slinger had just stepped clear. Panel was only five days old and the anchor sat close to the edge.
+  people_involved: 2
+  class: Lifting operation / crane
+  also_ok: [Cracking, Concrete strength / mix nonconformance]
+  domain: BOTH
+  severity: CRITICAL
+  expected_doc: Lifting Operations
+- id: V43
+  split: test
+  title: Shock at site board soaked by roof leak
+  description: Rain came through the unfinished roof membrane and ran down the wall into the temporary distribution board on level 4. The board kept tripping and the electrician got a shock off the casing while resetting it. Checked at hospital and released, the roof leak is still to be sealed.
+  people_involved: 1
+  class: Electrical contact
+  also_ok: [Water ingress / waterproofing]
+  domain: BOTH
+  severity: HIGH
+  expected_doc: PPE and Temporary Electrical
+- id: V44
+  split: test
+  title: Underpinning dig collapsed and cracked party wall
+  description: The underpinning pit next to the neighbour's party wall caved in on one side overnight, and the wall above now has a stepped crack through the brickwork about 1.5 m long. The operative due to go in first thing saw it and stayed out. Pit had been left unpropped over the weekend.
+  people_involved: 1
+  class: Excavation collapse / caught-in
+  also_ok: [Cracking]
+  domain: BOTH
+  severity: HIGH
+  expected_doc: Excavation
+- id: V45
+  split: test
+  title: Canteen water heater out of action
+  description: The water heater in the canteen cabin has stopped working so there is no hot water for brews. Reported to the welfare hire company, engineer booked for tomorrow and a kettle put in for now.
+  people_involved: 0
+  class: Unclassified
+  domain: SAFETY
+  severity: LOW
+  expected_doc: Incident Reporting
+- id: V46
+  split: test
+  title: Subcontractor vans parked in neighbour's bays
+  description: Shop owner next door complained that several subcontractor vans were parked in her customer bays outside the hoarding all morning. Drivers were asked to move and a reminder about the parking arrangements will go in the next toolbox talk.
+  people_involved: 0
+  class: Unclassified
+  domain: SAFETY
+  severity: LOW
+  expected_doc: Incident Reporting
