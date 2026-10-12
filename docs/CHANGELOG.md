@@ -83,6 +83,14 @@
   decision. The workflow also stores an uncertainty summary.
 - `scripts/resolve_all.py` and `scripts/demo_walkthrough.py` record a decision on each open conflict before closing.
 
+### Stage E1: knowledge screens
+
+- Knowledge page: ask the knowledge base (grounded answer with clickable citations to document, version, section and
+  page; answered, insufficient or conflicting evidence; removed unsupported statements and flagged sources), search
+  with provenance and scores, document detail with status, parser, pages, checksum, passages and original download,
+  and document upload (PDF, Word, Markdown, text) for people with `MANAGE_DOCUMENTS`, with organization-wide scope
+  offered only to organization-wide members. Browser test for upload and answers.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

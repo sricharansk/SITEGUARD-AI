@@ -148,3 +148,67 @@ export interface Me {
   full_name: string;
   memberships: { organization_id: string; organization: string; project_id: string | null; role: string; permissions: string[] }[];
 }
+
+/** Knowledge document (procedure, ITP, specification). Content is untrusted. */
+export interface KnowledgeDoc {
+  id: string;
+  organization_id: string;
+  project_id: string | null;
+  scope: "project" | "organization";
+  title: string;
+  doc_type: string;
+  source: string;
+  version: string;
+  effective_date: string | null;
+  tags: string[];
+  domain: Domain;
+  status: "PENDING" | "PROCESSING" | "READY" | "FAILED";
+  error: string | null;
+  file_name: string | null;
+  content_type: string | null;
+  size_bytes: number | null;
+  page_count: number | null;
+  parser: string | null;
+  chunks: number;
+  suspicious_chunks: number;
+  sha256: string;
+  uploaded_by: string | null;
+  processed_at: string | null;
+  created_at: string;
+  duplicate?: boolean;
+  chunk_list?: { ref: string; ordinal: number; section: string; page: number | null; suspicious: boolean; text: string }[];
+}
+
+export interface SearchHit {
+  ref: string;
+  document_id: string;
+  document_title: string;
+  doc_type: string;
+  domain: Domain;
+  source: string;
+  section: string;
+  page: number | null;
+  version: string;
+  effective_date: string | null;
+  tags: string[];
+  scope: "project" | "organization";
+  text: string;
+  score: number;
+  scores: Record<string, number>;
+  suspicious: boolean;
+}
+
+export interface GroundedAnswer {
+  status: "ANSWERED" | "INSUFFICIENT_EVIDENCE" | "CONFLICTING_EVIDENCE";
+  answer: string;
+  statements: { text: string; citations: string[] }[];
+  citations: { ref: string; document_id: string; document_title: string; section: string; page: number | null; version: string; effective_date: string | null }[];
+  confidence: number;
+  uncertainty: string;
+  unsupported_claims: string[];
+  conflicts: string[];
+  excluded_sources: { ref: string; reason: string }[];
+  needs_human_review: boolean;
+  provider: string;
+  disclaimer: string;
+}

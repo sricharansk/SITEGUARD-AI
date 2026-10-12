@@ -146,6 +146,39 @@ test("dashboard, incident list, action queue, knowledge and audit render", async
   await expect(page.locator("tbody tr").first()).toBeVisible();
 });
 
+test("upload a document, see its passages and get a cited answer", async ({ page }) => {
+  await loginAs(page, "qa");
+  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  const title = "Hoarding inspection procedure (E2E)";
+  const text = [
+    "# Hoarding inspection",
+    "",
+    "## Inspection frequency",
+    "",
+    "Site hoarding panels must be inspected every 14 days and after winds above 40 mph.",
+    "",
+    "## Records",
+    "",
+    "The site engineer records each hoarding inspection in the site diary.",
+  ].join("\n");
+  await page.getByLabel("File").setInputFiles({ name: "hoarding.md", mimeType: "text/markdown", buffer: Buffer.from(text) });
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel(/^Source/).fill("E2E test");
+  await page.getByRole("button", { name: "Upload" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Indexed: \d+ passage|already in the knowledge base/ })).toBeVisible();
+  await expect(page.getByText("Inspection frequency").first()).toBeVisible(); // the document's passages, with sections
+
+  await page.getByLabel("Question").fill("How often must site hoarding panels be inspected?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByTestId("answer-status")).toContainText("Answered");
+  await expect(page.getByRole("button", { name: new RegExp(`${title.replace(/[()]/g, "\\$&")} v1, Inspection frequency`) }).first()).toBeVisible();
+  await shot(page, "07-grounded-answer");
+
+  await page.getByLabel("Question").fill("What is the crane operator's lunch break policy on Mars?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByTestId("answer-status")).toContainText("Insufficient evidence");
+});
+
 test("a user from another tenant cannot open this tenant's incidents", async ({ page }) => {
   await loginAs(page, "hse");
   await page.getByRole("link", { name: "Incidents", exact: true }).click();
