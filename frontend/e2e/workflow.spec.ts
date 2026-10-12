@@ -179,6 +179,42 @@ test("upload a document, see its passages and get a cited answer", async ({ page
   await expect(page.getByTestId("answer-status")).toContainText("Insufficient evidence");
 });
 
+test("pause and resume the AI investigation, review a photo, and see the knowledge graph state", async ({ page }) => {
+  const title = "Worker without hard hat under scaffold loading bay";
+  await loginAs(page, "site");
+  await page.getByRole("link", { name: "Report incident" }).first().click();
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel("What happened").fill("A worker was seen without a hard hat under the scaffold loading bay while materials were being lifted.");
+  await page.getByLabel("Severity (your assessment)").selectOption("MEDIUM");
+  await page.getByRole("button", { name: "Report incident" }).click();
+  await page.waitForURL(/\/incident\/\?id=/);
+  const url = page.url();
+  // Synthetic test image (e2e/fixtures/site-photo.jpg), not a site photo.
+  await page.getByLabel("Evidence file").setInputFiles("e2e/fixtures/site-photo.jpg");
+  await page.getByLabel("Evidence description").fill("Photo of the loading bay");
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(page.getByText("site-photo.jpg").first()).toBeVisible();
+
+  await loginAs(page, "safety");
+  await open(page, url, title);
+  await page.getByLabel("Pause after triage for my review").check();
+  await page.getByRole("button", { name: "Run AI investigation" }).click();
+  await expect(page.getByText("Paused at triage")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Run AI investigation/ })).toHaveCount(0); // one active workflow
+  await page.getByRole("button", { name: "Resume investigation" }).click();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pending approval").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Check PPE and hazards" }).click();
+  await expect(page.getByText(/PPE hazard analysis/)).toBeVisible();
+  await expect(page.getByText(/No detection model is configured/)).toBeVisible(); // says what it could not do
+  await expect(page.getByAltText("Photo evidence: site-photo.jpg")).toBeVisible();
+  await shot(page, "08-photo-review-and-workflow");
+
+  await page.getByRole("button", { name: "Show related records" }).click();
+  await expect(page.getByText("The knowledge graph is not enabled on this server.")).toBeVisible();
+});
+
 test("a user from another tenant cannot open this tenant's incidents", async ({ page }) => {
   await loginAs(page, "hse");
   await page.getByRole("link", { name: "Incidents", exact: true }).click();

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { api, API_BASE, fmtDate, getToken, label } from "@/lib/api";
 import type { AgentRun, Capa, Conflict, Workspace } from "@/lib/types";
+import { GraphCard, PhotoReview, WorkflowCard, workflowActive } from "@/components/IncidentPanels";
 import { personName, useSession } from "@/components/Shell";
 import { AiPanel, Button, Card, ErrorBanner, Field, inputCls, Loading, SeverityBadge, StatusBadge } from "@/components/ui";
 
@@ -40,6 +41,7 @@ function IncidentWorkspace() {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [flags, setFlags] = useState<string[]>([]);
+  const [pauseAfterTriage, setPauseAfterTriage] = useState(false);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -95,18 +97,24 @@ function IncidentWorkspace() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {perms.has("RUN_AGENTS") && RUNNABLE.includes(inc.status) && (
-              <Button
-                disabled={!!busy}
-                onClick={() =>
-                  act("investigate", async () => {
-                    const r = await api.post<{ flags: string[] }>(`/incidents/${id}/investigate`);
-                    setFlags(r.flags);
-                  })
-                }
-              >
-                {busy === "investigate" ? "Agents running…" : ws.agent_runs.length ? "Re-run AI investigation" : "Run AI investigation"}
-              </Button>
+            {perms.has("RUN_AGENTS") && RUNNABLE.includes(inc.status) && !workflowActive(ws.workflow) && (
+              <>
+                <label className="flex items-center gap-1.5 text-xs text-ink-2">
+                  <input type="checkbox" checked={pauseAfterTriage} onChange={(e) => setPauseAfterTriage(e.target.checked)} />
+                  Pause after triage for my review
+                </label>
+                <Button
+                  disabled={!!busy}
+                  onClick={() =>
+                    act("investigate", async () => {
+                      const r = await api.post<{ flags: string[] }>(`/incidents/${id}/investigate${pauseAfterTriage ? "?pause_after=triage" : ""}`);
+                      setFlags(r.flags);
+                    })
+                  }
+                >
+                  {busy === "investigate" ? "Agents running…" : ws.agent_runs.length ? "Re-run AI investigation" : "Run AI investigation"}
+                </Button>
+              </>
             )}
             <div role="group" aria-label="Download report" className="flex gap-1">
               {(
@@ -163,13 +171,21 @@ function IncidentWorkspace() {
             <AiSections ws={ws} runs={runs} />
           )}
 
+          <PhotoReview ws={ws} busy={busy} canRun={perms.has("RUN_AGENTS")} onChange={load} />
+
           <Actions ws={ws} act={act} busy={busy} meId={me.id} can={(p) => perms.has(p)} triClass={tri?.incident_class} />
         </div>
 
         <div className="space-y-4">
+          <WorkflowCard wf={ws.workflow} act={act} busy={busy} canRun={perms.has("RUN_AGENTS")} onFlags={setFlags} />
           <Conflicts conflicts={ws.conflicts} act={act} busy={busy} canDecide={perms.has("APPROVE_CAPA") && inc.status !== "CLOSED"} />
           <Closure ws={ws} act={act} can={(p) => perms.has(p)} />
           <Evidence ws={ws} act={act} canUpload={perms.has("EDIT_INCIDENT") && inc.status !== "CLOSED"} />
+          <GraphCard
+            incidentId={inc.id}
+            organizationId={inc.organization_id}
+            canSync={me.memberships.some((m) => m.organization_id === inc.organization_id && !m.project_id && m.permissions.includes("MANAGE_PROJECTS"))}
+          />
           <Card title="Lifecycle">
             <ol className="space-y-2 text-sm">
               {ws.history.map((h) => (

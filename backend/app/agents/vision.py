@@ -5,7 +5,8 @@ An analyzer looks at one prepared image and reports detections using labels from
 thresholds, stores observations with full provenance, and people confirm or reject them.
 
 - `baseline` (default): no detection model. It reports nothing, so only the image-quality checks run. The choice of
-  detection model is open (DECISIONS O8) because the public PPE and defect datasets are licensed for research only.
+  detection model is an open owner decision (DECISIONS 022) because the public PPE and defect datasets are licensed
+  for research only.
 - `anthropic`: a Claude vision model asked for structured detections. Its confidence is self-reported and its boxes
   are approximate; both are recorded as such.
 """

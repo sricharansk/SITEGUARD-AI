@@ -261,8 +261,8 @@ def _limitations(analyzer: VisionAnalyzer, quality: dict, discarded: int, boxes_
     ]
     if analyzer.name == "baseline":
         out.append(
-            "No detection model is configured (DECISIONS O8), so only image-quality checks ran and no PPE, hazard "
-            "or defect detections were attempted."
+            "No detection model is configured (an owner decision, DECISIONS 022), so only image-quality checks ran "
+            "and no PPE, hazard or defect detections were attempted."
         )
     if analyzer.name == "anthropic":
         out.append("Confidence is self-reported by the model and boxes are approximate.")

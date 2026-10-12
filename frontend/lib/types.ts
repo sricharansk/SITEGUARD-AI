@@ -22,6 +22,7 @@ export interface Project {
 export interface Incident {
   id: string;
   reference: string;
+  organization_id: string;
   project_id: string;
   site_id: string | null;
   title: string;
@@ -93,6 +94,7 @@ export interface Workspace {
   approvals: { id: string; capa_id: string; reviewer_id: string; decision: string; reason: string; created_at: string }[];
   verifications: { id: string; capa_id: string; verifier_id: string; effective: boolean; notes: string; created_at: string }[];
   conflicts: Conflict[];
+  workflow: WorkflowRun | null;
   close_blockers: string[];
   permissions: string[];
 }
@@ -211,4 +213,69 @@ export interface GroundedAnswer {
   needs_human_review: boolean;
   provider: string;
   disclaimer: string;
+}
+
+export interface VisionObservation {
+  id: string;
+  ref: string;
+  analysis_id: string;
+  evidence_id: string;
+  category: "PPE" | "HAZARD" | "DEFECT";
+  label: string;
+  name: string;
+  maps_to: string | null;
+  confidence: number;
+  threshold: number;
+  above_threshold: boolean;
+  box: { x: number; y: number; w: number; h: number } | null;
+  note: string | null;
+  review_status: "UNREVIEWED" | "CONFIRMED" | "REJECTED";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+}
+
+export interface VisionAnalysis {
+  id: string;
+  evidence_id: string;
+  task: "PPE_HAZARD" | "DEFECT";
+  analyzer: string;
+  model: string;
+  model_version: string;
+  taxonomy_version: string;
+  status: "COMPLETED" | "FAILED";
+  error: string | null;
+  image_quality: { flags?: string[] };
+  limitations: string[];
+  created_at: string;
+  observations: VisionObservation[];
+}
+
+export interface WorkflowRun {
+  id: string;
+  kind: "TRIAGE" | "INVESTIGATION";
+  status: "RUNNING" | "PAUSED" | "FAILED" | "COMPLETED" | "CANCELLED";
+  status_reason: string | null;
+  provider: string;
+  current_stage: string | null;
+  stages: Record<string, { status: string; attempts?: number; errors?: string[]; reason?: string }>;
+  pause_after: string[];
+  uncertainty: {
+    min_confidence?: number | null;
+    low_confidence_agents?: string[];
+    failed_stages?: string[];
+    agents_needing_review?: { agent: string; reasons: string[] }[];
+    unresolved_questions?: { agent: string; question: string }[];
+  };
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface GraphView {
+  backend: string;
+  synced: boolean;
+  include_ai: boolean;
+  nodes: { id: string; label: string; properties: Record<string, unknown>; provenance: Record<string, unknown> }[];
+  edges: { id: string; type: string; source: string; source_label: string; target: string; target_label: string; provenance: Record<string, unknown> }[];
+  note: string;
 }

@@ -83,6 +83,15 @@
   decision. The workflow also stores an uncertainty summary.
 - `scripts/resolve_all.py` and `scripts/demo_walkthrough.py` record a decision on each open conflict before closing.
 
+### Stage E2: incident workspace panels
+
+- Workflow card (stages, attempts, lowest confidence, open questions; Resume, Cancel with reason, Pause while
+  running) and "Pause after triage for my review"; the Run button is hidden while a workflow is active.
+- Photo review: PPE/hazard and defect checks per photo, analyses marked as machine output with analyzer, image
+  quality and limitations, boxes drawn on the photo, confirm or reject each observation with a note.
+- Knowledge graph card: related records with AI-derived relationships marked, rebuild for organization-wide project
+  managers, or a plain message when the graph is disabled. Browser test with a synthetic fixture photo.
+
 ### Stage E1: knowledge screens
 
 - Knowledge page: ask the knowledge base (grounded answer with clickable citations to document, version, section and
