@@ -57,10 +57,10 @@ The incidents and procedures are **synthetic** and labelled as such; see [Data](
 
 **Every incident resolved** ([docs/RESULTS.md](docs/RESULTS.md), one report per incident in
 [docs/reports/](docs/reports/)): a project with 20 incidents (11 safety, 8 quality, 1 both) had 13 open. The agents
-investigated the ones still at REPORTED and a person reviewed every proposal (65 decisions on record across the
-project: 51 approved, 14 rejected with a reason). The escalation job flagged 3 overdue actions (one at management
-level, 8 days late), one quality action failed verification and was reworked, and all 21 incidents (including one
-reported during the run) ended CLOSED, with 106 agent runs and 0 failures.
+investigated the ones still at REPORTED and a person reviewed every proposal (99 decisions on record across the
+project: 81 approved, 18 rejected with a reason). The escalation job flagged 6 overdue actions (two at management
+level, up to 9 days late), one quality action failed verification and was reworked, and all 21 incidents (including
+one reported during the run) ended CLOSED, with 107 agent runs and 0 failures.
 
 **Agent quality** ([docs/EVALUATION.md](docs/EVALUATION.md)) on a held-out set of 46 synthetic cases. A separate
 author wrote the set before tuning, it was frozen in a commit, never used for tuning and measured once afterwards.
