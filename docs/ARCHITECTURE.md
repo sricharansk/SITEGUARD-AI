@@ -6,7 +6,8 @@ Modular backend + responsive web app + stateful agent orchestration. Keep compon
 
 ## Stack
 
-Next.js; React; TypeScript; Tailwind; Python; FastAPI; Pydantic; SQLAlchemy; PostgreSQL; pgvector; Neo4j; object storage; Docker; GitHub Actions; Azure.
+Next.js; React; TypeScript; Tailwind; Python; FastAPI; Pydantic; SQLAlchemy; PostgreSQL; pgvector; Neo4j; object
+storage; Docker; GitHub Actions; Azure.
 
 
 ```mermaid
@@ -54,7 +55,8 @@ Incident → evidence → retrieval → agents → risk/RCA/compliance → appro
 
 ## Dependency Rules
 
-UI does not access the database directly. Agents use approved service/tool interfaces. Provider-specific code stays behind adapters.
+UI does not access the database directly. Agents use approved service/tool interfaces. Provider-specific code stays
+behind adapters.
 
 ## What is built (0.2.0)
 
@@ -72,7 +74,8 @@ UI does not access the database directly. Agents use approved service/tool inter
 | Dataset pipelines | `backend/app/datasets/`, `data/dataset_registry.yaml` |
 | Scheduled jobs | `backend/app/jobs.py` |
 
-Not built yet: graph-aware retrieval for agents, a trained vision detection model, OIDC; Azure is defined in Bicep but no environment exists yet (ROADMAP.md).
+Not built yet: graph-aware retrieval for agents, a trained vision detection model, OIDC; Azure is defined in Bicep
+but no environment exists yet (ROADMAP.md).
 
 ## Knowledge graph
 

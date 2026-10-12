@@ -11,7 +11,8 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
 > Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
 > vectors), grounded answers with citations, Word/PDF reports, an email outbox and photo analysis with engineer
-> review, an optional knowledge graph with provenance; still being ported: resumable workflows ([ROADMAP](docs/ROADMAP.md)).
+> review, an optional knowledge graph with provenance, resumable workflows with recorded conflicts; still to come:
+> web screens for documents, answers, photo review and the email outbox ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -37,7 +38,8 @@ flowchart LR
 - **Runs offline by default** with deterministic rules; set `SITEGUARD_AI_PROVIDER=anthropic` to use Claude, with
   automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the person who
-  did the work cannot verify it, and an incident cannot close until every approved action is verified effective.
+  did the work cannot verify it, and an incident cannot close until every approved action is verified effective
+  and every disagreement the AI found (severity, risk, sources, photos) has a recorded human decision.
 - **Workflow:** action queue, notifications with an email outbox (off by default; retries and dead letters), two-level
   escalation of overdue actions, investigation report per incident in Markdown, Word or PDF with AI sections
   labelled and every human decision named.
@@ -91,7 +93,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 236 backend tests (incl. evaluation and red-team gates)
+make test            # 249 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker

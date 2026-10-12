@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     ai_provider: str = "rules"
     anthropic_model: str = "claude-opus-5-5"
     agent_timeout_seconds: float = 60.0
+    # Workflow resilience (docs/AGENTS.md#workflow): bounded retries of read-only agent stages with exponential
+    # backoff, and a lease after which a RUNNING workflow whose process died may be resumed.
+    agent_max_attempts: int = Field(default=2, ge=1, le=5)
+    agent_retry_backoff_seconds: float = Field(default=0.5, ge=0, le=30)
+    workflow_lease_seconds: int = Field(default=900, ge=30, le=86400)
 
     # Knowledge documents and retrieval (docs/AGENTS.md, docs/DATABASE.md).
     document_max_bytes: int = 25 * 1024 * 1024

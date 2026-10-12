@@ -5,6 +5,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.models import (
+    AgentConflict,
     AgentRun,
     ApprovalEvent,
     AuditEvent,
@@ -172,6 +173,28 @@ def build(db: Session, inc: Incident) -> str:
             else ["No relevant requirement was retrieved.", ""]
         )
         md += [f"_{comp['disclaimer']}_", ""]
+
+    found = [
+        c
+        for c in db.scalars(
+            select(AgentConflict).where(AgentConflict.incident_id == inc.id).order_by(AgentConflict.created_at)
+        )
+        if c.status != "SUPERSEDED"
+    ]
+    if found:
+        md += ["**Conflicts found by the investigation (both sides kept; decided by people):**", ""]
+        md += _table(
+            ["Kind", "Conflict", "Status", "Decision"],
+            [
+                [
+                    c.kind,
+                    c.summary,
+                    c.status,
+                    f"{names.get(c.resolved_by or '', '')}: {c.resolution}" if c.status == "RESOLVED" else "",
+                ]
+                for c in found
+            ],
+        )
 
     md += ["## 4. Corrective and preventive actions (human decisions)", ""]
     md += (

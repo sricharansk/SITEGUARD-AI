@@ -139,3 +139,15 @@ class CalibrationIn(_In):
     threshold: float = Field(ge=0.05, le=0.99)
     site_id: str | None = None
     reason: str = Field(min_length=3, max_length=2000)
+
+
+class ResumeIn(_In):
+    pause_after: list[str] | None = Field(default=None, max_length=8)
+
+
+class CancelIn(_In):
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class ResolveConflictIn(_In):
+    resolution: str = Field(min_length=3, max_length=4000)

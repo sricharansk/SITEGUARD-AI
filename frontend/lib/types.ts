@@ -92,8 +92,24 @@ export interface Workspace {
   capa: Capa[];
   approvals: { id: string; capa_id: string; reviewer_id: string; decision: string; reason: string; created_at: string }[];
   verifications: { id: string; capa_id: string; verifier_id: string; effective: boolean; notes: string; created_at: string }[];
+  conflicts: Conflict[];
   close_blockers: string[];
   permissions: string[];
+}
+
+/** A disagreement the AI investigation recorded; a reviewer records the decision before closure. */
+export interface Conflict {
+  id: string;
+  workflow_id: string;
+  kind: string;
+  summary: string;
+  details: Record<string, unknown>;
+  refs: string[];
+  status: "OPEN" | "RESOLVED" | "SUPERSEDED";
+  resolution: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
 }
 
 export interface Dashboard {

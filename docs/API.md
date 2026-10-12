@@ -16,7 +16,8 @@ consistent error envelope, `X-Correlation-ID` on every response and audit event.
 
 Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403,
 `NOT_FOUND` 404 (also returned for resources in another tenant), `INVALID_TRANSITION` / `INVALID_STATE` /
-`NOT_APPROVED` / `CLOSE_BLOCKED` 409, `FILE_TOO_LARGE` 413, `INTERNAL_ERROR` 500.
+`NOT_APPROVED` / `CLOSE_BLOCKED` / `EVIDENCE_INTEGRITY` / `WORKFLOW_ACTIVE` / `GRAPH_DISABLED` 409,
+`FILE_TOO_LARGE` 413, `RATE_LIMITED` 429, `INTERNAL_ERROR` 500, `GRAPH_UNAVAILABLE` 503.
 
 ## Endpoints
 
@@ -27,14 +28,21 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | GET/POST | /projects | READ / MANAGE_PROJECTS | Project with sites |
 | GET | /projects/{id} | READ | |
 | GET/POST | /projects/{id}/incidents | READ / CREATE_INCIDENT | Filters: status, severity, domain, q |
-| GET | /incidents/{id} | READ | Workspace: incident, history, evidence, latest agent runs, risk, CAPA, approvals, verifications, close blockers |
+| GET | /incidents/{id} | READ | Workspace: incident, history, evidence, latest agent runs, risk, CAPA, approvals, verifications, close blockers, the latest `workflow` and every `conflicts` row |
 | PATCH | /incidents/{id} | EDIT_INCIDENT | Audited before/after |
 | POST | /incidents/{id}/transition | EDIT_INCIDENT | Manual workflow; CLOSED not allowed here |
-| POST | /incidents/{id}/close | CLOSE_INCIDENT (+APPROVE_CRITICAL for CRITICAL) | Fails with CLOSE_BLOCKED and reasons |
+| POST | /incidents/{id}/close | CLOSE_INCIDENT (+APPROVE_CRITICAL for CRITICAL) | Fails with CLOSE_BLOCKED and reasons (unreviewed or unverified actions, open AI conflicts) |
 | POST | /incidents/{id}/evidence | EDIT_INCIDENT | Multipart; jpg/png/pdf/txt; magic-byte, size and SHA-256 checks |
 | GET | /evidence/{id}/download | READ | |
 | POST | /incidents/{id}/triage | RUN_AGENTS | Triage only |
-| POST | /incidents/{id}/investigate | RUN_AGENTS | Full workflow (covers investigate, RCA, compliance, CAPA) |
+| POST | /incidents/{id}/investigate | RUN_AGENTS | Full workflow (covers investigate, RCA, compliance, CAPA), checkpointed after every stage. Optional `?pause_after=` (repeatable: `triage`, `safety`, `quality`, `risk`, `rca`, `compliance`, `capa`) pauses after those stages for review. Returns `workflow`, `workflow_id`, runs, risk, CAPA, `conflicts` and `flags`. 409 `WORKFLOW_ACTIVE` while another workflow for the incident is RUNNING, PAUSED or FAILED (resume or cancel it) |
+| GET | /incidents/{id}/workflows | READ | Every workflow run of the incident, newest first: kind, status, reason, current stage, per-stage status/attempts/errors, uncertainty summary |
+| GET | /workflows/{id} | READ | One workflow with its runs, risk, CAPA and conflicts (same shape as investigate) |
+| POST | /workflows/{id}/pause | RUN_AGENTS | Asks a RUNNING workflow to stop before its next stage (409 otherwise). Audited |
+| POST | /workflows/{id}/resume | RUN_AGENTS | Continues a PAUSED or FAILED workflow, or a RUNNING one whose lease expired, from its next unfinished stage; optional body `{"pause_after": [...]}`. Finished stages are never re-run. 409 for COMPLETED/CANCELLED workflows or a closed incident. Audited |
+| POST | /workflows/{id}/cancel | RUN_AGENTS | `{"reason"}` (required); stops the workflow, keeps every stored stage. Audited |
+| GET | /incidents/{id}/conflicts | READ | Recorded disagreements, newest first: `kind` (`SEVERITY_DISAGREEMENT`, `DOMAIN_DISAGREEMENT`, `RISK_ABOVE_REPORTED`, `AGENT_DISAGREEMENT`, `SOURCE_CONFLICT`, `VISION_DISAGREEMENT`, `VISION_REVIEW_DISAGREEMENT`), summary, both sides in `details`, `refs`, status `OPEN` / `RESOLVED` / `SUPERSEDED` |
+| POST | /conflicts/{id}/resolve | APPROVE_CAPA | `{"resolution"}` (required): the reviewer's decision; only OPEN conflicts (409 otherwise). Open conflicts block closure. Audited as `conflict.resolve` |
 | GET | /incidents/{id}/agent-runs | READ | All runs with traces |
 | GET | /agents | - | Agent specs, tools and output JSON schemas |
 | GET | /risk/matrix | - | Matrix version and bands |

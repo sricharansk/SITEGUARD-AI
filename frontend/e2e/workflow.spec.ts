@@ -95,9 +95,15 @@ test("report, investigate, review, work, verify and close an incident in the bro
     await expect(page.getByRole("button", { name: "Verify", exact: true })).toHaveCount(before - 1);
   }
 
-  // Project manager closes it.
+  // Project manager records a decision on every AI conflict, then closes it.
   await loginAs(page, "pm");
   await open(page, url, title);
+  while ((await page.getByRole("button", { name: "Record decision" }).count()) > 0) {
+    const before = await page.getByRole("button", { name: "Record decision" }).count();
+    await page.getByLabel("Decision (recorded in the audit trail)").first().fill("Reviewed both sides; the reported severity stands.");
+    await page.getByRole("button", { name: "Record decision" }).first().click();
+    await expect(page.getByRole("button", { name: "Record decision" })).toHaveCount(before - 1);
+  }
   await page.getByLabel("Closure note").fill("All actions verified effective; lessons shared.");
   await page.getByRole("button", { name: "Close incident" }).click();
   await expect(page.getByText(/Closed .* after every approved action was verified effective/)).toBeVisible();

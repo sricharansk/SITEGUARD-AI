@@ -2,8 +2,9 @@
 
 ## API
 
-400 validation; 401 authentication; 403 authorization; 404 not found; 409 conflict (including `GRAPH_DISABLED` when
-the knowledge graph is off); 413 file too large; 429 rate limit; 500 unexpected error; 503 `GRAPH_UNAVAILABLE` when
+400 validation; 401 authentication; 403 authorization; 404 not found; 409 conflict (including `WORKFLOW_ACTIVE`
+while another investigation of the incident is running, paused or failed, and `GRAPH_DISABLED` when the knowledge
+graph is off); 413 file too large; 429 rate limit; 500 unexpected error; 503 `GRAPH_UNAVAILABLE` when
 the optional Neo4j store cannot be reached (retry later).
 
 The knowledge graph is a derived copy of PostgreSQL, so a graph failure never affects incidents, actions or

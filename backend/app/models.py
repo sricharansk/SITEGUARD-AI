@@ -340,6 +340,64 @@ class VisionCalibration(Timestamped, Base):
     updated_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
 
 
+class WorkflowStatus(enum.StrEnum):
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"  # stopped for human review at a checkpoint or on request; resumable
+    FAILED = "FAILED"  # stopped by an unexpected error; completed stages are kept; resumable
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+
+class WorkflowRun(Base):
+    """One investigation (or triage) workflow, checkpointed after every stage (Playbook Prompts 29 and 37).
+
+    `stages` holds each stage's status, attempts, errors and agent run id; `state` holds the outputs later stages
+    read. A run can be paused for human review and resumed, and a run whose process died can be resumed once its
+    lease has expired. Agent runs share the workflow id (`agent_runs.workflow_id`).
+    """
+
+    __tablename__ = "workflow_runs"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(20))  # TRIAGE | INVESTIGATION
+    status: Mapped[WorkflowStatus] = mapped_column(Enum(WorkflowStatus, native_enum=False), index=True)
+    provider: Mapped[str] = mapped_column(String(60))
+    current_stage: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    stages: Mapped[dict] = mapped_column(JSON, default=dict)
+    state: Mapped[dict] = mapped_column(JSON, default=dict)
+    pause_after: Mapped[list] = mapped_column(JSON, default=list)
+    pause_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    uncertainty: Mapped[dict] = mapped_column(JSON, default=dict)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AgentConflict(Base):
+    """A disagreement the workflow found: between agents, between AI and the report, between documents or between
+    vision analyses (Playbook Prompt 30). Both sides are kept; a person records the decision. Never overwritten:
+    a later investigation marks open ones SUPERSEDED and records its own."""
+
+    __tablename__ = "agent_conflicts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"), index=True)
+    workflow_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    summary: Mapped[str] = mapped_column(String(500))
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    refs: Mapped[list] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String(20), default="OPEN")  # OPEN | RESOLVED | SUPERSEDED
+    resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolved_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class AgentRun(Base):
     __tablename__ = "agent_runs"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)

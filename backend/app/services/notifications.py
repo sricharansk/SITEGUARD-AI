@@ -75,6 +75,29 @@ def review_required(db: Session, inc: Incident, count: int, critical: bool) -> N
     )
 
 
+def conflicts_detected(db: Session, inc: Incident, count: int) -> None:
+    """AI findings disagree: the people who review actions must record a decision before the incident can close."""
+    notify(
+        db,
+        inc,
+        users_with_roles(db, inc, {Role.HSE_MANAGER.value, Role.PROJECT_MANAGER.value}),
+        "AI_CONFLICT",
+        f"{inc.reference}: the AI investigation recorded {count} conflict(s) between agents, documents, photos or "
+        "the report. Review both sides and record a decision; the incident cannot close until you do.",
+    )
+
+
+def workflow_failed(db: Session, inc: Incident, user_id: str, stage: str) -> None:
+    notify(
+        db,
+        inc,
+        {user_id},
+        "WORKFLOW_FAILED",
+        f"{inc.reference}: the AI investigation stopped at the {stage} stage. Finished stages are kept; resume the "
+        "workflow to retry it, or continue manually.",
+    )
+
+
 def action_assigned(db: Session, inc: Incident, action: CapaAction) -> None:
     if action.assignee_id:
         notify(

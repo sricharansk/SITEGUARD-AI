@@ -133,6 +133,14 @@ def work_and_close(api: Api, row: dict, iid: str, site_id: str, fail_once: set[s
         )
     row["failed_verifications"] = failed
     closer = "hse" if row["reported_severity"] == "CRITICAL" else "pm"
+    # The incident cannot close while an AI conflict has no recorded human decision.
+    decisions = []
+    for c in api.call("GET", f"/incidents/{iid}/conflicts", closer):
+        if c["status"] == "OPEN":
+            note = "Reviewed both sides; the recorded severity and the human risk decision stand."
+            api.call("POST", f"/conflicts/{c['id']}/resolve", closer, json={"resolution": note})
+            decisions.append(c["kind"])
+    row["conflict_decisions"] = decisions
     closed = api.call(
         "POST",
         f"/incidents/{iid}/close",
@@ -250,6 +258,13 @@ def main() -> None:
     if flags:
         md += ["Conflicts the agents raised for human attention:", ""]
         md += [f"- {ref}: {f}" for ref, f in flags] + [""]
+    decided = sum(len(r.get("conflict_decisions", [])) for _, r in rows)
+    if decided:
+        md += [
+            f"Before closing, the closer recorded a decision on each of the {decided} open conflict(s) "
+            "(`POST /conflicts/{id}/resolve`); an incident cannot close while a conflict has no recorded decision.",
+            "",
+        ]
     md += [
         "### Escalation of overdue actions",
         "",

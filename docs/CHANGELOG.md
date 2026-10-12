@@ -69,6 +69,20 @@
 - Startup refuses unsafe Neo4j settings (no password, wrong scheme, no TLS in staging and production). Optional
   `neo4j` compose service (`graph` profile) and a CI `neo4j` job against Neo4j 5.26.
 
+### Stage D3: resumable investigations and recorded conflicts
+
+- The investigation is a checkpointed `workflow_runs` row (migration `0005`): each stage's result is stored with its
+  records in one transaction, so a workflow can pause for review (`?pause_after=`, `POST /workflows/{id}/pause`), be
+  resumed from the next unfinished stage without duplicating runs or actions (`POST /workflows/{id}/resume`), be
+  cancelled with a reason, or recover after a crash (lease). Agent stages are retried with backoff before they are
+  recorded as failed; a failed workflow notifies the person who started it. One active workflow per incident.
+- Disagreements are stored, not resolved by AI (`agent_conflicts`): severity, domain, risk above reported, safety
+  versus quality, cited documents with different values, and vision analyses or reviews that disagree. Project and
+  HSE managers are notified, an open conflict blocks closure until a person records a decision
+  (`POST /conflicts/{id}/resolve`), and the workspace, web app and investigation report show both sides and the
+  decision. The workflow also stores an uncertainty summary.
+- `scripts/resolve_all.py` and `scripts/demo_walkthrough.py` record a decision on each open conflict before closing.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

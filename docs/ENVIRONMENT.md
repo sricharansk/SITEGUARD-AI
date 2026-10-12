@@ -51,6 +51,9 @@ seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
 | `SITEGUARD_VISION_MAX_PIXELS`, `_MAX_SIDE` | 40000000, 1568 | Largest decodable image (decompression-bomb limit) and the longest side sent to an analyzer |
 | `SITEGUARD_VISION_TIMEOUT_SECONDS`, `_MEMORY_MB` | 30, 1024 | Limits of the image decoder child process |
 | `SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE` | 30 | Vision analyses each user may start per minute (429 above) |
+| `SITEGUARD_AGENT_MAX_ATTEMPTS` | 2 | Tries per agent stage before it is recorded as FAILED (1–5) |
+| `SITEGUARD_AGENT_RETRY_BACKOFF_SECONDS` | 0.5 | First retry delay; doubles each attempt |
+| `SITEGUARD_WORKFLOW_LEASE_SECONDS` | 900 | After this, a RUNNING workflow whose process died can be resumed |
 | `SITEGUARD_GRAPH_BACKEND` | `disabled` | Knowledge graph store: `disabled`, `memory` (inside the API process; tests and demos) or `neo4j` |
 | `SITEGUARD_NEO4J_URI`, `_USER`, `_PASSWORD` | `bolt://localhost:7687`, `neo4j`, empty | Neo4j connection; the password is required with `neo4j`, and staging and production require `bolt+s://` or `neo4j+s://` |
 | `SITEGUARD_NOTIFICATION_EMAIL_ADAPTER` | `disabled` | `disabled`, `log` (no address or content logged) or `smtp` (refused in local and test) |

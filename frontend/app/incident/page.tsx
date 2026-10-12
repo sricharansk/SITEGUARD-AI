@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { api, API_BASE, fmtDate, getToken, label } from "@/lib/api";
-import type { AgentRun, Capa, Workspace } from "@/lib/types";
+import type { AgentRun, Capa, Conflict, Workspace } from "@/lib/types";
 import { personName, useSession } from "@/components/Shell";
 import { AiPanel, Button, Card, ErrorBanner, Field, inputCls, Loading, SeverityBadge, StatusBadge } from "@/components/ui";
 
@@ -167,6 +167,7 @@ function IncidentWorkspace() {
         </div>
 
         <div className="space-y-4">
+          <Conflicts conflicts={ws.conflicts} act={act} canDecide={perms.has("APPROVE_CAPA") && inc.status !== "CLOSED"} />
           <Closure ws={ws} act={act} can={(p) => perms.has(p)} />
           <Evidence ws={ws} act={act} canUpload={perms.has("EDIT_INCIDENT") && inc.status !== "CLOSED"} />
           <Card title="Lifecycle">
@@ -530,6 +531,54 @@ function NewAction({ incidentId, act, done }: { incidentId: string; act: Act; do
         <Button type="submit">Propose action for review</Button>
       </div>
     </form>
+  );
+}
+
+function Conflicts({ conflicts, act, canDecide }: { conflicts: Conflict[]; act: Act; canDecide: boolean }) {
+  const shown = conflicts.filter((c) => c.status !== "SUPERSEDED");
+  if (shown.length === 0) return null;
+  const open = shown.filter((c) => c.status === "OPEN").length;
+  return (
+    <Card title={`AI conflicts (${open} open)`}>
+      <p className="mb-2 text-xs text-ink-2">
+        The investigation found disagreements. Both sides are kept; a reviewer records the decision before the incident can close.
+      </p>
+      <ul className="space-y-3">
+        {shown.map((c) => (
+          <ConflictItem key={c.id} c={c} act={act} canDecide={canDecide} />
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+function ConflictItem({ c, act, canDecide }: { c: Conflict; act: Act; canDecide: boolean }) {
+  const [decision, setDecision] = useState("");
+  return (
+    <li className="rounded-md border border-line p-2 text-sm">
+      <p className="text-xs font-medium text-muted">{label(c.kind)}</p>
+      <p>{c.summary}</p>
+      {c.status === "RESOLVED" ? (
+        <p className="mt-1 text-xs text-good-ink">✓ Decision recorded {fmtDate(c.resolved_at, true)}: {c.resolution}</p>
+      ) : canDecide ? (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            act("conflict", () => api.post(`/conflicts/${c.id}/resolve`, { resolution: decision }));
+          }}
+        >
+          <Field label="Decision (recorded in the audit trail)">
+            <textarea className={inputCls} value={decision} onChange={(e) => setDecision(e.target.value)} required minLength={3} />
+          </Field>
+          <Button type="submit" variant="secondary" disabled={decision.trim().length < 3}>
+            Record decision
+          </Button>
+        </form>
+      ) : (
+        <p className="mt-1 text-xs text-ink-2">Awaiting a decision by a project or HSE manager.</p>
+      )}
+    </li>
   );
 }
 

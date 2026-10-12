@@ -192,6 +192,9 @@ def walkthrough(api: Api, pid: str, h: str = "##") -> tuple[list[str], str]:
             "safety",
             json={"effective": True, "notes": "Checked on site; control in place."},
         )
+    for c in api.call("GET", f"/incidents/{iid}/conflicts", "pm"):
+        if c["status"] == "OPEN":  # closure needs a recorded human decision on every conflict
+            api.call("POST", f"/conflicts/{c['id']}/resolve", "pm", json={"resolution": "Reviewed; severity stands."})
     closed = api.call("POST", f"/incidents/{iid}/close", "pm", json={"note": "All actions verified effective."})
     ws = api.call("GET", f"/incidents/{iid}", "hse")
     md += [
