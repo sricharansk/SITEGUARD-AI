@@ -36,8 +36,8 @@ def test_search_is_tenant_and_project_scoped(db):
         source="test",
     )
     db.commit()
-    assert not rag.search(db, organization_id=demo.id, query="zebrawood cladding")
+    assert not rag.search(db, organization_id=demo.id, query="zebrawood")
     # Project-specific docs are hidden from org-wide searches and from other projects.
-    assert not rag.search(db, organization_id=other.id, query="zebrawood cladding")
-    hits = rag.search(db, organization_id=other.id, project_id=other_project.id, query="zebrawood cladding")
+    assert not rag.search(db, organization_id=other.id, query="zebrawood")
+    hits = rag.search(db, organization_id=other.id, project_id=other_project.id, query="zebrawood")
     assert hits and hits[0].document_id == secret.id

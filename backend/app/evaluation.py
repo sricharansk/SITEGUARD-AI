@@ -79,13 +79,17 @@ def gold_path() -> Path:
     return get_settings().seed_dir.parent / "eval" / "incidents_gold.yaml"
 
 
+def dev_v2_path() -> Path:
+    return get_settings().seed_dir.parent / "eval" / "dev_v2.yaml"
+
+
 def heldout_path() -> Path:
     return get_settings().seed_dir.parent / "eval" / "heldout_v2.yaml"
 
 
 def gold_cases() -> list[dict]:
-    """Dev cases (incidents_gold.yaml) followed by the held-out test cases (heldout_v2.yaml)."""
-    dev = yaml.safe_load(gold_path().read_text())["cases"]
+    """Dev cases (incidents_gold.yaml, dev_v2.yaml) followed by the held-out test cases (heldout_v2.yaml)."""
+    dev = yaml.safe_load(gold_path().read_text())["cases"] + yaml.safe_load(dev_v2_path().read_text())["cases"]
     test = yaml.safe_load(heldout_path().read_text())["cases"]
     assert all(c["split"] == "dev" for c in dev) and all(c["split"] == "test" for c in test)
     return dev + test
