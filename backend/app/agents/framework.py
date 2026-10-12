@@ -86,7 +86,8 @@ class RulesProvider(Provider):
 def allowed_refs(pack: dict) -> set[str]:
     refs = {f"incident:{pack['incident']['id']}"}
     refs |= {f"evidence:{e['id']}" for e in pack.get("evidence", [])}
-    refs |= {h["ref"] for h in pack.get("knowledge", [])}
+    # Instruction-like (suspicious) chunks stay visible as data but can never be cited.
+    refs |= {h["ref"] for h in pack.get("knowledge", []) if not h.get("suspicious")}
     return refs
 
 

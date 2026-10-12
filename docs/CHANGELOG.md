@@ -15,6 +15,24 @@
   `infrastructure`, and a smoke test in `docker`.
 - `.claude/` review agents, rules and permission settings; docs/GOVERNANCE.md.
 
+### Stage B: documents, hybrid retrieval, grounded answers
+
+- `POST /documents/upload` for PDF, DOCX, Markdown and text: parsed in a resource-limited child process, chunked
+  with section and page provenance, original kept; unparseable files become `FAILED` documents with the reason;
+  duplicates (same content, version and scope) are not ingested twice.
+- `GET /documents/{id}`, `GET /documents/{id}/download`, `POST /documents/reindex`.
+- Embeddings per chunk (`chunk_embeddings`; pgvector on PostgreSQL, JSON on SQLite) with an offline hashing
+  embedder; hybrid search (BM25 + vector, reciprocal rank fusion, deterministic rerank), `mode=lexical` available.
+- `POST /knowledge/answer`: grounded answers with citations, or explicit insufficient or conflicting evidence;
+  unsupported claims removed; audited.
+- Organization-wide documents need an organization-wide `MANAGE_DOCUMENTS` role; instruction-like titles and
+  headings are flagged; content sent to Claude cannot close its untrusted-data tag.
+- Request bodies over the largest allowed upload are refused with 413 before they are read; uploads whose content
+  does not match the extension are refused before they are stored; agents can no longer cite instruction-like
+  chunks with any provider (previously only the rules provider skipped them).
+- Migration `0002`; CI runs the pgvector integration tests. Evaluation: dev-split retrieval hit@3 88% → 92%
+  (held-out unchanged at 96%).
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

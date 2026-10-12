@@ -32,8 +32,8 @@ jobs:
         run: pytest -q
 
   postgres:
-    # Migrations on the same image as docker-compose, and the backup and restore drill (scripts/backup.py into a
-    # fresh database; docs/DEPLOYMENT.md#backup-and-restore).
+    # Migrations and pgvector search on the same image as docker-compose, and the backup and restore drill
+    # (scripts/backup.py into a fresh database; docs/DEPLOYMENT.md#backup-and-restore).
     runs-on: ubuntu-latest
     services:
       db:
@@ -66,6 +66,10 @@ jobs:
         env:
           SITEGUARD_DATABASE_URL: postgresql+psycopg://siteguard:ci-only@localhost:5432/siteguard_test
         run: alembic upgrade head && alembic check
+      - name: pgvector integration (vector column, hybrid search)
+        env:
+          SITEGUARD_TEST_POSTGRES_URL: postgresql+psycopg://siteguard:ci-only@localhost:5432/siteguard_test
+        run: pytest -q tests/test_postgres.py -rs
       - name: Backup and restore drill
         env:
           SITEGUARD_TEST_POSTGRES_URL: postgresql+psycopg://siteguard:ci-only@localhost:5432/siteguard_test

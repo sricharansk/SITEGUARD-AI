@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,7 +12,7 @@ from app.api import agents, auth, capa, dashboard, incidents, knowledge, notific
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
-from app.core.hardening import SecurityHeadersMiddleware
+from app.core.hardening import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.observability import CorrelationMiddleware, configure_logging
 
 TITLE = "Site Guard AI: Multi-Agent Construction Safety & Quality Incident Resolution System"
@@ -20,12 +21,18 @@ TITLE = "Site Guard AI: Multi-Agent Construction Safety & Quality Incident Resol
 def init_db() -> None:
     from app import models  # noqa: F401  (register tables)
     from app.seed import seed_if_empty
+    from app.services.embeddings import index_pending
 
     if get_settings().auto_create_schema:
         dbmod.Base.metadata.create_all(dbmod.engine)
-    if get_settings().seed_demo_data:
-        with dbmod.SessionLocal() as session:
+    with dbmod.SessionLocal() as session:
+        if get_settings().seed_demo_data:
             seed_if_empty(session)
+        # Chunks from before embeddings existed (or from a changed embedder) get vectors; idempotent.
+        report = index_pending(session)
+        session.commit()
+        if report.embedded or report.failed:
+            logging.getLogger("siteguard").info("startup embedding", extra={"extra_fields": report.__dict__})
 
 
 @asynccontextmanager
@@ -112,6 +119,7 @@ def create_app() -> FastAPI:
         "AI output is decision support; humans approve every action.",
         lifespan=lifespan,
     )
+    app.add_middleware(BodySizeLimitMiddleware)  # innermost: its 413 still gets headers and a correlation ID
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(CorrelationMiddleware)
     app.add_middleware(

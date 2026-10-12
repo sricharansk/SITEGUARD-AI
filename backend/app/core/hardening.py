@@ -1,4 +1,4 @@
-"""Login throttling and HTTP security headers (docs/SECURITY.md).
+"""Login throttling, request body limits and HTTP security headers (docs/SECURITY.md).
 
 The throttle is in memory, so each replica counts on its own; with N replicas an attacker gets at most N times the
 budget. Move it to Redis or the database before scaling out beyond a few replicas.
@@ -10,8 +10,10 @@ from collections import defaultdict, deque
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.config import get_settings
+from app.core.errors import _envelope
 
 
 class LoginThrottle:
@@ -81,3 +83,74 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if get_settings().env not in ("local", "test"):
             h.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
+
+
+# Room for multipart boundaries and form fields around the largest allowed file.
+BODY_OVERHEAD_BYTES = 1024 * 1024
+
+
+def max_body_bytes() -> int:
+    s = get_settings()
+    return max(s.document_max_bytes, s.evidence_max_bytes) + BODY_OVERHEAD_BYTES
+
+
+class _BodyTooLarge(Exception):
+    pass
+
+
+class BodySizeLimitMiddleware:
+    """Refuse request bodies over the largest allowed upload before they are read.
+
+    Multipart forms are spooled to disk while FastAPI parses them, before authentication runs, so without this
+    limit an anonymous client could fill the disk. A declared Content-Length is checked up front; chunked bodies
+    are counted as they arrive and cut off at the limit.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        limit = max_body_bytes()
+        declared = dict(scope["headers"]).get(b"content-length")
+        if declared is not None and (not declared.isdigit() or int(declared) > limit):
+            await self._reject(scope, send, limit)
+            return
+        received = 0
+        exceeded = False
+        started = False
+
+        async def counting_receive() -> Message:
+            nonlocal received, exceeded
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > limit:
+                    exceeded = True
+                    raise _BodyTooLarge
+            return message
+
+        async def guarded_send(message: Message) -> None:
+            nonlocal started
+            if exceeded:
+                return  # whatever the app answers to a cut-off body is replaced by the 413 below
+            started = started or message["type"] == "http.response.start"
+            await send(message)
+
+        try:
+            await self.app(scope, counting_receive, guarded_send)
+        except _BodyTooLarge:
+            pass
+        if exceeded and not started:
+            await self._reject(scope, send, limit)
+
+    @staticmethod
+    async def _reject(scope: Scope, send: Send, limit: int) -> None:
+        response = _envelope(Request(scope), 413, "FILE_TOO_LARGE", f"Request body exceeds {limit} bytes")
+        await response(scope, _no_receive, send)
+
+
+async def _no_receive() -> Message:
+    return {"type": "http.disconnect"}

@@ -9,8 +9,9 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > Status: **0.2.0 pilot.** Web app, API, six bounded agents, human approval workflow, escalation, reports,
 > evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
-> Azure environment has been created yet. Being ported from PR #2: hybrid retrieval, vision, knowledge graph,
-> Word/PDF reports ([ROADMAP](docs/ROADMAP.md)).
+> Azure environment has been created yet. PDF/DOCX knowledge documents, hybrid retrieval (BM25 + vectors) and
+> grounded answers with citations are ported from PR #2; still being ported: Word/PDF reports, vision, knowledge
+> graph ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -39,6 +40,10 @@ flowchart LR
   did the work cannot verify it, and an incident cannot close until every approved action is verified effective.
 - **Workflow:** action queue, notifications, two-level escalation of overdue actions, Markdown investigation report
   per incident with AI sections labelled and every human decision named.
+- **Knowledge base:** upload procedures, ITPs and specifications as PDF, DOCX or Markdown (parsed in an isolated,
+  resource-limited process, with page and section provenance); hybrid search (BM25 + vectors, pgvector in
+  PostgreSQL); `POST /knowledge/answer` returns cited answers, or says plainly that the evidence is insufficient or
+  conflicting.
 - **Enterprise basics:** nine roles with server-side RBAC, tenant isolation, evidence validation and SHA-256
   provenance, audit trail with correlation IDs, Alembic migrations, consistent error envelope.
 
@@ -85,7 +90,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 88 backend tests (incl. evaluation and red-team gates)
+make test            # 190 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker
@@ -107,7 +112,8 @@ frontend/        Next.js + TypeScript + Tailwind web app (static export served b
 backend/app/
   agents/        framework (allowlist, budget, fallback), registry, rules, Claude provider, orchestrator
   api/           FastAPI routes
-  services/      risk, lifecycle, CAPA/approval/verification, notifications/escalation, reports, RAG, evidence, audit
+  services/      risk, lifecycle, CAPA/approval/verification, notifications/escalation, reports, document parsing,
+                 embeddings, hybrid retrieval, grounded answers, evidence, audit
   datasets/      public dataset pipelines (OSHA Severe Injury Reports)
   evaluation.py  gold-set evaluation and red-team suite
   jobs.py        scheduled jobs (escalate overdue actions)
@@ -124,8 +130,8 @@ scripts/         resolve_all.py (results run), demo_walkthrough.py (single incid
 ## Tech stack
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK; Next.js 16,
-React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions. Planned: Azure Container Apps, pgvector
-hybrid search, Neo4j, vision models, Entra ID.
+React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; Azure Bicep. Planned: Neo4j, vision models,
+Entra ID.
 
 ## Data and datasets
 

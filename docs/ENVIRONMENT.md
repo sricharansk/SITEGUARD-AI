@@ -40,6 +40,13 @@ seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
 | `SITEGUARD_PUBLIC_WEB_URL` | `http://localhost:8000/app` | Public web app URL; https required in staging and production |
 | `SITEGUARD_LOGIN_MAX_FAILURES` | 5 | Failed sign-ins per (email, client) in 15 minutes before HTTP 429 |
 | `SITEGUARD_LOGIN_MAX_FAILURES_PER_ACCOUNT` | 20 | Failed sign-ins per email in 15 minutes from any client |
+| `SITEGUARD_DOCUMENT_MAX_BYTES` | 26214400 (25 MB) | Largest knowledge document upload (HTTP 413 above) |
+| `SITEGUARD_CHUNK_STRATEGY` | `heading` | `heading`, `page` or `semantic` chunking |
+| `SITEGUARD_CHUNK_MAX_CHARS` | 900 | Maximum chunk length (200–8000) |
+| `SITEGUARD_EMBEDDING_PROVIDER` | `hashing` | Offline deterministic embedder; the only provider today (DECISIONS 017) |
+| `SITEGUARD_RETRIEVAL_MODE` | `hybrid` | `hybrid` (BM25 + vector) or `lexical` (BM25 only) |
+| `SITEGUARD_PARSER_TIMEOUT_SECONDS` | 60 | Wall-clock and CPU limit for parsing one PDF or DOCX (5–600) |
+| `SITEGUARD_PARSER_MEMORY_MB` | 1024 | Address-space limit of the parser child process (256–8192) |
 
 ## Dependencies
 

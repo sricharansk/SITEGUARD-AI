@@ -36,7 +36,7 @@ deterministic fallback when the LLM is unavailable.
 Reason: the product must work offline, in CI and when the AI provider fails (ERROR_HANDLING.md). Rules output is
 reproducible and testable; Claude adds better reasoning when configured.
 
-## Decision 009 — BM25 retrieval before pgvector
+## Decision 009 — BM25 retrieval before pgvector (superseded by 017)
 
 Reason: no embedding provider is needed for the pilot and results are explainable. The `rag.search` interface
 stays the same when vector and hybrid retrieval are added.
@@ -77,9 +77,37 @@ Reason: PR #2 and PR #4 were built in parallel from the same base and implement 
 (migrations, notifications, web app); merging main into #2 conflicted in 50 files. The owner chose to merge #4 and
 port #2's additional features onto main stage by stage, each with tests and green CI, rather than one large merge.
 Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
+Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019).
 
 ## Decision 016 — One container on Azure
 
 Reason: main's API serves the web app at `/app` (Decision 011), so the Azure deployment from PR #2 is adapted to one
 Container App with external HTTPS ingress instead of an internal API plus a web app with a server-side proxy. The
 login throttle and startup migrations keep it at one replica for now.
+
+## Decision 017 — Hybrid retrieval with an offline hashing embedder until a model is chosen
+
+Reason: Playbook Prompts 11–12 need vector search, but the embedding model is an open owner decision (data
+residency, cost) and tests must not call external services. `HashingEmbedder` (`hashing-bow` v1, 384 dimensions) hashes stemmed
+words and word pairs into a normalised vector: deterministic, offline and free, and it catches word forms and
+phrases BM25 misses, but it does not capture meaning. Vectors are stored per (chunk, model, version) in pgvector, so
+a semantic model plugs in behind the `Embedder` interface and is indexed alongside without a schema change.
+Lexical and vector rankings are combined with reciprocal rank fusion (k = 60), which needs no score calibration,
+then a deterministic reranker (query coverage, heading match, phrase match) orders the top candidates. On the 14
+labelled queries in `evals/retrieval/seed_queries.yaml` hybrid hit@3 must stay ≥ 0.85 and never below lexical.
+
+## Decision 018 — Grounded answers verify citations and support after the model
+
+Reason: an answer is only useful for safety work if each statement can be traced to a source. Whatever the
+answerer returns, statements that cite unknown refs or share less than half their terms with a cited chunk are
+removed into `unsupported_claims`; conflicting values across documents force `CONFLICTING_EVIDENCE`; a question the
+sources barely cover returns `INSUFFICIENT_EVIDENCE` without calling a model. This keeps the guarantee the same for
+the rules and Claude answerers.
+
+## Decision 019 — Untrusted binary documents are parsed in a resource-limited child process
+
+Reason: PDF and DOCX parsers can be driven into minutes of CPU or gigabytes of memory by small hostile files, and the
+API process serves every tenant. `parsing.parse_document` runs pypdf and python-docx in `python -m
+app.services.parse_worker` with an address-space limit, a CPU-time limit and a wall-clock timeout, after cheap
+pre-checks (zip expansion, page count). Text and Markdown stay in process. The cost is a process start per binary
+upload, which is small next to parsing and embedding.

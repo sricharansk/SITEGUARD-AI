@@ -20,9 +20,26 @@ Never commit credentials. Use environment variables locally and managed secret s
 
 Retrieved documents are untrusted. Tool calls are allowlisted and validated. High-impact actions require human approval.
 
+Instruction-like text is flagged at ingestion in the document title, section heading and chunk text; flagged chunks
+are never cited by agents and are excluded from knowledge answers. Content sent to Claude is JSON with `<` and `>`
+escaped, so it cannot close the `<evidence_pack>` or `<sources>` tag around it. Grounded answers keep only
+statements that cite a retrieved source and share its terms; a model's conflict claim is kept only when it names a
+retrieved source (AGENTS.md).
+
 ## File Uploads
 
 Validate extension, MIME, size, checksum and content before processing.
+
+| Upload | Allowed | Checks |
+|---|---|---|
+| Incident evidence (`POST /incidents/{id}/evidence`) | jpg, png, pdf, txt | Extension, declared MIME, magic bytes, UTF-8 text, `SITEGUARD_EVIDENCE_MAX_BYTES` |
+| Knowledge documents (`POST /documents/upload`) | pdf, docx, md, txt | Extension picks the parser; a declared MIME type must match it (or be `application/octet-stream`) and the stored type comes from the parser; the content must match the extension (`%PDF-`, zip header, UTF-8 text) before anything is stored; at most `SITEGUARD_DOCUMENT_MAX_BYTES` is read; DOCX rejected when it would expand past 100 MB, 100x its size or 5,000 entries; PDF and DOCX parsed in a child process with CPU-time, memory and wall-clock limits (`SITEGUARD_PARSER_TIMEOUT_SECONDS`, `SITEGUARD_PARSER_MEMORY_MB`) and at most 5 million characters of text |
+
+A document that cannot be parsed is kept as a `FAILED` document with a generic reason; a request that fails for any
+other reason removes the stored file. Downloads are sent as attachments with the stored type and `nosniff`.
+
+Organization-wide documents and the reindex job affect every project, so they need an organization-wide
+membership with `MANAGE_DOCUMENTS`; a role limited to one project can only add documents to that project.
 
 ## Logging
 
@@ -45,6 +62,10 @@ Do not log passwords, tokens, API keys or raw sensitive evidence by default.
   (`SITEGUARD_LOGIN_MAX_FAILURES`, default 5; `SITEGUARD_LOGIN_MAX_FAILURES_PER_ACCOUNT`, default 20). Over the limit
   the API answers 429 `RATE_LIMITED` with `Retry-After`. Unknown emails count too, so throttling does not reveal which
   accounts exist. The counts are in-process: run one replica until a shared store exists.
+- **Request body limit:** bodies larger than the biggest allowed upload (`max(SITEGUARD_DOCUMENT_MAX_BYTES,
+  SITEGUARD_EVIDENCE_MAX_BYTES)` + 1 MB for form fields) get 413 `FILE_TOO_LARGE` before they are read, also for
+  anonymous callers and chunked bodies, because multipart forms are spooled to disk before authentication runs.
+  Set the same limit at any reverse proxy in front of the API.
 - **Security headers** on every response: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
   `Referrer-Policy: no-referrer`, `Permissions-Policy`; `Cache-Control: no-store` on API responses;
   `Strict-Transport-Security` outside local and test. The web app at `/app` gets a Content-Security-Policy

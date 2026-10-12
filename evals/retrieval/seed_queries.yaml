@@ -1,0 +1,45 @@
+# Labelled retrieval queries over the synthetic seed knowledge base (data/seed/knowledge/).
+# expected: substring of the document title that should appear in the top results.
+# Used by backend/tests/test_knowledge.py (Prompt 12) and the evaluation runner (Prompt 40).
+- id: q01
+  query: trench box or shoring before anyone enters an excavation
+  expected: Excavation and Trenching
+- id: q02
+  query: edge protection guardrail with toe board at open edges
+  expected: Working at Height
+- id: q03
+  query: personal fall protection harness anchor
+  expected: Working at Height
+- id: q04
+  query: lift plan slings and rigging for crane lifts
+  expected: Lifting Operations
+- id: q05
+  query: reversing vehicles and pedestrian segregation on site
+  expected: Site Traffic and Mobile Plant
+- id: q06
+  query: slump test before concrete placement
+  expected: Cast-in-place Concrete
+- id: q07
+  query: reinforcement hold point inspection before pour
+  expected: Cast-in-place Concrete
+- id: q08
+  query: waterproofing membrane laps inspection
+  expected: Waterproofing and Structural Steel
+- id: q09
+  query: bolt tightening on structural steel connections
+  expected: Waterproofing and Structural Steel
+- id: q10
+  query: residual current device on temporary electrical supplies
+  expected: PPE and Temporary Electrical
+- id: q11
+  query: lock off and isolation before electrical work
+  expected: PPE and Temporary Electrical
+- id: q12
+  query: root cause analysis and investigation level after an incident
+  expected: Incident Reporting and Investigation
+- id: q13
+  query: minimum PPE hard hat and high visibility clothing
+  expected: PPE and Temporary Electrical
+- id: q14
+  query: inspecting excavations after rain
+  expected: Excavation and Trenching

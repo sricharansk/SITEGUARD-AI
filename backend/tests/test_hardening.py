@@ -39,3 +39,28 @@ def test_security_headers(client):
     assert "Content-Security-Policy" not in api.headers  # Swagger UI at /docs needs its CDN
     assert "Strict-Transport-Security" not in api.headers  # local/test env only
     assert api.headers["Cache-Control"] == "no-store"
+
+
+def test_oversized_bodies_are_refused_before_authentication(client, monkeypatch):
+    from app.core import hardening
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(hardening, "BODY_OVERHEAD_BYTES", 0)
+    monkeypatch.setattr(get_settings(), "document_max_bytes", 64)
+    monkeypatch.setattr(get_settings(), "evidence_max_bytes", 64)
+    # Declared length over the limit, no token: refused with the error envelope, nothing is parsed.
+    r = client.post("/documents/upload", files={"file": ("big.pdf", b"%PDF-" + b"x" * 200)})
+    assert r.status_code == 413 and r.json()["error"]["code"] == "FILE_TOO_LARGE"
+    assert r.json()["error"]["correlation_id"] and r.headers["X-Content-Type-Options"] == "nosniff"
+
+    # Chunked body without Content-Length: cut off once it passes the limit.
+    def chunks():
+        for _ in range(10):
+            yield b"y" * 32
+
+    r = client.post("/auth/login", content=chunks(), headers={"Content-Type": "application/json"})
+    assert r.status_code == 413 and r.json()["error"]["code"] == "FILE_TOO_LARGE"
+    # Bodies under the limit are untouched.
+    r = client.post("/auth/login", json={"email": "a@b.c", "password": "x"})
+    assert r.status_code == 401
+    login_throttle.reset()
