@@ -17,3 +17,4 @@ data/processed/
 frontend/node_modules/
 frontend/out/
 frontend/test-results/
+build/

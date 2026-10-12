@@ -20,6 +20,18 @@ it and resolves every open incident with `scripts/resolve_all.py` (`.github/work
 | tests/test_datasets.py | OSHA SIR pipeline on a synthetic fixture: column validation, construction filter, dedupe, date filter, OIICS mapping, no employer data in outputs; dataset registry completeness |
 | frontend/e2e/workflow.spec.ts | Browser: report -> AI investigation -> PM blocked from critical approval -> HSE approval -> work -> independent verification -> closure; dashboard, lists, action queue, knowledge, audit; cross-tenant URL returns NOT_FOUND |
 
+| tests/test_hardening.py | Login throttle (429 with Retry-After, per account and client, unknown emails counted, success clears), security headers |
+| tests/test_config_validation.py | Startup refuses unsafe staging/production settings (secret strength and placeholders, demo seeding, non-PostgreSQL, CORS, http URLs); developer environments keep their defaults |
+| tests/test_ops_scripts.py | `scripts/backup.py` file handling (archive round trip, path traversal and symlinks refused, URL to libpq env without the password in argv); `scripts/smoke_test.py` against the API; `scripts/dependency_audit.py` exception handling |
+| tests/test_backup_restore.py | PostgreSQL backup and restore drill (CI `postgres` job; needs `SITEGUARD_TEST_POSTGRES_URL` and the PostgreSQL client tools) |
+
+## CI jobs
+
+`backend` (lint incl. scripts, types, tests) · `postgres` (migrations + `alembic check` on PostgreSQL, restore drill) ·
+`dependency-audit` (lock file and npm; also weekly) · `infrastructure` (Bicep build/lint, actionlint with shellcheck,
+staging compose config) · `frontend` (typecheck, build) · `docker` (image, smoke test, browser tests, full
+resolution run).
+
 ## Evaluation
 
 `make eval` (or `cd backend && python -m app.evaluation --out ../docs/EVALUATION.md`) scores the agents on

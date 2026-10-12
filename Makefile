@@ -1,11 +1,11 @@
 .PHONY: install test lint eval run web up down demo e2e
 
 install:
-	cd backend && pip install -e ".[dev]"
+	cd backend && pip install -r requirements.lock -e ".[dev]"
 	cd frontend && npm ci --no-audit --no-fund
 
 lint:
-	cd backend && ruff check app tests migrations && ruff format --check app tests migrations && mypy app --ignore-missing-imports
+	cd backend && ruff check app tests migrations ../scripts && ruff format --check app tests migrations ../scripts && mypy app --ignore-missing-imports
 	cd frontend && npm run typecheck
 
 test:

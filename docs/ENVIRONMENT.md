@@ -30,3 +30,26 @@ when migrations manage the schema. For `npm run dev` on port 3000 set `NEXT_PUBL
 
 Use `.env.example` as the template. Never commit real values. Demo users share `SITEGUARD_DEMO_PASSWORD`; turn
 seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
+
+## Settings added in the hardening stage
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `SITEGUARD_ENV` | `local` | local, test, demo, staging or production; staging and production turn on every startup check |
+| `SITEGUARD_SEED_DEMO_DATA` | on for local/test/demo, off otherwise | Demo users share a known password; refused in staging and production |
+| `SITEGUARD_PUBLIC_WEB_URL` | `http://localhost:8000/app` | Public web app URL; https required in staging and production |
+| `SITEGUARD_LOGIN_MAX_FAILURES` | 5 | Failed sign-ins per (email, client) in 15 minutes before HTTP 429 |
+| `SITEGUARD_LOGIN_MAX_FAILURES_PER_ACCOUNT` | 20 | Failed sign-ins per email in 15 minutes from any client |
+
+## Dependencies
+
+Runtime packages are pinned in `backend/requirements.lock`; Docker and CI install from it. To change a dependency,
+edit `pyproject.toml`, then regenerate the lock in a clean Python 3.12 virtual environment:
+
+```bash
+python3.12 -m venv /tmp/lock && /tmp/lock/bin/pip install ./backend
+/tmp/lock/bin/pip freeze --exclude-editable | grep -vi '^siteguard-ai-backend'   # paste under the header
+python scripts/dependency_audit.py pypi --requirements backend/requirements.lock  # needs pip-audit
+```
+
+Dev tools (pytest, httpx, ruff, mypy) are pinned in `pyproject.toml` so local runs match CI.

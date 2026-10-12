@@ -12,6 +12,12 @@ notifications and two-level escalation of overdue actions; investigation reports
 taxonomy coverage (11 safety + 9 quality classes); evaluation set with held-out split and red-team suite; dataset
 registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single image serving API + web app.
 
+## IN PROGRESS — rebuilding PR #2 on main
+
+Stage A (hardening, Azure IaC and deploy workflow, staging, operations) done. Next: B document parsing, embeddings,
+hybrid retrieval and grounded answers; C reports in Word/PDF and email delivery; D vision, knowledge graph,
+resumable workflows and conflicts; E web screens for these.
+
 ## NOW
 
 Run the OSHA SIR pipeline on the real 2024-2026 file and publish the report; score the Claude provider on the gold

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — rebuilding PR #2 on main
+
+### Stage A: hardening and deployment
+
+- Login throttle (429 `RATE_LIMITED`, `Retry-After`), security headers, CSP on the web app, `no-store` on API responses.
+- Startup configuration validation for staging and production; demo seeding only in local, test and demo.
+- Azure Bicep (network, private PostgreSQL, Key Vault, managed identity, registry, Azure Files evidence share,
+  Container Apps app and jobs, monitoring) and a manual OIDC deploy workflow with a migration job, smoke test and
+  rollback instructions, adapted to one container.
+- Isolated staging compose stack; `scripts/smoke_test.py`, `scripts/backup.py` (with a PostgreSQL restore drill),
+  `scripts/dependency_audit.py`; `app.core.db.run_migrations()`.
+- `backend/requirements.lock`, pinned dev tools; CI jobs `postgres`, `dependency-audit` (also weekly),
+  `infrastructure`, and a smoke test in `docker`.
+- `.claude/` review agents, rules and permission settings; docs/GOVERNANCE.md.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

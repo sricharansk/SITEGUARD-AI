@@ -70,3 +70,16 @@ migration.
 Reason: overdue CAPA escalation must be safe to run repeatedly from a scheduler. Each action records its escalation
 level, so each level is sent once. Notifications are stored in the database; email or Teams adapters can read the
 same table later.
+
+## Decision 015 — Rebuild PR #2's features on main in stages
+
+Reason: PR #2 and PR #4 were built in parallel from the same base and implement the same parts differently
+(migrations, notifications, web app); merging main into #2 conflicted in 50 files. The owner chose to merge #4 and
+port #2's additional features onto main stage by stage, each with tests and green CI, rather than one large merge.
+Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
+
+## Decision 016 — One container on Azure
+
+Reason: main's API serves the web app at `/app` (Decision 011), so the Azure deployment from PR #2 is adapted to one
+Container App with external HTTPS ingress instead of an internal API plus a web app with a server-side proxy. The
+login throttle and startup migrations keep it at one replica for now.

@@ -7,8 +7,10 @@ retrieve the procedures that apply, propose corrective and preventive actions (C
 verified closure. AI agents do the first pass; qualified people approve every action and close every incident.
 
 > Status: **0.2.0 pilot.** Web app, API, six bounded agents, human approval workflow, escalation, reports,
-> evaluation and red-team suite, migrations, Docker and CI are working. Not yet built: pgvector hybrid retrieval,
-> vision, knowledge graph, OIDC, Azure resources ([ROADMAP](docs/ROADMAP.md)).
+> evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
+> deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
+> Azure environment has been created yet. Being ported from PR #2: hybrid retrieval, vision, knowledge graph,
+> Word/PDF reports ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
