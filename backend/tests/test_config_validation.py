@@ -104,3 +104,14 @@ def test_demo_environment_needs_a_real_secret_but_may_seed_and_use_http():
     assert settings_problems(settings(env="demo", jwt_secret=STRONG_SECRET)) == []
     default_secret = settings(env="demo", jwt_secret="dev-only-change-me")
     assert any("at least 32" in p for p in settings_problems(default_secret))
+
+
+def test_smtp_is_refused_in_development_and_needs_starttls_when_deployed():
+    dev = settings(env="test", notification_email_adapter="smtp")
+    assert any("not allowed in local or test" in p for p in settings_problems(dev))
+    assert settings_problems(settings(env="test", notification_email_adapter="log")) == []
+    plain = deployed(notification_email_adapter="smtp", smtp_starttls=False, smtp_from="siteguard@example.com")
+    assert any("SITEGUARD_SMTP_STARTTLS" in p for p in settings_problems(plain))
+    placeholder = deployed(notification_email_adapter="smtp", smtp_from="siteguard@CHANGE-example.com")
+    assert any("SITEGUARD_SMTP_FROM" in p for p in settings_problems(placeholder))
+    assert settings_problems(deployed(notification_email_adapter="smtp", smtp_from="siteguard@example.com")) == []

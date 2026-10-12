@@ -1,5 +1,7 @@
 """In-app notifications and escalation of overdue CAPA actions (docs/API.md#notifications).
 
+Each notification is also queued for email in the same transaction (services/delivery.py).
+
 Escalation ladder for an approved action that is past its due date and not completed:
 level 1 on the first overdue day notifies the assignee and everyone holding the owner role;
 level 2 after ESCALATE_TO_MANAGEMENT_DAYS notifies the project manager and HSE manager.
@@ -20,7 +22,7 @@ from app.models import (
     Role,
     WorkStatus,
 )
-from app.services import audit
+from app.services import audit, delivery
 
 ESCALATE_TO_MANAGEMENT_DAYS = 7
 ACTIVE = (ApprovalStatus.APPROVED, ApprovalStatus.MODIFIED)
@@ -55,6 +57,7 @@ def notify(
             incident_id=inc.id,
             capa_id=capa_id,
         )
+        delivery.enqueue(n)
         db.add(n)
         out.append(n)
     return out

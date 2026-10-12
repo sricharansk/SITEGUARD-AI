@@ -56,8 +56,22 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /capa/escalate-overdue | APPROVE_CAPA | Escalate overdue approved actions (level 1 owner, level 2 after 7 days PM + HSE). Idempotent |
 | GET | /notifications | any | The caller's notifications (`unread_only`) |
 | POST | /notifications/{id}/read | recipient | Mark read |
-| GET | /incidents/{id}/report | READ | Investigation report, `text/markdown`, AI sections labelled, human decisions named; audited |
+| GET | /notifications/deliveries | VIEW_AUDIT (organization-wide membership) | `?organization_id=&status=`; email outbox with status (`PENDING`, `SENT`, `FAILED` dead letter, `SKIPPED`), attempts, last error and the recipient's name (no addresses) |
+| POST | /notifications/deliver | MANAGE_PROJECTS (organization-wide membership) | `?organization_id=`; send due emails now (normally the `deliver-notifications` job); returns `sent`, `retrying`, `failed`, `skipped`; audited |
+| POST | /notifications/deliveries/{id}/retry | MANAGE_PROJECTS (organization-wide membership) | Put a `FAILED` or `SKIPPED` delivery back in the queue (409 otherwise); audited |
+| GET | /incidents/{id}/report | READ | Investigation report, `format=md` (default, `text/markdown`), `docx` or `pdf`; all three rendered from the same Markdown, AI sections labelled, human decisions named; `X-Report-SHA256` header; audited with format and checksum |
 | GET | /projects/{id}/people | READ | Names and roles on the project (no emails) |
 | GET | /app/ | - | The web app (static build served by the API) |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
 | GET | /health | - | |
+
+## Notifications
+
+Workflow events create in-app notifications (review required, assignment, failed verification, overdue escalation).
+Each one is also queued for email in `notification_deliveries` in the same transaction. The `deliver-notifications`
+job (`python -m app.jobs escalate-overdue deliver-notifications`) sends due rows with the adapter in
+`SITEGUARD_NOTIFICATION_EMAIL_ADAPTER`: `disabled` (default; rows become `SKIPPED`), `log` (records that a message
+would be sent, without address or content) or `smtp` (STARTTLS; refused in local and test). A failed send is retried
+after 1, 5, 25 ... minutes up to `SITEGUARD_NOTIFICATION_MAX_ATTEMPTS`, then becomes `FAILED` until an administrator
+retries it. Delivery never changes workflow state. Emails carry the notification text and a link to the incident in
+the web app.

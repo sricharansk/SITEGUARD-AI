@@ -9,9 +9,9 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > Status: **0.2.0 pilot.** Web app, API, six bounded agents, human approval workflow, escalation, reports,
 > evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
-> Azure environment has been created yet. PDF/DOCX knowledge documents, hybrid retrieval (BM25 + vectors) and
-> grounded answers with citations are ported from PR #2; still being ported: Word/PDF reports, vision, knowledge
-> graph ([ROADMAP](docs/ROADMAP.md)).
+> Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
+> vectors), grounded answers with citations, Word/PDF reports and an email outbox; still being ported: vision,
+> knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -38,8 +38,9 @@ flowchart LR
   automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the person who
   did the work cannot verify it, and an incident cannot close until every approved action is verified effective.
-- **Workflow:** action queue, notifications, two-level escalation of overdue actions, Markdown investigation report
-  per incident with AI sections labelled and every human decision named.
+- **Workflow:** action queue, notifications with an email outbox (off by default; retries and dead letters), two-level
+  escalation of overdue actions, investigation report per incident in Markdown, Word or PDF with AI sections
+  labelled and every human decision named.
 - **Knowledge base:** upload procedures, ITPs and specifications as PDF, DOCX or Markdown (parsed in an isolated,
   resource-limited process, with page and section provenance); hybrid search (BM25 + vectors, pgvector in
   PostgreSQL); `POST /knowledge/answer` returns cited answers, or says plainly that the evidence is insufficient or
@@ -90,7 +91,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 190 backend tests (incl. evaluation and red-team gates)
+make test            # 203 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker

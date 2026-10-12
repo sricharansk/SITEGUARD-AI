@@ -1,4 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 const PASSWORD = process.env.DEMO_PASSWORD ?? "siteguard-demo";
 const SHOTS = process.env.SCREENSHOT_DIR;
@@ -101,6 +102,18 @@ test("report, investigate, review, work, verify and close an incident in the bro
   await page.getByRole("button", { name: "Close incident" }).click();
   await expect(page.getByText(/Closed .* after every approved action was verified effective/)).toBeVisible();
   await shot(page, "03-incident-closed");
+
+  // The closed incident's report downloads as PDF and Word.
+  for (const [button, ext, magic] of [
+    ["PDF", "pdf", "%PDF-"],
+    ["Word", "docx", "PK"],
+  ] as const) {
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: button, exact: true }).click()]);
+    expect(download.suggestedFilename()).toMatch(new RegExp(`-report\\.${ext}$`));
+    const path = await download.path();
+    const head = readFileSync(path).subarray(0, 5).toString("latin1");
+    expect(head.startsWith(magic)).toBe(true);
+  }
 });
 
 test("dashboard, incident list, action queue, knowledge and audit render", async ({ page }) => {

@@ -1,7 +1,7 @@
 // Container app and jobs. One container serves the API and the web app (static build at /app) over HTTPS-only
-// external ingress; a scheduled job escalates overdue actions; a manual migration job runs `alembic upgrade head`
-// with the new image before the deploy workflow rolls it out. Secrets are Key Vault references resolved through the
-// managed identity. An availability test checks /health and the web app.
+// external ingress; a scheduled job escalates overdue actions and sends due notification emails; a manual migration
+// job runs `alembic upgrade head` with the new image before the deploy workflow rolls it out. Secrets are Key Vault
+// references resolved through the managed identity. An availability test checks /health and the web app.
 
 param namePrefix string
 param location string
@@ -21,6 +21,12 @@ param siteguardEnv string
 param publicWebUrl string
 @allowed(['rules', 'anthropic'])
 param aiProvider string
+@allowed(['disabled', 'smtp'])
+param emailAdapter string
+param smtpHost string
+param smtpPort int
+param smtpUsername string
+param smtpFrom string
 param jobsCron string
 @description('Object ID of the GitHub Actions OIDC service principal; empty to grant nothing.')
 param deployPrincipalId string
@@ -29,6 +35,7 @@ var apiName = '${namePrefix}-api'
 var origin = 'https://${apiName}.${defaultDomain}'
 var webUrl = empty(publicWebUrl) ? '${origin}/app' : publicWebUrl
 var useAnthropic = aiProvider == 'anthropic'
+var useSmtp = emailAdapter == 'smtp'
 
 resource appIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: appIdentityName
@@ -55,8 +62,22 @@ var commonEnv = [
   { name: 'SITEGUARD_PUBLIC_WEB_URL', value: webUrl }
   { name: 'SITEGUARD_AI_PROVIDER', value: aiProvider }
 ]
+var smtpSecret = { name: 'smtp-password', keyVaultUrl: '${keyVaultUri}secrets/smtp-password', identity: appIdentity.id }
+var emailEnv = concat(
+  [{ name: 'SITEGUARD_NOTIFICATION_EMAIL_ADAPTER', value: emailAdapter }],
+  useSmtp
+    ? [
+        { name: 'SITEGUARD_SMTP_HOST', value: smtpHost }
+        { name: 'SITEGUARD_SMTP_PORT', value: string(smtpPort) }
+        { name: 'SITEGUARD_SMTP_USERNAME', value: smtpUsername }
+        { name: 'SITEGUARD_SMTP_FROM', value: smtpFrom }
+        { name: 'SITEGUARD_SMTP_PASSWORD', secretRef: 'smtp-password' }
+      ]
+    : []
+)
 var anthropicEnv = useAnthropic ? [{ name: 'ANTHROPIC_API_KEY', secretRef: 'anthropic-api-key' }] : []
-var secrets = concat([databaseSecret, jwtSecret], useAnthropic ? [anthropicSecret] : [])
+var secrets = concat([databaseSecret, jwtSecret], useAnthropic ? [anthropicSecret] : [], useSmtp ? [smtpSecret] : [])
+var jobSecrets = concat([databaseSecret, jwtSecret], useSmtp ? [smtpSecret] : [])
 
 resource api 'Microsoft.App/containerApps@2024-03-01' = {
   name: apiName
@@ -91,6 +112,7 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
               { name: 'SITEGUARD_CORS_ORIGINS', value: '' }
               { name: 'SITEGUARD_EVIDENCE_DIR', value: '/srv/evidence' }
             ],
+            emailEnv,
             anthropicEnv
           )
           volumeMounts: [{ volumeName: 'evidence', mountPath: '/srv/evidence' }]
@@ -149,16 +171,16 @@ resource scheduledJobs 'Microsoft.App/jobs@2024-03-01' = {
       replicaTimeout: 900
       replicaRetryLimit: 1
       registries: registries
-      secrets: [databaseSecret, jwtSecret]
+      secrets: jobSecrets
     }
     template: {
       containers: [
         {
           name: 'jobs'
           image: apiImage
-          command: ['python', '-m', 'app.jobs', 'escalate-overdue']
+          command: ['python', '-m', 'app.jobs', 'escalate-overdue', 'deliver-notifications']
           resources: { cpu: json('0.5'), memory: '1Gi' }
-          env: commonEnv
+          env: concat(commonEnv, emailEnv)
         }
       ]
     }

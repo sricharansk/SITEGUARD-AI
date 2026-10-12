@@ -63,7 +63,7 @@ UI does not access the database directly. Agents use approved service/tool inter
 | Web app (Next.js, TypeScript, Tailwind; static export) | `frontend/`, served at `/app` |
 | API, RBAC, tenant scoping | `backend/app/api`, `backend/app/core` |
 | Agents, orchestrator, rules and Claude providers | `backend/app/agents` |
-| Risk, lifecycle, CAPA, notifications/escalation, reports, evidence, audit | `backend/app/services` |
+| Risk, lifecycle, CAPA, notifications/escalation, email outbox, reports (Markdown, Word, PDF), evidence, audit | `backend/app/services` |
 | Document parsing (isolated child process), chunking, embeddings, hybrid retrieval, grounded answers | `backend/app/services/{parsing,chunking,embeddings,rag,answer}.py` |
 | Migrations | `backend/migrations` (Alembic) |
 | Evaluation and red-team | `backend/app/evaluation.py`, `data/eval/` |

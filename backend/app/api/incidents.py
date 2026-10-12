@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,7 @@ from app.models import (
     Site,
     VerificationRecord,
 )
-from app.services import audit, capa, evidence, incidents, lifecycle, report, risk
+from app.services import audit, capa, evidence, incidents, lifecycle, report, report_render, risk
 
 router = APIRouter(tags=["incidents"])
 
@@ -270,10 +270,19 @@ def assess_risk(
     return ok(ser.risk(row))
 
 
-@router.get("/incidents/{incident_id}/report", response_class=PlainTextResponse)
-def incident_report(incident_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    """Investigation report as Markdown, with AI sections labelled and human decisions named."""
+@router.get("/incidents/{incident_id}/report")
+def incident_report(
+    incident_id: str,
+    format: str = Query(default="md", pattern="^(md|docx|pdf)$"),
+    p: Principal = Depends(current_principal),
+    db: Session = Depends(get_db),
+):
+    """Investigation report as Markdown, Word or PDF, with AI sections labelled and human decisions named.
+
+    All three formats are rendered from the same Markdown. Each download is audited with the file's SHA-256."""
     inc = load_incident(db, p, incident_id)
+    content = report_render.render(report.build(db, inc), format, f"Investigation report {inc.reference}")
+    digest = report_render.checksum(content)
     audit.record(
         db,
         organization_id=inc.organization_id,
@@ -281,10 +290,14 @@ def incident_report(incident_id: str, p: Principal = Depends(current_principal),
         action="incident.report",
         entity_type="incident",
         entity_id=inc.id,
+        details={"format": format, "sha256": digest},
     )
     db.commit()
-    return PlainTextResponse(
-        report.build(db, inc),
-        media_type="text/markdown; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{inc.reference}-report.md"'},
+    return Response(
+        content,
+        media_type=report_render.FORMATS[format],
+        headers={
+            "Content-Disposition": f'attachment; filename="{inc.reference}-report.{format}"',
+            "X-Report-SHA256": digest,
+        },
     )

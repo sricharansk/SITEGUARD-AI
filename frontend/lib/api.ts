@@ -33,7 +33,7 @@ export function setToken(token: string | null) {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown, raw = false): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown, blob = false): Promise<T> {
   const headers: Record<string, string> = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -44,7 +44,7 @@ async function request<T>(method: string, path: string, body?: unknown, raw = fa
     payload = JSON.stringify(body);
   }
   const res = await fetch(`${API_BASE}${path}`, { method, headers, body: payload });
-  if (raw && res.ok) return (await res.text()) as T;
+  if (blob && res.ok) return (await res.blob()) as T;
   let json: any = null;
   try {
     json = await res.json();
@@ -64,7 +64,7 @@ export const api = {
   post: <T,>(path: string, body?: unknown) => request<T>("POST", path, body ?? {}),
   patch: <T,>(path: string, body: unknown) => request<T>("PATCH", path, body),
   upload: <T,>(path: string, form: FormData) => request<T>("POST", path, form),
-  text: (path: string) => request<string>("GET", path, undefined, true),
+  blob: (path: string) => request<Blob>("GET", path, undefined, true),
 };
 
 export function qs(params: Record<string, string | number | boolean | undefined | null>): string {

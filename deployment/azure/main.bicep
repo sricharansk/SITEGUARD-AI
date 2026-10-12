@@ -68,7 +68,15 @@ param publicWebUrl string = ''
 @allowed(['rules', 'anthropic'])
 param aiProvider string = 'rules'
 
-@description('Cron schedule (UTC) for python -m app.jobs escalate-overdue (idempotent; hourly is plenty).')
+@description('Email delivery of notifications. smtp needs the Key Vault secret smtp-password (docs/DEPLOYMENT.md#azure).')
+@allowed(['disabled', 'smtp'])
+param emailAdapter string = 'disabled'
+param smtpHost string = ''
+param smtpPort int = 587
+param smtpUsername string = ''
+param smtpFrom string = ''
+
+@description('Cron schedule (UTC) for the escalate-overdue and deliver-notifications jobs (idempotent; hourly is plenty).')
 param jobsCron string = '7 * * * *'
 
 @minValue(30)
@@ -186,6 +194,11 @@ module apps 'modules/apps.bicep' = if (deployApps) {
     siteguardEnv: environmentName
     publicWebUrl: publicWebUrl
     aiProvider: aiProvider
+    emailAdapter: emailAdapter
+    smtpHost: smtpHost
+    smtpPort: smtpPort
+    smtpUsername: smtpUsername
+    smtpFrom: smtpFrom
     jobsCron: jobsCron
     deployPrincipalId: deployPrincipalId
   }

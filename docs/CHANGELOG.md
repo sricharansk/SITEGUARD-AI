@@ -33,6 +33,18 @@
 - Migration `0002`; CI runs the pgvector integration tests. Evaluation: dev-split retrieval hit@3 88% → 92%
   (held-out unchanged at 96%).
 
+### Stage C: Word and PDF reports, email outbox
+
+- `GET /incidents/{id}/report?format=md|docx|pdf`: Word and PDF rendered from the same Markdown report, with an
+  `X-Report-SHA256` header; every download audited with format and checksum. The incident workspace offers
+  Markdown, Word and PDF downloads.
+- Email delivery outbox (`notification_deliveries`, migration `0003`): each notification is queued in the same
+  transaction; `python -m app.jobs deliver-notifications` sends due rows with the `disabled` (default), `log` or
+  `smtp` adapter, with backoff, bounded attempts and dead letters. `GET /notifications/deliveries`,
+  `POST /notifications/deliver`, `POST /notifications/deliveries/{id}/retry` for administrators.
+- Startup refuses `smtp` in local and test and SMTP without STARTTLS in staging and production. Azure Bicep and the
+  staging stack pass email settings, with `smtp-password` in Key Vault; the scheduled job runs both jobs.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

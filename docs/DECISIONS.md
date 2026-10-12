@@ -78,6 +78,7 @@ Reason: PR #2 and PR #4 were built in parallel from the same base and implement 
 port #2's additional features onto main stage by stage, each with tests and green CI, rather than one large merge.
 Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
 Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019).
+Stage C: Word and PDF reports, email delivery outbox (Decisions 020–021).
 
 ## Decision 016 — One container on Azure
 
@@ -111,3 +112,20 @@ API process serves every tenant. `parsing.parse_document` runs pypdf and python-
 app.services.parse_worker` with an address-space limit, a CPU-time limit and a wall-clock timeout, after cheap
 pre-checks (zip expansion, page count). Text and Markdown stay in process. The cost is a process start per binary
 upload, which is small next to parsing and embedding.
+
+## Decision 020 — Word and PDF reports are rendered from the Markdown report
+
+Reason: PR #2 built reports from a separate block model; main already had a reviewed Markdown report that the web
+app and `scripts/resolve_all.py` use. Rendering Word (python-docx) and PDF (fpdf2) from that Markdown keeps one
+source, so the three formats cannot drift and the AI-generated labels and named human decisions appear in all of
+them. Only the fixed Markdown subset the report builder writes is parsed, and nothing is rendered as HTML. The PDF
+uses a standard font that covers Latin-1, so other characters are replaced there; Word and Markdown keep the full
+text. Each download is audited with its SHA-256.
+
+## Decision 021 — Email through an outbox, off by default
+
+Reason: notifications must not be lost when email fails, and email must never block or undo a workflow change. Each
+notification gets a delivery row in the same transaction; a job sends due rows with bounded retries and backoff,
+and failures end as visible dead letters an administrator can retry. Email is `disabled` by default and `smtp` is
+refused in local and test, because it sends incident details outside the system (an owner decision, GOVERNANCE.md).
+Disabled deliveries are marked `SKIPPED`, so turning email on later does not send a backlog of old notifications.

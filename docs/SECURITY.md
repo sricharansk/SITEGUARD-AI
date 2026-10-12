@@ -41,6 +41,13 @@ other reason removes the stored file. Downloads are sent as attachments with the
 Organization-wide documents and the reindex job affect every project, so they need an organization-wide
 membership with `MANAGE_DOCUMENTS`; a role limited to one project can only add documents to that project.
 
+## Email
+
+Email is off by default. With `smtp`, the job sends notification text (incident reference, action title, due date)
+and a link that still requires sign-in; it never attaches evidence or reports. STARTTLS is required in staging and
+production, the SMTP password is a secret (Key Vault in Azure), and `smtp` is refused in local and test so
+development never emails real people. The `log` adapter records only the recipient's domain.
+
 ## Logging
 
 Do not log passwords, tokens, API keys or raw sensitive evidence by default.

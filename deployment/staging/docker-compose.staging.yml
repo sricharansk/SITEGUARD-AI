@@ -28,6 +28,12 @@ x-api-environment: &api-environment
   SITEGUARD_LOGIN_MAX_FAILURES: ${SITEGUARD_LOGIN_MAX_FAILURES:-5}
   SITEGUARD_AI_PROVIDER: ${SITEGUARD_AI_PROVIDER:-rules}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  SITEGUARD_NOTIFICATION_EMAIL_ADAPTER: ${SITEGUARD_NOTIFICATION_EMAIL_ADAPTER:-disabled}
+  SITEGUARD_SMTP_HOST: ${SITEGUARD_SMTP_HOST:-localhost}
+  SITEGUARD_SMTP_PORT: ${SITEGUARD_SMTP_PORT:-587}
+  SITEGUARD_SMTP_USERNAME: ${SITEGUARD_SMTP_USERNAME:-}
+  SITEGUARD_SMTP_PASSWORD: ${SITEGUARD_SMTP_PASSWORD:-}
+  SITEGUARD_SMTP_FROM: ${SITEGUARD_SMTP_FROM:-siteguard@localhost}
 
 services:
   db:
@@ -59,14 +65,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Scheduled job (escalation of overdue actions; idempotent). Run from cron, for example hourly:
+  # Scheduled jobs (escalation of overdue actions, then email delivery; both idempotent). Run from cron, hourly:
   #   docker compose -f deployment/staging/docker-compose.staging.yml --env-file /etc/siteguard/staging.env \
   #     run --rm jobs
   jobs:
     image: ${SITEGUARD_API_IMAGE:-siteguard-api:local}
     profiles: [jobs]
     environment: *api-environment
-    command: ["python", "-m", "app.jobs", "escalate-overdue"]
+    command: ["python", "-m", "app.jobs", "escalate-overdue", "deliver-notifications"]
     depends_on:
       db:
         condition: service_healthy

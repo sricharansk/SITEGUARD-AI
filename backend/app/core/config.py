@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -31,6 +31,17 @@ class Settings(BaseSettings):
     web_dir: Path = REPO_ROOT / "frontend" / "out"
     # Public address of the web app (links in notifications; https required in staging and production).
     public_web_url: str = "http://localhost:8000/app"
+
+    # Email delivery of notifications (docs/API.md#notifications). Off unless an adapter is chosen; "smtp" is refused
+    # in local and test so development never emails real people.
+    notification_email_adapter: Literal["disabled", "log", "smtp"] = "disabled"
+    notification_max_attempts: int = Field(default=3, ge=1, le=10)
+    smtp_host: str = "localhost"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from: str = "siteguard@localhost"
+    smtp_starttls: bool = True
 
     # AI provider: "rules" (deterministic, offline) or "anthropic".
     ai_provider: str = "rules"

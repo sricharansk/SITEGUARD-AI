@@ -40,7 +40,8 @@ Use versioned container image and database migration strategy. Never perform des
   `.github/workflows/deploy.yml` workflow.
 - `scripts/smoke_test.py`, `scripts/backup.py`, `scripts/dependency_audit.py`: operations ([Smoke test](#smoke-test),
   [Backup and restore](#backup-and-restore)).
-- Scheduled job: `python -m app.jobs escalate-overdue` (idempotent), from cron or the Azure Container Apps job.
+- Scheduled jobs: `python -m app.jobs escalate-overdue deliver-notifications` (both idempotent), from cron or the
+  Azure Container Apps job.
 - CI (`.github/workflows/ci.yml`): backend lint, types and tests; PostgreSQL migrations and restore drill; dependency
   audit (also weekly); Bicep, actionlint and compose checks; web typecheck and build; image build, smoke test,
   browser tests and a full resolution run against the container.
@@ -137,12 +138,12 @@ python scripts/backup.py verify --evidence-dir /srv/evidence [--manifest /backup
 | Virtual network | Container Apps subnet (Microsoft.Storage service endpoint) and a delegated PostgreSQL subnet |
 | PostgreSQL Flexible Server 16 | Private access only, TLS required, `azure.extensions=VECTOR` allow-listed, automated backups (7–35 days, optional geo-redundancy), optional zone-redundant HA |
 | Storage account | `evidence` Azure Files share mounted at `/srv/evidence` (uid/gid 10001); HTTPS only, TLS 1.2, no public blob access, firewall admits only the apps subnet, share soft delete |
-| Key Vault | RBAC mode, soft delete and purge protection; secrets `database-url`, `jwt-secret`, optional `anthropic-api-key` |
+| Key Vault | RBAC mode, soft delete and purge protection; secrets `database-url`, `jwt-secret`, optional `anthropic-api-key` and `smtp-password` |
 | Managed identity | One user-assigned identity: AcrPull on the registry, Key Vault Secrets User on the vault. No registry passwords or secret values in app configuration |
 | Container Registry | Basic, admin user disabled |
 | Container Apps environment | In the VNet, logs to Log Analytics |
 | App (`<prefix>-api`) | API + web app in one container, external HTTPS-only ingress, one replica (in-process login throttle), startup/liveness/readiness probes on `/health` |
-| Scheduled job | `python -m app.jobs escalate-overdue` on `jobsCron` (default hourly) |
+| Scheduled job | `python -m app.jobs escalate-overdue deliver-notifications` on `jobsCron` (default hourly); email settings from `emailAdapter`, `smtpHost`, `smtpPort`, `smtpUsername`, `smtpFrom` |
 | Migration job | Manual trigger, no retries, `alembic upgrade head`; the deploy workflow runs it with the new image before the rollout |
 | Log Analytics, Application Insights | Container logs; availability test of `/health` from three regions with TLS certificate checks |
 
@@ -174,6 +175,7 @@ Administrator on the resource group, since the templates create role assignments
    az keyvault secret set --vault-name <keyVaultName output> --name jwt-secret --file jwt.txt
    shred -u jwt.txt pg-admin.txt
    ```
+   With `emailAdapter = 'smtp'`, also store the SMTP password as `smtp-password` the same way.
 6. **Image:** run the **Deploy** workflow for `staging` with `push_only`; its summary lists the image digest.
 7. **Phase 2:** set `deployApps = true` and `apiImage` to that digest; deploy again.
 8. **Release:** run Deploy without `push_only`. It checks that CI passed for the commit, pushes the image, records the
@@ -212,3 +214,5 @@ CI runs these, `actionlint` (with shellcheck) and the staging compose check in t
 - **Migrations also run on container start;** the migration job runs them first so a failure stops the rollout.
 - **No telemetry SDK:** Application Insights holds availability results; logs go to Log Analytics.
 - **Anthropic provider** sends incident content to an external API; it stays off (`rules`) unless the owner approves.
+- **Email** sends notification text (incident references and action titles) through the configured SMTP provider; it
+  stays `disabled` unless the owner approves. There is no per-user email opt-out yet.

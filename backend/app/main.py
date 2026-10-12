@@ -62,6 +62,8 @@ def settings_problems(s: Settings) -> list[str]:
         s.jwt_secret == DEFAULT_JWT_SECRET or len(s.jwt_secret) < MIN_JWT_SECRET_LENGTH
     ):
         problems.append(f"Set SITEGUARD_JWT_SECRET to a random value of at least {MIN_JWT_SECRET_LENGTH} characters")
+    if s.env in ("local", "test") and s.notification_email_adapter == "smtp":
+        problems.append("SITEGUARD_NOTIFICATION_EMAIL_ADAPTER=smtp is not allowed in local or test (use log)")
     if s.env in DEPLOYED_ENVIRONMENTS:
         problems += _deployed_problems(s)
     return problems
@@ -92,7 +94,10 @@ def _deployed_problems(s: Settings) -> list[str]:
         problems.append(f"SITEGUARD_CORS_ORIGINS must use https:// when {env} (got {', '.join(insecure)})")
     if not s.public_web_url.startswith("https://"):
         problems.append(f"SITEGUARD_PUBLIC_WEB_URL must use https:// when {env}")
+    if s.notification_email_adapter == "smtp" and not s.smtp_starttls:
+        problems.append(f"SITEGUARD_SMTP_STARTTLS must be true when {env} (credentials and incident details)")
     for name, value in (
+        ("SITEGUARD_SMTP_FROM", s.smtp_from),
         ("SITEGUARD_DATABASE_URL", s.database_url),
         ("SITEGUARD_PUBLIC_WEB_URL", s.public_web_url),
         ("SITEGUARD_CORS_ORIGINS", s.cors_origins),

@@ -39,5 +39,12 @@ param deployPrincipalId = ''
 param publicWebUrl = ''
 
 param aiProvider = 'rules'
+// Email delivery of notifications: 'disabled' or 'smtp' (then create the Key Vault secret smtp-password and set
+// the host, username and from address; sending incident details by email is an owner decision).
+param emailAdapter = 'disabled'
+param smtpHost = ''
+param smtpPort = 587
+param smtpUsername = ''
+param smtpFrom = ''
 param jobsCron = '7 * * * *'
 param logRetentionDays = 30

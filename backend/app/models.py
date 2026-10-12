@@ -347,7 +347,7 @@ class AuditEvent(Base):
 
 
 class Notification(Base):
-    """In-app notification for one user. Delivery adapters (email, Teams) can read from this table later."""
+    """In-app notification for one user. External delivery (email) goes through `notification_deliveries`."""
 
     __tablename__ = "notifications"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
@@ -359,3 +359,32 @@ class Notification(Base):
     capa_id: Mapped[str | None] = mapped_column(ForeignKey("capa_actions.id"), nullable=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    deliveries: Mapped[list["NotificationDelivery"]] = relationship(
+        back_populates="notification", cascade="all, delete-orphan"
+    )
+
+
+class DeliveryStatus(enum.StrEnum):
+    PENDING = "PENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"  # dead letter: every attempt failed; an administrator can retry it
+    SKIPPED = "SKIPPED"  # external delivery disabled when the job ran; an administrator can retry it
+
+
+class NotificationDelivery(Base):
+    """Outbox row for sending one notification on one channel, with bounded retries (docs/API.md#notifications)."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (UniqueConstraint("notification_id", "channel"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    notification_id: Mapped[str] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))  # EMAIL
+    status: Mapped[DeliveryStatus] = mapped_column(
+        Enum(DeliveryStatus, native_enum=False), default=DeliveryStatus.PENDING, index=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    notification: Mapped[Notification] = relationship(back_populates="deliveries")

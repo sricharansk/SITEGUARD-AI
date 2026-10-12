@@ -47,6 +47,9 @@ seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
 | `SITEGUARD_RETRIEVAL_MODE` | `hybrid` | `hybrid` (BM25 + vector) or `lexical` (BM25 only) |
 | `SITEGUARD_PARSER_TIMEOUT_SECONDS` | 60 | Wall-clock and CPU limit for parsing one PDF or DOCX (5–600) |
 | `SITEGUARD_PARSER_MEMORY_MB` | 1024 | Address-space limit of the parser child process (256–8192) |
+| `SITEGUARD_NOTIFICATION_EMAIL_ADAPTER` | `disabled` | `disabled`, `log` (no address or content logged) or `smtp` (refused in local and test) |
+| `SITEGUARD_NOTIFICATION_MAX_ATTEMPTS` | 3 | Send attempts before a delivery becomes `FAILED` (1–10) |
+| `SITEGUARD_SMTP_HOST`, `_PORT`, `_USERNAME`, `_PASSWORD`, `_FROM`, `_STARTTLS` | `localhost`, 587, empty, empty, `siteguard@localhost`, true | SMTP server for `smtp`; STARTTLS is required in staging and production |
 
 ## Dependencies
 

@@ -32,7 +32,7 @@ owner sets periods.
 | Incidents, CAPA actions, approvals, verification records | Kept indefinitely | Retention per jurisdiction and contract (safety records often have statutory minimums) |
 | Evidence files | Kept indefinitely (Azure Files share soft delete, default 14 days) | Retention, legal hold, malware scanning |
 | Audit events | Kept indefinitely, append-only from the application | See [Audit retention](#audit-retention) |
-| Notifications | Kept indefinitely | Purge period for read notifications |
+| Notifications and email deliveries | Kept indefinitely | Purge period for read notifications and sent deliveries |
 | Application logs (Log Analytics) | `logRetentionDays`, default 30 days | Period; archive if longer is required |
 | PostgreSQL automated backups (Azure) | `postgresBackupRetentionDays`, default 7 days (7–35) | Period; geo-redundant backups for production |
 | Logical backups (`scripts/backup.py`) | Kept where the operator stores them | Period and storage location |
@@ -79,6 +79,8 @@ For security incidents affecting Site Guard AI itself (not construction incident
   `python -m app.evaluation` (EVALUATION.md).
 - **Human control** does not depend on the provider: AI output is never an approved action, high and critical
   actions need APPROVE_CRITICAL, and no incident closes without verified actions.
+- **Email** (`SITEGUARD_NOTIFICATION_EMAIL_ADAPTER=smtp`) sends notification text to people's mailboxes through the
+  SMTP provider; turning it on is an owner decision like the AI provider. The outbox lists recipients by name only.
 - **No legal certification:** outputs cite requirements for review; they never certify compliance.
 
 ## Dataset licences
@@ -118,7 +120,9 @@ The API refuses to start, listing every problem at once, when its settings are u
 | Database is PostgreSQL | – | – | yes |
 | CORS origins without `*`, all `https://` | – | – | yes |
 | `SITEGUARD_PUBLIC_WEB_URL` uses `https://` | – | – | yes |
-| No `CHANGE` placeholder in the database URL, public URL or CORS origins | – | – | yes |
+| Email adapter is not `smtp` | yes | – | – |
+| SMTP uses STARTTLS when `smtp` is chosen | – | – | yes |
+| No `CHANGE` placeholder in the database URL, public URL, CORS origins or SMTP sender | – | – | yes |
 
 ## Change management
 

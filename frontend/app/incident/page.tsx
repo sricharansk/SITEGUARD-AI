@@ -67,12 +67,12 @@ function IncidentWorkspace() {
   const runs = Object.fromEntries(ws.agent_runs.map((r) => [r.agent, r]));
   const tri = runs.triage?.output;
 
-  async function downloadReport() {
-    const md = await api.text(`/incidents/${id}/report`);
-    const url = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
+  async function downloadReport(format: "md" | "docx" | "pdf") {
+    const file = await api.blob(`/incidents/${id}/report?format=${format}`);
+    const url = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${inc.reference}-report.md`;
+    a.download = `${inc.reference}-report.${format}`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -108,9 +108,19 @@ function IncidentWorkspace() {
                 {busy === "investigate" ? "Agents running…" : ws.agent_runs.length ? "Re-run AI investigation" : "Run AI investigation"}
               </Button>
             )}
-            <Button variant="secondary" onClick={() => act("report", downloadReport)}>
-              Download report
-            </Button>
+            <div role="group" aria-label="Download report" className="flex gap-1">
+              {(
+                [
+                  ["md", "Report (Markdown)"],
+                  ["docx", "Word"],
+                  ["pdf", "PDF"],
+                ] as const
+              ).map(([format, text]) => (
+                <Button key={format} variant="secondary" disabled={!!busy} onClick={() => act("report", () => downloadReport(format))}>
+                  {text}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
