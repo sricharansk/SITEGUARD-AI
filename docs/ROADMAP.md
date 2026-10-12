@@ -16,7 +16,8 @@ registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single imag
 
 Done: A hardening, Azure IaC and deploy workflow, staging, operations; B document parsing (PDF, DOCX), embeddings,
 hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox; D1 vision evidence analysis; D2 knowledge graph; D3 resumable workflows
-and recorded conflicts. Next: E web screens for these.
+and recorded conflicts; E web screens for documents, grounded answers, photo review, workflows, the graph and the
+email outbox. With this, every feature of PR #2 is rebuilt on main.
 
 ## NOW
 

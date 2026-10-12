@@ -215,6 +215,27 @@ test("pause and resume the AI investigation, review a photo, and see the knowled
   await expect(page.getByText("The knowledge graph is not enabled on this server.")).toBeVisible();
 });
 
+test("email outbox: auditors see deliveries, admins run delivery and retry", async ({ page }) => {
+  await loginAs(page, "auditor");
+  await page.getByRole("link", { name: "Email outbox", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Email outbox" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send due emails now" })).toHaveCount(0); // view only
+  await expect(page.locator("tbody tr").first()).toBeVisible();
+  await expect(page.getByText("@demo.siteguard.local")).toHaveCount(0); // names, never addresses
+
+  await loginAs(page, "admin");
+  await page.getByRole("link", { name: "Email outbox", exact: true }).click();
+  await page.getByRole("button", { name: "Send due emails now" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Delivery run: \d+ sent/ })).toBeVisible();
+  await page.getByRole("tab", { name: "Skipped" }).click(); // email is turned off in this environment
+  await page.getByRole("button", { name: "Retry" }).first().click();
+  await expect(page.getByRole("status").filter({ hasText: "Queued again" })).toBeVisible();
+  await shot(page, "09-email-outbox");
+
+  await loginAs(page, "site");
+  await expect(page.getByRole("link", { name: "Email outbox", exact: true })).toHaveCount(0);
+});
+
 test("a user from another tenant cannot open this tenant's incidents", async ({ page }) => {
   await loginAs(page, "hse");
   await page.getByRole("link", { name: "Incidents", exact: true }).click();

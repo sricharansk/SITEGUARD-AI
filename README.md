@@ -11,8 +11,8 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
 > Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
 > vectors), grounded answers with citations, Word/PDF reports, an email outbox and photo analysis with engineer
-> review, an optional knowledge graph with provenance, resumable workflows with recorded conflicts; still to come:
-> web screens for documents, answers, photo review and the email outbox ([ROADMAP](docs/ROADMAP.md)).
+> review, an optional knowledge graph with provenance, resumable workflows with recorded conflicts; each with its
+> web screen ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -83,7 +83,9 @@ paraphrased injection is **not detected** by the pattern guard and is still cont
 | ![Workspace](docs/screenshots/02-incident-ai-investigation.png) | ![Closed](docs/screenshots/03-incident-closed.png) |
 
 More screens: [incident list](docs/screenshots/04-incident-list.png),
-[action queue](docs/screenshots/05-action-queue.png), [knowledge search](docs/screenshots/06-knowledge-search.png).
+[action queue](docs/screenshots/05-action-queue.png), [knowledge search](docs/screenshots/06-knowledge-search.png),
+[grounded answer](docs/screenshots/07-grounded-answer.png), [photo review and workflow](docs/screenshots/08-photo-review-and-workflow.png),
+[email outbox](docs/screenshots/09-email-outbox.png).
 
 ## Quick start
 

@@ -83,6 +83,12 @@
   decision. The workflow also stores an uncertainty summary.
 - `scripts/resolve_all.py` and `scripts/demo_walkthrough.py` record a decision on each open conflict before closing.
 
+### Stage E3: email outbox screen
+
+- Email outbox page for organization-wide auditors, HSE managers and administrators: deliveries by status with
+  attempts, last error and next try, recipients by name only; organization-wide administrators send due emails now
+  and retry failed or skipped deliveries. "AI" and "CAPA" labels. Browser test.
+
 ### Stage E2: incident workspace panels
 
 - Workflow card (stages, attempts, lowest confidence, open questions; Resume, Cancel with reason, Pause while

@@ -39,3 +39,7 @@ the run is paused or failed. Photo evidence has "Check PPE and hazards" and "Che
 analyzer, image-quality flags and what it could not do, draws boxes on the photo, and lets the engineer confirm or
 reject each observation with a note. The knowledge graph card shows the incident's related records on request, or
 says the graph is not enabled on this server.
+
+Email outbox (organization-wide auditors, HSE managers and administrators): every queued email with its status,
+attempts, last error and next try, filtered by status; recipients by name only. Organization-wide administrators
+send due emails now and retry failed or skipped deliveries.
