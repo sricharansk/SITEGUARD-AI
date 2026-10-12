@@ -2,6 +2,18 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Load test and capacity
+
+- `scripts/load_test.py`: signed-in readers and optional incident reporters against a running stack; per-endpoint
+  p50/p95/p99, throughput and error rate; `--max-error-rate` / `--max-p95-ms` gates; refuses production. CI runs a
+  20 s check in the `docker` job.
+- `docs/LOAD_TEST.md`: one API process serves about 55 req/s; 100 readers at 2 s think time plus 2 reporters ran
+  at 39 req/s, read p95 0.80 s, 0 errors; an investigation takes 2–2.5 s; the dashboard, action queue and incident
+  list slow linearly with project size (dashboard 20 ms → 82 ms from 20 to 155 incidents).
+- Fix: two incident reports submitted at the same moment got the same reference and the second failed with HTTP 500.
+  Numbering is serialised with a PostgreSQL advisory lock, and the API renumbers and retries when a reference is
+  taken (SQLite). Tests on PostgreSQL (8 concurrent reports) and SQLite.
+
 ### Accuracy: new held-out set, second tuning round
 
 - Evaluation protocol (Decision 025): the old test split had been seen, so it is now dev (`origin: test-v1`). A new

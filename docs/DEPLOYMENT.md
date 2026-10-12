@@ -217,7 +217,9 @@ jobs. The graph holds no data that PostgreSQL does not, so it needs no backup of
   malware scanning are open. Confirm the SMB mount works with the storage firewall in the first deployment.
 - **No user provisioning without demo seeding:** a new staging or production environment has no accounts until an
   admin bootstrap command, invitations or SSO exist. Until then the smoke test runs its anonymous checks.
-- **Single replica:** the login throttle is in-process; scale out only after a shared store exists.
+- **Single replica:** the login throttle is in-process; scale out only after a shared store exists. One process
+  serves about 55 requests per second; measured capacity and what to change before scaling are in
+  [LOAD_TEST.md](LOAD_TEST.md).
 - **Migrations also run on container start;** the migration job runs them first so a failure stops the rollout.
 - **No telemetry SDK:** Application Insights holds availability results; logs go to Log Analytics.
 - **Anthropic provider** sends incident content to an external API; it stays off (`rules`) unless the owner approves.

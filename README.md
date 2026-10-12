@@ -78,6 +78,11 @@ Tuning used 120 dev cases only (Decision 025):
 These are scores for the offline rules provider on synthetic, AI-assisted cases; they are not a substitute for a
 pilot on expert-labelled reports (limits in EVALUATION.md).
 
+**Load** ([docs/LOAD_TEST.md](docs/LOAD_TEST.md)): one container on PostgreSQL served 100 readers clicking every
+2 s plus 2 people reporting and investigating incidents at 39 requests/s, read p95 0.80 s, 0 errors. One API process
+tops out at about 55 requests/s; the dashboard slows as a project grows, which is the first thing to fix before
+scaling.
+
 The red-team suite covers prompt injection in reports and documents, fabricated citations, model timeouts and
 out-of-schema output, a fatal incident reported as LOW, cross-tenant retrieval and undeclared tool calls. One
 paraphrased injection is **not detected** by the pattern guard and is still contained by the workflow (RT02).
@@ -131,7 +136,8 @@ backend/tests/   unit, agent, API, notification, migration, dataset and evaluati
 data/seed/       synthetic incidents, demo users, synthetic procedures and ITPs
 data/eval/       labelled synthetic evaluation set (dev + held-out test)
 data/dataset_registry.yaml  public datasets with licence and allowed use
-docs/            PRD, architecture, agents, API, database, security, testing, datasets, results, evaluation, decisions
+docs/            PRD, architecture, agents, API, database, security, testing, datasets, results, evaluation, load test,
+                 decisions
 docs/planning/   the original implementation blueprint, playbook and strategy documents
 scripts/         resolve_all.py (results run), demo_walkthrough.py (single incident)
 ```

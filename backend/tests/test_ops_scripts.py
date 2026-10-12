@@ -14,6 +14,7 @@ from tests.scripts_loader import load_script
 
 backup = load_script("backup")
 smoke_test = load_script("smoke_test")
+load_test = load_script("load_test")
 
 
 # -- backup.py ---------------------------------------------------------------------------------------------------
@@ -343,3 +344,45 @@ def test_audit_tool_errors_fail_closed(tmp_path, capsys):
     report.write_text(json.dumps({"error": {"code": "ENOLOCK", "summary": "no lockfile"}}))
     assert dependency_audit.main(["npm", "--input", str(report)]) == 1
     assert "npm audit failed" in capsys.readouterr().err
+
+
+# -- load_test.py --------------------------------------------------------------------------------------------------
+
+
+def _load_args(**kw):
+    import argparse
+
+    values = {"base_url": "http://testserver", "users": 2, "writers": 1, "duration": 1.0, "ramp": 0.0}
+    values |= {"think_ms": 0.0, "seed": 1} | kw
+    return argparse.Namespace(**values)
+
+
+def test_load_test_runs_readers_and_writers_without_errors(client, monkeypatch):
+    import asyncio
+
+    import httpx
+
+    monkeypatch.setenv("SITEGUARD_LOAD_PASSWORD", PASSWORD)
+    runner = load_test.Runner(_load_args(), transport=httpx.ASGITransport(app=client.app))
+    result = asyncio.run(runner.run())
+    names = {r["endpoint"] for r in result["endpoints"]}
+    assert result["error_rate"] == 0 and result["requests"] > 0
+    assert result["incidents_created"] >= 1 and "POST /incidents/{id}/investigate" in names
+    assert "| Endpoint |" in load_test.to_markdown(result)
+
+
+def test_load_test_refuses_a_production_deployment():
+    import asyncio
+
+    import httpx
+
+    health = httpx.MockTransport(lambda request: httpx.Response(200, json={"data": {"env": "production"}}))
+    with pytest.raises(SystemExit, match="production"):
+        asyncio.run(load_test.Runner(_load_args(), transport=health).run())
+
+
+def test_load_test_percentiles():
+    assert load_test.pct([], 95) == 0.0
+    assert load_test.pct([5.0], 99) == 5.0
+    values = [float(v) for v in range(1, 101)]
+    assert load_test.pct(values, 50) == 50.0 and load_test.pct(values, 95) == 95.0 and load_test.pct(values, 99) == 99.0
