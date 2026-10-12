@@ -35,6 +35,15 @@ Validate extension, MIME, size, checksum and content before processing.
 | Incident evidence (`POST /incidents/{id}/evidence`) | jpg, png, pdf, txt | Extension, declared MIME, magic bytes, UTF-8 text, `SITEGUARD_EVIDENCE_MAX_BYTES` |
 | Knowledge documents (`POST /documents/upload`) | pdf, docx, md, txt | Extension picks the parser; a declared MIME type must match it (or be `application/octet-stream`) and the stored type comes from the parser; the content must match the extension (`%PDF-`, zip header, UTF-8 text) before anything is stored; at most `SITEGUARD_DOCUMENT_MAX_BYTES` is read; DOCX rejected when it would expand past 100 MB, 100x its size or 5,000 entries; PDF and DOCX parsed in a child process with CPU-time, memory and wall-clock limits (`SITEGUARD_PARSER_TIMEOUT_SECONDS`, `SITEGUARD_PARSER_MEMORY_MB`) and at most 5 million characters of text |
 
+Vision analysis (`POST /evidence/{id}/vision`) re-checks the stored file against its SHA-256 first (a mismatch is
+refused and audited), then decodes JPEG/PNG only in a child process with CPU, memory and time limits
+(`SITEGUARD_VISION_*`); the decoded format must match the evidence type and images above
+`SITEGUARD_VISION_MAX_PIXELS` are refused as decompression bombs. Analyzers only see a re-encoded copy without
+EXIF/GPS metadata; the original evidence is never modified. Text written in an image is untrusted content for the
+vision model, and the analyzer's free-text notes are stored as labelled machine text and never passed to the agents.
+Analyses are rate limited per user (`SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE`). Child processes set their own memory
+and CPU limits at startup (no `preexec_fn` in the threaded server), and at most four run at once per API process.
+
 A document that cannot be parsed is kept as a `FAILED` document with a generic reason; a request that fails for any
 other reason removes the stored file. Downloads are sent as attachments with the stored type and `nosniff`.
 
@@ -47,6 +56,29 @@ Email is off by default. With `smtp`, the job sends notification text (incident 
 and a link that still requires sign-in; it never attaches evidence or reports. STARTTLS is required in staging and
 production, the SMTP password is a secret (Key Vault in Azure), and `smtp` is refused in local and test so
 development never emails real people. The `log` adapter records only the recipient's domain.
+
+## Knowledge graph
+
+The optional Neo4j graph (docs/ARCHITECTURE.md#knowledge-graph) is a derived copy of PostgreSQL and follows the same
+tenant rules:
+
+- Every node and relationship carries `organization_id` and `project_id`. Node ids are relational ids, people are
+  separate nodes per organization, relationships only join nodes of one organization, and a sync that would take
+  over another organization's node is refused and rolled back.
+- `GET /incidents/{id}/graph` is authorized exactly like reading the incident (404 outside the caller's scope, before
+  any graph check) and returns only that organization's records in projects the caller can see; the filter is in the
+  Cypher query and applied again in the service. `POST /graph/sync` needs an organization-wide membership with
+  `MANAGE_PROJECTS` and is audited as `graph.sync`.
+- Cypher is fixed text built from allowlisted labels and relationship types; record values only travel as query
+  parameters, and there is no endpoint that accepts Cypher.
+- `SITEGUARD_NEO4J_PASSWORD` is a secret setting and is never logged (graph errors log the exception type only).
+  With `SITEGUARD_GRAPH_BACKEND=neo4j` the API refuses to start without a password or with a URI that is not
+  `bolt://` or `neo4j://` (or their TLS forms), and in production it requires a verified TLS connection (`bolt+s://`
+  or `neo4j+s://`). The compose `neo4j` service binds to 127.0.0.1 only.
+- Graph properties copy stored text (incident titles, AI output, document titles). Treat them as untrusted data and
+  render them as text; the graph is not given to agents as instructions.
+- Only a person's full name and active flag are copied; email addresses, password hashes, evidence storage keys and
+  document text stay in PostgreSQL.
 
 ## Logging
 

@@ -16,7 +16,8 @@ consistent error envelope, `X-Correlation-ID` on every response and audit event.
 
 Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403,
 `NOT_FOUND` 404 (also returned for resources in another tenant), `INVALID_TRANSITION` / `INVALID_STATE` /
-`NOT_APPROVED` / `CLOSE_BLOCKED` 409, `FILE_TOO_LARGE` 413, `INTERNAL_ERROR` 500.
+`NOT_APPROVED` / `CLOSE_BLOCKED` / `EVIDENCE_INTEGRITY` / `WORKFLOW_ACTIVE` / `GRAPH_DISABLED` 409,
+`FILE_TOO_LARGE` 413, `RATE_LIMITED` 429, `INTERNAL_ERROR` 500, `GRAPH_UNAVAILABLE` 503.
 
 ## Endpoints
 
@@ -27,14 +28,21 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | GET/POST | /projects | READ / MANAGE_PROJECTS | Project with sites |
 | GET | /projects/{id} | READ | |
 | GET/POST | /projects/{id}/incidents | READ / CREATE_INCIDENT | Filters: status, severity, domain, q |
-| GET | /incidents/{id} | READ | Workspace: incident, history, evidence, latest agent runs, risk, CAPA, approvals, verifications, close blockers |
+| GET | /incidents/{id} | READ | Workspace: incident, history, evidence, latest agent runs, risk, CAPA, approvals, verifications, close blockers, the latest `workflow` and every `conflicts` row |
 | PATCH | /incidents/{id} | EDIT_INCIDENT | Audited before/after |
 | POST | /incidents/{id}/transition | EDIT_INCIDENT | Manual workflow; CLOSED not allowed here |
-| POST | /incidents/{id}/close | CLOSE_INCIDENT (+APPROVE_CRITICAL for CRITICAL) | Fails with CLOSE_BLOCKED and reasons |
+| POST | /incidents/{id}/close | CLOSE_INCIDENT (+APPROVE_CRITICAL for CRITICAL) | Fails with CLOSE_BLOCKED and reasons (unreviewed or unverified actions, open AI conflicts) |
 | POST | /incidents/{id}/evidence | EDIT_INCIDENT | Multipart; jpg/png/pdf/txt; magic-byte, size and SHA-256 checks |
 | GET | /evidence/{id}/download | READ | |
 | POST | /incidents/{id}/triage | RUN_AGENTS | Triage only |
-| POST | /incidents/{id}/investigate | RUN_AGENTS | Full workflow (covers investigate, RCA, compliance, CAPA) |
+| POST | /incidents/{id}/investigate | RUN_AGENTS | Full workflow (covers investigate, RCA, compliance, CAPA), checkpointed after every stage. Optional `?pause_after=` (repeatable: `triage`, `safety`, `quality`, `risk`, `rca`, `compliance`, `capa`) pauses after those stages for review. Returns `workflow`, `workflow_id`, runs, risk, CAPA, `conflicts` and `flags`. 409 `WORKFLOW_ACTIVE` while another workflow for the incident is RUNNING, PAUSED or FAILED (resume or cancel it) |
+| GET | /incidents/{id}/workflows | READ | Every workflow run of the incident, newest first: kind, status, reason, current stage, per-stage status/attempts/errors, uncertainty summary |
+| GET | /workflows/{id} | READ | One workflow with its runs, risk, CAPA and conflicts (same shape as investigate) |
+| POST | /workflows/{id}/pause | RUN_AGENTS | Asks a RUNNING workflow to stop before its next stage (409 otherwise). Audited |
+| POST | /workflows/{id}/resume | RUN_AGENTS | Continues a PAUSED or FAILED workflow, or a RUNNING one whose lease expired, from its next unfinished stage; optional body `{"pause_after": [...]}`. Finished stages are never re-run. 409 for COMPLETED/CANCELLED workflows or a closed incident. Audited |
+| POST | /workflows/{id}/cancel | RUN_AGENTS | `{"reason"}` (required); stops the workflow, keeps every stored stage. Audited |
+| GET | /incidents/{id}/conflicts | READ | Recorded disagreements, newest first: `kind` (`SEVERITY_DISAGREEMENT`, `DOMAIN_DISAGREEMENT`, `RISK_ABOVE_REPORTED`, `AGENT_DISAGREEMENT`, `SOURCE_CONFLICT`, `VISION_DISAGREEMENT`, `VISION_REVIEW_DISAGREEMENT`), summary, both sides in `details`, `refs`, status `OPEN` / `RESOLVED` / `SUPERSEDED` |
+| POST | /conflicts/{id}/resolve | APPROVE_CAPA | `{"resolution"}` (required): the reviewer's decision; only OPEN conflicts (409 otherwise). Open conflicts block closure. Audited as `conflict.resolve` |
 | GET | /incidents/{id}/agent-runs | READ | All runs with traces |
 | GET | /agents | - | Agent specs, tools and output JSON schemas |
 | GET | /risk/matrix | - | Matrix version and bands |
@@ -44,6 +52,13 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | POST | /capa/{id}/approve | as review | Shortcut for APPROVE |
 | PATCH | /capa/{id}/progress | UPDATE_CAPA_PROGRESS | IN_PROGRESS / COMPLETED, assignee |
 | POST | /capa/{id}/verify | VERIFY_CAPA | Not by the assignee; failed verification reopens work |
+| POST | /evidence/{id}/vision | RUN_AGENTS | Vision analysis of a JPEG/PNG: `{"task": "PPE_HAZARD" \| "DEFECT"}`. Refuses tampered files (409 `EVIDENCE_INTEGRITY`, audited), non-images (400 `UNSUPPORTED_FILE`), undecodable or oversized images (400 `IMAGE_UNREADABLE`) and closed incidents (409). Returns the analysis with analyzer, model, model version, taxonomy version, evidence SHA-256, preprocessing, image-quality flags, the thresholds used and their source, limitations, a disclaimer and every observation (label, confidence, threshold, `above_threshold`, normalized box/polygon, `review_status`). An analyzer failure is stored and returned with `status: FAILED` (201), never as an empty result. Audited as `vision.analyze` |
+| GET | /incidents/{id}/vision | READ | The incident's vision analyses with observations, oldest first |
+| POST | /vision/observations/{id}/review | RUN_AGENTS | `{"decision": "CONFIRMED" \| "REJECTED", "note"}`; records who, when and why; audited with before/after. Only CONFIRMED observations count as validated facts for the agents |
+| GET | /vision/taxonomy | any | Labels per task, default threshold, the agent hazard/defect each label maps to, image-quality limits, taxonomy version |
+| GET/PUT | /projects/{id}/vision/calibration | READ / MANAGE_PROJECTS | Detection threshold (0.05–0.99) for one label on the project, or on one of its sites (`site_id`), with a required `reason`; a site value beats the project value, which beats the default. Audited as `vision.calibrate` with before/after |
+| GET | /incidents/{id}/graph | READ | The incident's neighbourhood in the knowledge graph: `nodes` (`id`, `label`, `properties`, `provenance`) and `edges` (`id`, `type`, `source`, `target`, `properties`, `provenance`). Provenance is `organization_id`, `project_id`, `source_table`, `source_id`, `source_field`, `ai_derived`, `agent_run_id`, `review_status`. `include_ai=false` leaves out AI-derived items; `synced` is false until the organization has been synced. Authorized like reading the incident (404 out of scope); limited to the incident's organization and the caller's projects. 409 `GRAPH_DISABLED`, 503 `GRAPH_UNAVAILABLE` |
+| POST | /graph/sync | MANAGE_PROJECTS (organization-wide) | `?organization_id=`; rebuilds that organization's knowledge graph from PostgreSQL (normally `python -m app.jobs graph-sync`); idempotent, removes what PostgreSQL no longer has; returns node and relationship counts with how many were created and deleted; audited as `graph.sync`. 409 `GRAPH_DISABLED`, 503 `GRAPH_UNAVAILABLE` |
 | GET/POST | /documents | READ / MANAGE_DOCUMENTS | Ingest text/Markdown (`effective_date`, `tags` optional). The same content, version and scope returns the existing document with 200 and `duplicate: true` |
 | POST | /documents/upload | MANAGE_DOCUMENTS (organization-wide membership when `project_id` is empty) | Multipart PDF / DOCX / Markdown / text up to `SITEGUARD_DOCUMENT_MAX_BYTES` (413 above); declared type must match the extension (400 `UNSUPPORTED_FILE`); original kept; an unparseable or unsafe file is stored as a `FAILED` document with the reason (201) |
 | GET | /documents/{id} | READ | Metadata, processing state and every chunk with page, section and ref |

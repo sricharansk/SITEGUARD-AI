@@ -47,6 +47,15 @@ seeding off (`SITEGUARD_SEED_DEMO_DATA=false`) anywhere real data is stored.
 | `SITEGUARD_RETRIEVAL_MODE` | `hybrid` | `hybrid` (BM25 + vector) or `lexical` (BM25 only) |
 | `SITEGUARD_PARSER_TIMEOUT_SECONDS` | 60 | Wall-clock and CPU limit for parsing one PDF or DOCX (5–600) |
 | `SITEGUARD_PARSER_MEMORY_MB` | 1024 | Address-space limit of the parser child process (256–8192) |
+| `SITEGUARD_VISION_PROVIDER` | `baseline` | `baseline` (image-quality checks only, no detection model) or `anthropic` (Claude vision; sends the re-encoded photo to Anthropic) |
+| `SITEGUARD_VISION_MAX_PIXELS`, `_MAX_SIDE` | 40000000, 1568 | Largest decodable image (decompression-bomb limit) and the longest side sent to an analyzer |
+| `SITEGUARD_VISION_TIMEOUT_SECONDS`, `_MEMORY_MB` | 30, 1024 | Limits of the image decoder child process |
+| `SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE` | 30 | Vision analyses each user may start per minute (429 above) |
+| `SITEGUARD_AGENT_MAX_ATTEMPTS` | 2 | Tries per agent stage before it is recorded as FAILED (1–5) |
+| `SITEGUARD_AGENT_RETRY_BACKOFF_SECONDS` | 0.5 | First retry delay; doubles each attempt |
+| `SITEGUARD_WORKFLOW_LEASE_SECONDS` | 900 | After this, a RUNNING workflow whose process died can be resumed |
+| `SITEGUARD_GRAPH_BACKEND` | `disabled` | Knowledge graph store: `disabled`, `memory` (inside the API process; tests and demos) or `neo4j` |
+| `SITEGUARD_NEO4J_URI`, `_USER`, `_PASSWORD` | `bolt://localhost:7687`, `neo4j`, empty | Neo4j connection; the password is required with `neo4j`, and staging and production require `bolt+s://` or `neo4j+s://` |
 | `SITEGUARD_NOTIFICATION_EMAIL_ADAPTER` | `disabled` | `disabled`, `log` (no address or content logged) or `smtp` (refused in local and test) |
 | `SITEGUARD_NOTIFICATION_MAX_ATTEMPTS` | 3 | Send attempts before a delivery becomes `FAILED` (1–10) |
 | `SITEGUARD_SMTP_HOST`, `_PORT`, `_USERNAME`, `_PASSWORD`, `_FROM`, `_STARTTLS` | `localhost`, 587, empty, empty, `siteguard@localhost`, true | SMTP server for `smtp`; STARTTLS is required in staging and production |
@@ -63,3 +72,19 @@ python scripts/dependency_audit.py pypi --requirements backend/requirements.lock
 ```
 
 Dev tools (pytest, httpx, ruff, mypy) are pinned in `pyproject.toml` so local runs match CI.
+
+## Knowledge graph (optional)
+
+Off by default (`SITEGUARD_GRAPH_BACKEND=disabled`). To use Neo4j locally:
+
+```bash
+docker compose --profile graph up -d neo4j     # Neo4j 5.26 on 127.0.0.1:7687 (browser on :7474)
+# in .env: SITEGUARD_GRAPH_BACKEND=neo4j, SITEGUARD_NEO4J_PASSWORD = the compose NEO4J_PASSWORD,
+# SITEGUARD_NEO4J_URI=bolt://neo4j:7687 for the api container or bolt://localhost:7687 from the host
+make graph-sync                                 # python -m app.jobs graph-sync: every organization
+```
+
+`SITEGUARD_GRAPH_BACKEND=memory` keeps the graph inside the API process (sync with `POST /graph/sync`); it is lost on
+restart and a separate job process cannot see it. To run the integration test against a local Neo4j, set
+`SITEGUARD_TEST_NEO4J_URI`, `SITEGUARD_TEST_NEO4J_USER` and `SITEGUARD_TEST_NEO4J_PASSWORD` and run
+`pytest tests/test_graph.py -rs`.

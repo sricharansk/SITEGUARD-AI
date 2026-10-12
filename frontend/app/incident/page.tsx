@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
 import { api, API_BASE, fmtDate, getToken, label } from "@/lib/api";
-import type { AgentRun, Capa, Workspace } from "@/lib/types";
+import type { AgentRun, Capa, Conflict, Workspace } from "@/lib/types";
+import { GraphCard, PhotoReview, WorkflowCard, workflowActive } from "@/components/IncidentPanels";
 import { personName, useSession } from "@/components/Shell";
 import { AiPanel, Button, Card, ErrorBanner, Field, inputCls, Loading, SeverityBadge, StatusBadge } from "@/components/ui";
 
@@ -40,6 +41,7 @@ function IncidentWorkspace() {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [flags, setFlags] = useState<string[]>([]);
+  const [pauseAfterTriage, setPauseAfterTriage] = useState(false);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -95,18 +97,24 @@ function IncidentWorkspace() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {perms.has("RUN_AGENTS") && RUNNABLE.includes(inc.status) && (
-              <Button
-                disabled={!!busy}
-                onClick={() =>
-                  act("investigate", async () => {
-                    const r = await api.post<{ flags: string[] }>(`/incidents/${id}/investigate`);
-                    setFlags(r.flags);
-                  })
-                }
-              >
-                {busy === "investigate" ? "Agents running…" : ws.agent_runs.length ? "Re-run AI investigation" : "Run AI investigation"}
-              </Button>
+            {perms.has("RUN_AGENTS") && RUNNABLE.includes(inc.status) && !workflowActive(ws.workflow) && (
+              <>
+                <label className="flex items-center gap-1.5 text-xs text-ink-2">
+                  <input type="checkbox" checked={pauseAfterTriage} onChange={(e) => setPauseAfterTriage(e.target.checked)} />
+                  Pause after triage for my review
+                </label>
+                <Button
+                  disabled={!!busy}
+                  onClick={() =>
+                    act("investigate", async () => {
+                      const r = await api.post<{ flags: string[] }>(`/incidents/${id}/investigate${pauseAfterTriage ? "?pause_after=triage" : ""}`);
+                      setFlags(r.flags);
+                    })
+                  }
+                >
+                  {busy === "investigate" ? "Agents running…" : ws.agent_runs.length ? "Re-run AI investigation" : "Run AI investigation"}
+                </Button>
+              </>
             )}
             <div role="group" aria-label="Download report" className="flex gap-1">
               {(
@@ -163,12 +171,21 @@ function IncidentWorkspace() {
             <AiSections ws={ws} runs={runs} />
           )}
 
+          <PhotoReview ws={ws} busy={busy} canRun={perms.has("RUN_AGENTS")} onChange={load} />
+
           <Actions ws={ws} act={act} busy={busy} meId={me.id} can={(p) => perms.has(p)} triClass={tri?.incident_class} />
         </div>
 
         <div className="space-y-4">
+          <WorkflowCard wf={ws.workflow} act={act} busy={busy} canRun={perms.has("RUN_AGENTS")} onFlags={setFlags} />
+          <Conflicts conflicts={ws.conflicts} act={act} busy={busy} canDecide={perms.has("APPROVE_CAPA") && inc.status !== "CLOSED"} />
           <Closure ws={ws} act={act} can={(p) => perms.has(p)} />
           <Evidence ws={ws} act={act} canUpload={perms.has("EDIT_INCIDENT") && inc.status !== "CLOSED"} />
+          <GraphCard
+            incidentId={inc.id}
+            organizationId={inc.organization_id}
+            canSync={me.memberships.some((m) => m.organization_id === inc.organization_id && !m.project_id && m.permissions.includes("MANAGE_PROJECTS"))}
+          />
           <Card title="Lifecycle">
             <ol className="space-y-2 text-sm">
               {ws.history.map((h) => (
@@ -530,6 +547,54 @@ function NewAction({ incidentId, act, done }: { incidentId: string; act: Act; do
         <Button type="submit">Propose action for review</Button>
       </div>
     </form>
+  );
+}
+
+function Conflicts({ conflicts, act, busy, canDecide }: { conflicts: Conflict[]; act: Act; busy: string | null; canDecide: boolean }) {
+  const shown = conflicts.filter((c) => c.status !== "SUPERSEDED");
+  if (shown.length === 0) return null;
+  const open = shown.filter((c) => c.status === "OPEN").length;
+  return (
+    <Card title={`AI conflicts (${open} open)`}>
+      <p className="mb-2 text-xs text-ink-2">
+        The investigation found disagreements. Both sides are kept; a reviewer records the decision before the incident can close.
+      </p>
+      <ul className="space-y-3">
+        {shown.map((c) => (
+          <ConflictItem key={c.id} c={c} act={act} busy={busy} canDecide={canDecide} />
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+function ConflictItem({ c, act, busy, canDecide }: { c: Conflict; act: Act; busy: string | null; canDecide: boolean }) {
+  const [decision, setDecision] = useState("");
+  return (
+    <li className="rounded-md border border-line p-2 text-sm">
+      <p className="text-xs font-medium text-muted">{label(c.kind)}</p>
+      <p>{c.summary}</p>
+      {c.status === "RESOLVED" ? (
+        <p className="mt-1 text-xs text-good-ink">✓ Decision recorded {fmtDate(c.resolved_at, true)}: {c.resolution}</p>
+      ) : canDecide ? (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            act("conflict", () => api.post(`/conflicts/${c.id}/resolve`, { resolution: decision }));
+          }}
+        >
+          <Field label="Decision (recorded in the audit trail)">
+            <textarea className={inputCls} value={decision} onChange={(e) => setDecision(e.target.value)} required minLength={3} />
+          </Field>
+          <Button type="submit" variant="secondary" disabled={busy === "conflict" || decision.trim().length < 3}>
+            Record decision
+          </Button>
+        </form>
+      ) : (
+        <p className="mt-1 text-xs text-ink-2">Awaiting a decision by a project or HSE manager.</p>
+      )}
+    </li>
   );
 }
 

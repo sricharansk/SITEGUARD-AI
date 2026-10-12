@@ -89,6 +89,9 @@ const ACRONYMS: [RegExp, string][] = [
   [/\bhse\b/g, "HSE"],
   [/\bqa qc\b/g, "QA/QC"],
   [/\bppe\b/g, "PPE"],
+  [/\bitp\b/g, "ITP"],
+  [/\bai\b/g, "AI"],
+  [/\bcapa\b/g, "CAPA"],
 ];
 export const label = (s: string) => {
   if (!/^[A-Z0-9_]+$/.test(s)) return s;

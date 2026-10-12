@@ -22,6 +22,43 @@ flowchart LR
 The orchestrator (`orchestrator.py`) runs the steps in order. It moves the incident to `PENDING_APPROVAL` and
 stops. No agent can approve an action, change a risk score or close an incident.
 
+### Checkpoints, pause and resume
+
+Each run is a `workflow_runs` row (Decision 024). Stages: `triage`, `safety`, `quality`, `risk`, `rca`,
+`compliance`, `capa`, `approval`. After every stage the stage record and its validated output are saved with the
+stage's own records in one transaction. Then:
+
+- `?pause_after=<stage>` on `POST /incidents/{id}/investigate`, or `POST /workflows/{id}/pause` while running,
+  stops the workflow as `PAUSED` before the next stage so a person can review what is stored.
+- `POST /workflows/{id}/resume` continues from the next unfinished stage with the stored state; finished stages
+  are never repeated, so agent runs, risk assessments and actions are never duplicated.
+- `POST /workflows/{id}/cancel` stops it with a reason; nothing stored is removed.
+- A stage that raises an unexpected error is rolled back, recorded as `ERROR`, and the workflow becomes `FAILED`
+  (the person who started it is notified); it can be resumed once the cause is fixed.
+- A `RUNNING` workflow whose lease (`SITEGUARD_WORKFLOW_LEASE_SECONDS`) has passed is treated as crashed and can be
+  resumed.
+- Only one workflow per incident may be `RUNNING`, `PAUSED` or `FAILED` (409 `WORKFLOW_ACTIVE`).
+
+## Conflicts and uncertainty
+
+The workflow never picks a winner silently (`services/conflicts.py`). At the approval stage it records an
+`agent_conflicts` row, with both sides and references, for each of:
+
+| Kind | When |
+|---|---|
+| `SEVERITY_DISAGREEMENT` | AI triage severity is two or more levels from the reported severity |
+| `DOMAIN_DISAGREEMENT` | Triage classes a SAFETY incident as QUALITY or the reverse |
+| `RISK_ABOVE_REPORTED` | The risk matrix band is CRITICAL, or two levels above the reported severity |
+| `AGENT_DISAGREEMENT` | Safety and quality investigations differ by two or more on likelihood or consequence (the matrix uses the higher) |
+| `SOURCE_CONFLICT` | Two cited documents in scope give different values, in the same unit, for the same requirement |
+| `VISION_DISAGREEMENT` | Two analyses of the same photo and task disagree whether a label is present |
+| `VISION_REVIEW_DISAGREEMENT` | Reviewers confirmed and rejected the same label on the same photo |
+
+People with `APPROVE_CAPA` are notified (`AI_CONFLICT`). An `OPEN` conflict blocks closure until a person records a
+decision (`POST /conflicts/{id}/resolve`); a later investigation marks still-open conflicts `SUPERSEDED` and
+records its own. The workflow also stores an uncertainty summary: confidence per agent, the lowest confidence,
+low-confidence agents, agents needing review with their reasons, failed stages and every open question.
+
 ## Bounded agent contract
 
 Each agent (`registry.py`) declares:
@@ -79,6 +116,49 @@ rank fusion combines them, and a deterministic reranker (query coverage, heading
 top candidates. The embedder is offline and deterministic (`hashing-bow` v1, Decision 017); a semantic model plugs
 in behind the `Embedder` interface. `SITEGUARD_RETRIEVAL_MODE=lexical` uses BM25 only.
 
+## Vision
+
+Playbook Prompts 25–27; code in `services/vision.py` (pipeline, taxonomy, thresholds), `services/vision_worker.py`
+(image decoding) and `agents/vision.py` (analyzers); DECISIONS 022.
+
+1. **Integrity.** The stored file is hashed and compared with the evidence's recorded SHA-256. A mismatch is refused
+   (409 `EVIDENCE_INTEGRITY`) and audited as `evidence.integrity_failed`.
+2. **Preprocessing** in a child process with CPU, memory and time limits (`SITEGUARD_VISION_*`): only JPEG and PNG,
+   the decoded format must match the evidence type, images above `SITEGUARD_VISION_MAX_PIXELS` are refused
+   (decompression bombs), EXIF orientation is applied, and the image is re-encoded as JPEG without EXIF/GPS metadata
+   and scaled to at most `SITEGUARD_VISION_MAX_SIDE` pixels. The original evidence file is never changed.
+3. **Image-quality checks** (deterministic): `LOW_RESOLUTION` (short side < 480 px), `TOO_DARK`, `OVEREXPOSED`,
+   `LOW_CONTRAST` and `POSSIBLY_BLURRED`. Flags become limitations on the analysis, not detections.
+4. **Analyzer** (`SITEGUARD_VISION_PROVIDER`) with the labels for the task:
+   - `baseline` (default): no detection model; reports nothing, so the analysis says that no PPE, hazard or defect
+     detection was attempted. The detection model is an open owner decision: the public PPE and defect datasets are
+     licensed for research and evaluation only (`docs/DATASETS.md`).
+   - `anthropic`: Claude vision with the `VisionDraft` schema; self-reported confidence and approximate boxes, both
+     stated in the limitations. Text in the image is treated as untrusted content.
+   An analyzer failure is stored as `FAILED` with no observations; it never falls back to a result that would look
+   like "nothing found".
+5. **Taxonomy and thresholds.** Taxonomy `2026.10-1` (`GET /vision/taxonomy`): PPE labels (person without hard hat,
+   hi-vis, harness at height, eye protection), hazard labels (unprotected edge, uncovered opening, unsupported
+   excavation, suspended load over people, unsafe ladder, exposed electrical, hot work without controls, unsecured
+   materials at height, blocked route) and defect labels (crack, spalling, honeycombing, exposed reinforcement,
+   corrosion, moisture staining, efflorescence). Each maps to a hazard or defect in the agents' taxonomy where one
+   exists. Detections with other labels are discarded and counted; boxes outside the image are dropped. The
+   threshold is 0.5 unless a project or site calibration sets another (site beats project beats default); the
+   snapshot of thresholds and their source is stored with the analysis. Below-threshold observations are kept and
+   marked, so a later calibration can be checked against them.
+6. **Human validation.** People with `RUN_AGENTS` confirm or reject each observation with a note (not on a
+   closed incident). Agents get observations from completed analyses through `list_vision_observations`, without
+   the analyzer's free text, in two lists: `vision` holds the observations a person CONFIRMED (also below threshold),
+   the only ones with a citable `vision:<id>` ref; `vision_unreviewed` holds above-threshold observations nobody has
+   checked, with no ref. A model citing anything else has the citation removed and the run flagged, like any unknown
+   ref. The rules provider adds the mapped hazard or defect for confirmed observations and turns unreviewed ones into
+   open questions. Quality detections therefore count as findings only after engineer validation.
+7. **Limits.** Each user may start `SITEGUARD_VISION_RATE_LIMIT_PER_MINUTE` analyses a minute (429 `RATE_LIMITED`),
+   and at most four decoder or parser child processes run at once per API process.
+
+Every response carries the disclaimer that observations are machine output for human review, not proof, and that no
+observation does not mean no hazard or defect.
+
 ## Knowledge answers (`POST /knowledge/answer`)
 
 A bounded RAG answer, separate from the incident workflow (`services/answer.py`):
@@ -117,8 +197,12 @@ HIGH <= 16, CRITICAL >= 17. Agents only suggest the two inputs. A human can reco
 
 ## Failure behaviour
 
-An agent that raises is recorded as `FAILED`; the workflow continues with the remaining agents, the incident is
-kept, and people can add actions manually (`POST /incidents/{id}/capa`) and use manual transitions.
+An agent stage is tried up to `SITEGUARD_AGENT_MAX_ATTEMPTS` times with exponential backoff
+(`SITEGUARD_AGENT_RETRY_BACKOFF_SECONDS`). A stage that still fails is recorded as `FAILED` with its attempts; the
+workflow continues with the remaining agents, the incident is kept, and people can add actions manually
+(`POST /incidents/{id}/capa`) and use manual transitions. An error outside an agent (for example while storing
+actions) rolls the stage back and fails the workflow, which can then be resumed (see "Checkpoints, pause and
+resume").
 
 ## Coverage and evaluation
 

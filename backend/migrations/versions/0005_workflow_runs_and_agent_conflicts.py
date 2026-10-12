@@ -1,0 +1,117 @@
+"""workflow runs and agent conflicts
+
+Agent runs from before this revision keep their workflow_id but have no workflow_runs row; the workspace and report
+fall back to them as before.
+
+Revision ID: 0005
+Revises: 0004
+Create Date: 2026-10-12 16:31:34.724766
+"""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "0005"
+down_revision: str | None = "0004"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        "workflow_runs",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("organization_id", sa.String(length=36), nullable=False),
+        sa.Column("incident_id", sa.String(length=36), nullable=False),
+        sa.Column("kind", sa.String(length=20), nullable=False),
+        sa.Column(
+            "status",
+            sa.Enum("RUNNING", "PAUSED", "FAILED", "COMPLETED", "CANCELLED", name="workflowstatus", native_enum=False),
+            nullable=False,
+        ),
+        sa.Column("provider", sa.String(length=60), nullable=False),
+        sa.Column("current_stage", sa.String(length=40), nullable=True),
+        sa.Column("stages", sa.JSON(), nullable=False),
+        sa.Column("state", sa.JSON(), nullable=False),
+        sa.Column("pause_after", sa.JSON(), nullable=False),
+        sa.Column("pause_requested", sa.Boolean(), nullable=False),
+        sa.Column("status_reason", sa.Text(), nullable=True),
+        sa.Column("uncertainty", sa.JSON(), nullable=False),
+        sa.Column("lease_expires_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("started_by", sa.String(length=36), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["incident_id"],
+            ["incidents.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["organization_id"],
+            ["organizations.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["started_by"],
+            ["users.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    with op.batch_alter_table("workflow_runs", schema=None) as batch_op:
+        batch_op.create_index(batch_op.f("ix_workflow_runs_incident_id"), ["incident_id"], unique=False)
+        batch_op.create_index(batch_op.f("ix_workflow_runs_organization_id"), ["organization_id"], unique=False)
+        batch_op.create_index(batch_op.f("ix_workflow_runs_status"), ["status"], unique=False)
+
+    op.create_table(
+        "agent_conflicts",
+        sa.Column("id", sa.String(length=36), nullable=False),
+        sa.Column("organization_id", sa.String(length=36), nullable=False),
+        sa.Column("incident_id", sa.String(length=36), nullable=False),
+        sa.Column("workflow_id", sa.String(length=36), nullable=False),
+        sa.Column("kind", sa.String(length=40), nullable=False),
+        sa.Column("summary", sa.String(length=500), nullable=False),
+        sa.Column("details", sa.JSON(), nullable=False),
+        sa.Column("refs", sa.JSON(), nullable=False),
+        sa.Column("status", sa.String(length=20), nullable=False),
+        sa.Column("resolution", sa.Text(), nullable=True),
+        sa.Column("resolved_by", sa.String(length=36), nullable=True),
+        sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["incident_id"],
+            ["incidents.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["organization_id"],
+            ["organizations.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["resolved_by"],
+            ["users.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["workflow_id"],
+            ["workflow_runs.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    with op.batch_alter_table("agent_conflicts", schema=None) as batch_op:
+        batch_op.create_index(batch_op.f("ix_agent_conflicts_incident_id"), ["incident_id"], unique=False)
+        batch_op.create_index(batch_op.f("ix_agent_conflicts_organization_id"), ["organization_id"], unique=False)
+        batch_op.create_index(batch_op.f("ix_agent_conflicts_workflow_id"), ["workflow_id"], unique=False)
+
+
+def downgrade() -> None:
+    with op.batch_alter_table("agent_conflicts", schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f("ix_agent_conflicts_workflow_id"))
+        batch_op.drop_index(batch_op.f("ix_agent_conflicts_organization_id"))
+        batch_op.drop_index(batch_op.f("ix_agent_conflicts_incident_id"))
+
+    op.drop_table("agent_conflicts")
+    with op.batch_alter_table("workflow_runs", schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f("ix_workflow_runs_status"))
+        batch_op.drop_index(batch_op.f("ix_workflow_runs_organization_id"))
+        batch_op.drop_index(batch_op.f("ix_workflow_runs_incident_id"))
+
+    op.drop_table("workflow_runs")

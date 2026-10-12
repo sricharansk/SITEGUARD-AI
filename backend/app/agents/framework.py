@@ -88,6 +88,7 @@ def allowed_refs(pack: dict) -> set[str]:
     refs |= {f"evidence:{e['id']}" for e in pack.get("evidence", [])}
     # Instruction-like (suspicious) chunks stay visible as data but can never be cited.
     refs |= {h["ref"] for h in pack.get("knowledge", []) if not h.get("suspicious")}
+    refs |= {v["ref"] for v in pack.get("vision", [])}  # confirmed observations only; unreviewed ones have no ref
     return refs
 
 

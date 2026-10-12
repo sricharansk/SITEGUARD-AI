@@ -10,6 +10,7 @@ from app.core.db import get_db
 from app.core.errors import AppError, Conflict, NotFound
 from app.core.security import Permission, Principal, current_principal
 from app.models import (
+    AgentConflict,
     AgentRun,
     ApprovalEvent,
     CapaAction,
@@ -22,6 +23,7 @@ from app.models import (
     Severity,
     Site,
     VerificationRecord,
+    WorkflowRun,
 )
 from app.services import audit, capa, evidence, incidents, lifecycle, report, report_render, risk
 
@@ -80,7 +82,8 @@ def create_incident(
 
 @router.get("/incidents/{incident_id}")
 def get_incident(incident_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    """The incident workspace: incident, history, evidence, agent runs, risk, actions, approvals, verifications."""
+    """The incident workspace: incident, history, evidence, agent runs, risk, actions, approvals, verifications,
+    the latest workflow and every recorded conflict."""
     inc = load_incident(db, p, incident_id)
     events = db.scalars(
         select(IncidentEvent).where(IncidentEvent.incident_id == inc.id).order_by(IncidentEvent.created_at)
@@ -104,6 +107,12 @@ def get_incident(incident_id: str, p: Principal = Depends(current_principal), db
     verifs: list[VerificationRecord] = (
         list(db.scalars(select(VerificationRecord).where(VerificationRecord.capa_id.in_(ids)))) if ids else []
     )
+    workflow = db.scalar(
+        select(WorkflowRun).where(WorkflowRun.incident_id == inc.id).order_by(desc(WorkflowRun.created_at)).limit(1)
+    )
+    found = db.scalars(
+        select(AgentConflict).where(AgentConflict.incident_id == inc.id).order_by(desc(AgentConflict.created_at))
+    )
     return ok(
         {
             "incident": ser.incident(inc),
@@ -114,6 +123,8 @@ def get_incident(incident_id: str, p: Principal = Depends(current_principal), db
             "capa": [ser.capa(a) for a in actions],
             "approvals": [ser.approval(a) for a in approvals],
             "verifications": [ser.verification(v) for v in verifs],
+            "workflow": ser.workflow(workflow),
+            "conflicts": [ser.conflict(c) for c in found],
             "close_blockers": capa.close_blockers(db, inc),
             "permissions": sorted(p.permissions(inc.organization_id, inc.project_id)),
         }

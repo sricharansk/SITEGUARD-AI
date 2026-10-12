@@ -93,6 +93,7 @@ export default function Shell({ children }: { children: ReactNode }) {
     { href: "/review/", label: "Actions" },
     { href: "/knowledge/", label: "Knowledge" },
     ...(value.can("VIEW_AUDIT") ? [{ href: "/audit/", label: "Audit" }] : []),
+    ...(memberships.some((m) => !m.project_id && m.permissions.includes("VIEW_AUDIT")) ? [{ href: "/outbox/", label: "Email outbox" }] : []),
   ];
 
   return (

@@ -10,8 +10,9 @@ verified closure. AI agents do the first pass; qualified people approve every ac
 > evaluation and red-team suite, migrations, Docker and CI are working. Hardening, Azure Bicep with a manual OIDC
 > deploy workflow, a staging stack and backup/restore tooling are in place ([DEPLOYMENT](docs/DEPLOYMENT.md)); no
 > Azure environment has been created yet. Ported from PR #2: PDF/DOCX knowledge documents, hybrid retrieval (BM25 +
-> vectors), grounded answers with citations, Word/PDF reports and an email outbox; still being ported: vision,
-> knowledge graph, resumable workflows ([ROADMAP](docs/ROADMAP.md)).
+> vectors), grounded answers with citations, Word/PDF reports, an email outbox and photo analysis with engineer
+> review, an optional knowledge graph with provenance, resumable workflows with recorded conflicts; each with its
+> web screen ([ROADMAP](docs/ROADMAP.md)).
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
@@ -37,7 +38,8 @@ flowchart LR
 - **Runs offline by default** with deterministic rules; set `SITEGUARD_AI_PROVIDER=anthropic` to use Claude, with
   automatic fallback to rules if the model call fails.
 - **Human in control:** AI output is never an approved action. Critical actions need the HSE manager, the person who
-  did the work cannot verify it, and an incident cannot close until every approved action is verified effective.
+  did the work cannot verify it, and an incident cannot close until every approved action is verified effective
+  and every disagreement the AI found (severity, risk, sources, photos) has a recorded human decision.
 - **Workflow:** action queue, notifications with an email outbox (off by default; retries and dead letters), two-level
   escalation of overdue actions, investigation report per incident in Markdown, Word or PDF with AI sections
   labelled and every human decision named.
@@ -81,7 +83,9 @@ paraphrased injection is **not detected** by the pattern guard and is still cont
 | ![Workspace](docs/screenshots/02-incident-ai-investigation.png) | ![Closed](docs/screenshots/03-incident-closed.png) |
 
 More screens: [incident list](docs/screenshots/04-incident-list.png),
-[action queue](docs/screenshots/05-action-queue.png), [knowledge search](docs/screenshots/06-knowledge-search.png).
+[action queue](docs/screenshots/05-action-queue.png), [knowledge search](docs/screenshots/06-knowledge-search.png),
+[grounded answer](docs/screenshots/07-grounded-answer.png), [photo review and workflow](docs/screenshots/08-photo-review-and-workflow.png),
+[email outbox](docs/screenshots/09-email-outbox.png).
 
 ## Quick start
 
@@ -91,7 +95,7 @@ cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 203 backend tests (incl. evaluation and red-team gates)
+make test            # 249 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker
@@ -131,8 +135,8 @@ scripts/         resolve_all.py (results run), demo_walkthrough.py (single incid
 ## Tech stack
 
 Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL (pgvector image), Anthropic SDK; Next.js 16,
-React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; Azure Bicep. Planned: Neo4j, vision models,
-Entra ID.
+React 19, TypeScript, Tailwind 4, Playwright; Docker, GitHub Actions; pgvector hybrid search; optional Neo4j
+knowledge graph; Azure Bicep. Planned: a trained vision detection model, Entra ID.
 
 ## Data and datasets
 

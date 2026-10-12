@@ -77,8 +77,9 @@ Reason: PR #2 and PR #4 were built in parallel from the same base and implement 
 (migrations, notifications, web app); merging main into #2 conflicted in 50 files. The owner chose to merge #4 and
 port #2's additional features onto main stage by stage, each with tests and green CI, rather than one large merge.
 Stage A: hardening, configuration validation, Azure IaC and deploy workflow, staging stack, operations scripts.
-Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019).
-Stage C: Word and PDF reports, email delivery outbox (Decisions 020–021).
+Stage B: document parsing, embeddings, hybrid retrieval and grounded answers (Decisions 017–019). Stage C: Word and
+PDF reports, email delivery outbox (Decisions 020–021). Stage D: vision evidence analysis (Decision 022), knowledge
+graph (Decision 023), resumable workflows and conflicts (Decision 024).
 
 ## Decision 016 — One container on Azure
 
@@ -89,13 +90,14 @@ login throttle and startup migrations keep it at one replica for now.
 ## Decision 017 — Hybrid retrieval with an offline hashing embedder until a model is chosen
 
 Reason: Playbook Prompts 11–12 need vector search, but the embedding model is an open owner decision (data
-residency, cost) and tests must not call external services. `HashingEmbedder` (`hashing-bow` v1, 384 dimensions) hashes stemmed
-words and word pairs into a normalised vector: deterministic, offline and free, and it catches word forms and
-phrases BM25 misses, but it does not capture meaning. Vectors are stored per (chunk, model, version) in pgvector, so
-a semantic model plugs in behind the `Embedder` interface and is indexed alongside without a schema change.
-Lexical and vector rankings are combined with reciprocal rank fusion (k = 60), which needs no score calibration,
-then a deterministic reranker (query coverage, heading match, phrase match) orders the top candidates. On the 14
-labelled queries in `evals/retrieval/seed_queries.yaml` hybrid hit@3 must stay ≥ 0.85 and never below lexical.
+residency, cost) and tests must not call external services. `HashingEmbedder` (`hashing-bow` v1, 384 dimensions)
+hashes stemmed words and word pairs into a normalised vector: deterministic, offline and free, and it catches word
+forms and phrases BM25 misses, but it does not capture meaning. Vectors are stored per (chunk, model, version) in
+pgvector, so a semantic model plugs in behind the `Embedder` interface and is indexed alongside without a schema
+change. Lexical and vector rankings are combined with reciprocal rank fusion (k = 60), which needs no score
+calibration, then a deterministic reranker (query coverage, heading match, phrase match) orders the top candidates.
+On the 14 labelled queries in `evals/retrieval/seed_queries.yaml` hybrid hit@3 must stay ≥ 0.85 and never below
+lexical.
 
 ## Decision 018 — Grounded answers verify citations and support after the model
 
@@ -129,3 +131,39 @@ notification gets a delivery row in the same transaction; a job sends due rows w
 and failures end as visible dead letters an administrator can retry. Email is `disabled` by default and `smtp` is
 refused in local and test, because it sends incident details outside the system (an owner decision, GOVERNANCE.md).
 Disabled deliveries are marked `SKIPPED`, so turning email on later does not send a backlog of old notifications.
+
+## Decision 022 — Vision is an observation pipeline with a pluggable analyzer and engineer validation
+
+Reason: the detection model is not chosen (an owner decision) and the public PPE and defect datasets are
+research-only, so the milestone builds everything around the model and keeps the model swappable. One
+`VisionAnalyzer` interface (`agents/vision.py`) reports detections against a versioned taxonomy; the service checks
+the evidence hash, decodes the image in a resource-limited child process (as for documents, Decision 019), applies
+project/site calibrated thresholds and stores every detection with the analyzer, model version, taxonomy version and
+thresholds used. The default `baseline` analyzer detects nothing and says so, rather than pretending; Claude vision
+is available as an adapter with self-reported confidence. A failed analysis is stored as `FAILED`, never as "nothing
+found". Agents only treat observations a person CONFIRMED as findings; unreviewed ones become open questions, and no
+observation is ever read as "no hazard".
+
+## Decision 023 — The knowledge graph is an optional, rebuildable projection of PostgreSQL
+
+Reason: Playbook Prompt 28 asks for a Neo4j knowledge graph, while PostgreSQL stays the system of record (Decision
+002) and Neo4j is not needed to run the pilot. The graph is derived: `graph-sync` rebuilds one organization's nodes
+and relationships from stored rows, idempotently, and deletes what PostgreSQL no longer has, so it can be dropped and
+rebuilt at any time. Every node and relationship names its source row and field, whether it came from AI output and
+its review status. Reads go through the same incident authorization (404 out of scope) and are limited to the
+caller's organization and projects. The store is `disabled` by default, `memory` for tests and demos, or `neo4j`.
+Agents do not read the graph yet; graph-aware retrieval is a later owner decision.
+
+## Decision 024 — The bounded workflow is checkpointed and resumable; conflicts are stored, not resolved by AI
+
+Reason: Playbook Prompts 29, 30 and 37 need pause for human review, resume after a crash and no silent winner when
+agents or sources disagree. A graph framework (for example LangGraph) was not needed for that: the fixed stage order
+of Decision 007 is kept and each stage is checkpointed in a `workflow_runs` row (status, per-stage record and
+validated state) in the same transaction as the stage's records. A resume continues from the next unfinished stage,
+so finished stages are never repeated and actions are never duplicated; a stage that raises is rolled back, recorded
+as `ERROR` and the workflow is `FAILED` but resumable. Agent stages are retried a bounded number of times
+(`SITEGUARD_AGENT_MAX_ATTEMPTS`, exponential backoff) before they are recorded as failed and the workflow carries
+on. A lease marks crashed runs. Only one active workflow per incident is allowed (409 `WORKFLOW_ACTIVE`).
+Disagreements (severity, domain, risk above reported, safety versus quality, cited documents with different values,
+vision analyses or reviews that disagree) are stored as `agent_conflicts` with both sides, people with
+`APPROVE_CAPA` are notified, and closure is blocked until a person records a decision.

@@ -45,6 +45,67 @@
 - Startup refuses `smtp` in local and test and SMTP without STARTTLS in staging and production. Azure Bicep and the
   staging stack pass email settings, with `smtp-password` in Key Vault; the scheduled job runs both jobs.
 
+### Stage D1: vision analysis of photo evidence
+
+- `POST /evidence/{id}/vision` (`PPE_HAZARD` or `DEFECT`): checks the stored file against its SHA-256, decodes the
+  image in a resource-limited child process (orientation, metadata removed, size and decompression-bomb limits),
+  measures image quality and runs the configured analyzer: `baseline` (no detection model; says so) or Claude vision.
+  Every detection is stored as an observation with analyzer, model and taxonomy versions and the thresholds used;
+  a failed analysis is stored as `FAILED`, never as "nothing found". Rate limited per user.
+- Engineers confirm or reject observations (`POST /vision/observations/{id}/review`); thresholds per label can be
+  calibrated per project or site. Safety and quality agents cite only confirmed observations (`vision:` refs) and turn
+  unreviewed ones into open questions. The investigation report lists photo observations with their review state.
+- Migration `0004`; `GET /vision/taxonomy`, `GET /incidents/{id}/vision`, `GET/PUT /projects/{id}/vision/calibration`.
+
+### Stage D2: knowledge graph
+
+- Optional knowledge graph built as a projection of PostgreSQL (`services/graph.py`): organizations, projects,
+  sites, locations, people, incidents, evidence, documents, investigations, hazards, RCAs, causes, requirements and
+  actions, with provenance (source table, row, field, agent run, AI-derived, review status) on every node and
+  relationship. In-memory or Neo4j store; fixed, allowlisted, parameterized Cypher.
+- `python -m app.jobs graph-sync` / `make graph-sync` and `POST /graph/sync` (organization-wide `MANAGE_PROJECTS`,
+  audited) rebuild it idempotently and remove deleted records; `GET /incidents/{id}/graph` returns an incident's
+  neighbourhood limited to the caller's organization and projects. Off by default (`SITEGUARD_GRAPH_BACKEND`).
+- Startup refuses unsafe Neo4j settings (no password, wrong scheme, no TLS in staging and production). Optional
+  `neo4j` compose service (`graph` profile) and a CI `neo4j` job against Neo4j 5.26.
+
+### Stage D3: resumable investigations and recorded conflicts
+
+- The investigation is a checkpointed `workflow_runs` row (migration `0005`): each stage's result is stored with its
+  records in one transaction, so a workflow can pause for review (`?pause_after=`, `POST /workflows/{id}/pause`), be
+  resumed from the next unfinished stage without duplicating runs or actions (`POST /workflows/{id}/resume`), be
+  cancelled with a reason, or recover after a crash (lease). Agent stages are retried with backoff before they are
+  recorded as failed; a failed workflow notifies the person who started it. One active workflow per incident.
+- Disagreements are stored, not resolved by AI (`agent_conflicts`): severity, domain, risk above reported, safety
+  versus quality, cited documents with different values, and vision analyses or reviews that disagree. Project and
+  HSE managers are notified, an open conflict blocks closure until a person records a decision
+  (`POST /conflicts/{id}/resolve`), and the workspace, web app and investigation report show both sides and the
+  decision. The workflow also stores an uncertainty summary.
+- `scripts/resolve_all.py` and `scripts/demo_walkthrough.py` record a decision on each open conflict before closing.
+
+### Stage E3: email outbox screen
+
+- Email outbox page for organization-wide auditors, HSE managers and administrators: deliveries by status with
+  attempts, last error and next try, recipients by name only; organization-wide administrators send due emails now
+  and retry failed or skipped deliveries. "AI" and "CAPA" labels. Browser test.
+
+### Stage E2: incident workspace panels
+
+- Workflow card (stages, attempts, lowest confidence, open questions; Resume, Cancel with reason, Pause while
+  running) and "Pause after triage for my review"; the Run button is hidden while a workflow is active.
+- Photo review: PPE/hazard and defect checks per photo, analyses marked as machine output with analyzer, image
+  quality and limitations, boxes drawn on the photo, confirm or reject each observation with a note.
+- Knowledge graph card: related records with AI-derived relationships marked, rebuild for organization-wide project
+  managers, or a plain message when the graph is disabled. Browser test with a synthetic fixture photo.
+
+### Stage E1: knowledge screens
+
+- Knowledge page: ask the knowledge base (grounded answer with clickable citations to document, version, section and
+  page; answered, insufficient or conflicting evidence; removed unsupported statements and flagged sources), search
+  with provenance and scores, document detail with status, parser, pages, checksum, passages and original download,
+  and document upload (PDF, Word, Markdown, text) for people with `MANAGE_DOCUMENTS`, with organization-wide scope
+  offered only to organization-wide members. Browser test for upload and answers.
+
 ## 0.2.0 — Web app, full incident coverage, evaluation
 
 ### Added

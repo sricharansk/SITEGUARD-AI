@@ -15,8 +15,9 @@ registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single imag
 ## IN PROGRESS — rebuilding PR #2 on main
 
 Done: A hardening, Azure IaC and deploy workflow, staging, operations; B document parsing (PDF, DOCX), embeddings,
-hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox. Next: D vision, knowledge
-graph, resumable workflows and conflicts; E web screens for these.
+hybrid retrieval and grounded answers; C Word/PDF reports and the email delivery outbox; D1 vision evidence analysis; D2 knowledge graph; D3 resumable workflows
+and recorded conflicts; E web screens for documents, grounded answers, photo review, workflows, the graph and the
+email outbox. With this, every feature of PR #2 is rebuilt on main.
 
 ## NOW
 
@@ -27,7 +28,7 @@ Flexible Server, Blob Storage for evidence, Key Vault).
 ## NEXT
 
 A semantic embedding model (owner decision: data residency, cost); vision (PPE and defect detection, licensed
-datasets only); Neo4j knowledge graph; Teams notification adapter and per-user email preferences; OIDC (Entra ID) with httpOnly cookies;
+datasets only); graph-aware retrieval for agents; Teams notification adapter and per-user email preferences; OIDC (Entra ID) with httpOnly cookies;
 BLS CFOI and HSE benchmarks on the dashboard; load tests.
 
 ## LATER

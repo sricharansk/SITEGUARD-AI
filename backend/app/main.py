@@ -8,12 +8,25 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
-from app.api import agents, auth, capa, dashboard, incidents, knowledge, notifications, projects
+from app.api import (
+    agents,
+    auth,
+    capa,
+    dashboard,
+    graph,
+    incidents,
+    knowledge,
+    notifications,
+    projects,
+    vision,
+    workflows,
+)
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.hardening import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.observability import CorrelationMiddleware, configure_logging
+from app.services import graph as graph_service
 
 TITLE = "Site Guard AI: Multi-Agent Construction Safety & Quality Incident Resolution System"
 
@@ -40,9 +53,12 @@ async def lifespan(app: FastAPI):
     configure_logging()
     init_db()
     yield
+    graph_service.close_store()
 
 
 KNOWN_ENVIRONMENTS = ("local", "test", "demo", "staging", "production")
+NEO4J_SCHEMES = ("bolt://", "bolt+s://", "bolt+ssc://", "neo4j://", "neo4j+s://", "neo4j+ssc://")
+NEO4J_TLS_SCHEMES = ("bolt+s://", "neo4j+s://")
 # Shared environments that may hold real incident data: every check below applies (docs/SECURITY.md).
 DEPLOYED_ENVIRONMENTS = ("staging", "production")
 DEFAULT_JWT_SECRET = "dev-only-change-me"
@@ -62,6 +78,11 @@ def settings_problems(s: Settings) -> list[str]:
         s.jwt_secret == DEFAULT_JWT_SECRET or len(s.jwt_secret) < MIN_JWT_SECRET_LENGTH
     ):
         problems.append(f"Set SITEGUARD_JWT_SECRET to a random value of at least {MIN_JWT_SECRET_LENGTH} characters")
+    if s.graph_backend == "neo4j":
+        if not s.neo4j_uri.startswith(NEO4J_SCHEMES):
+            problems.append("SITEGUARD_NEO4J_URI must use the bolt or neo4j scheme (bolt+s / neo4j+s for TLS)")
+        if not s.neo4j_password.get_secret_value():
+            problems.append("Set SITEGUARD_NEO4J_PASSWORD when SITEGUARD_GRAPH_BACKEND=neo4j")
     if s.env in ("local", "test") and s.notification_email_adapter == "smtp":
         problems.append("SITEGUARD_NOTIFICATION_EMAIL_ADAPTER=smtp is not allowed in local or test (use log)")
     if s.env in DEPLOYED_ENVIRONMENTS:
@@ -94,6 +115,8 @@ def _deployed_problems(s: Settings) -> list[str]:
         problems.append(f"SITEGUARD_CORS_ORIGINS must use https:// when {env} (got {', '.join(insecure)})")
     if not s.public_web_url.startswith("https://"):
         problems.append(f"SITEGUARD_PUBLIC_WEB_URL must use https:// when {env}")
+    if s.graph_backend == "neo4j" and not s.neo4j_uri.startswith(NEO4J_TLS_SCHEMES):
+        problems.append(f"SITEGUARD_NEO4J_URI must use verified TLS (bolt+s:// or neo4j+s://) when {env}")
     if s.notification_email_adapter == "smtp" and not s.smtp_starttls:
         problems.append(f"SITEGUARD_SMTP_STARTTLS must be true when {env} (credentials and incident details)")
     for name, value in (
@@ -135,7 +158,8 @@ def create_app() -> FastAPI:
         expose_headers=["X-Correlation-ID"],
     )
     install_error_handlers(app)
-    for r in (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications):
+    routers = (auth, projects, incidents, knowledge, agents, capa, dashboard, notifications, vision, graph, workflows)
+    for r in routers:
         app.include_router(r.router)
 
     if s.web_dir.is_dir():

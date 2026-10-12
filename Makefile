@@ -1,4 +1,4 @@
-.PHONY: install test lint eval run web up down demo e2e
+.PHONY: install test lint eval run web up down demo e2e graph-sync
 
 install:
 	cd backend && pip install -r requirements.lock -e ".[dev]"
@@ -13,6 +13,9 @@ test:
 
 eval:  ## Gold-set evaluation + red-team suite -> docs/EVALUATION.md
 	cd backend && python -m app.evaluation --out ../docs/EVALUATION.md --json ../docs/evaluation.json
+
+graph-sync:  ## Rebuild the knowledge graph from PostgreSQL (needs SITEGUARD_GRAPH_BACKEND=neo4j)
+	cd backend && python -m app.jobs graph-sync
 
 web:  ## Build the web app; the API serves it at /app
 	cd frontend && npm run build

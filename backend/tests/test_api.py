@@ -194,6 +194,10 @@ def test_end_to_end_incident_to_verified_closure(client, project_id):
         r = client.post(f"/capa/{a['id']}/verify", json={"effective": True, "notes": "Checked on site"}, headers=safety)
         assert r.status_code == 200, r.text
 
+    # Every conflict the investigation recorded needs a human decision before closure (tests/test_workflows.py).
+    for c in res["conflicts"]:
+        r = client.post(f"/conflicts/{c['id']}/resolve", json={"resolution": "Reviewed; severity stands"}, headers=pm)
+        assert r.status_code == 200, r.text
     r = client.post(f"/incidents/{iid}/close", json={"note": "Verified and lessons shared"}, headers=pm)
     assert r.status_code == 200 and r.json()["data"]["status"] == "CLOSED"
 

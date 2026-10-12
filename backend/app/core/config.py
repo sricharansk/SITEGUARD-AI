@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     ai_provider: str = "rules"
     anthropic_model: str = "claude-opus-5-5"
     agent_timeout_seconds: float = 60.0
+    # Workflow resilience (docs/AGENTS.md#workflow): bounded retries of read-only agent stages with exponential
+    # backoff, and a lease after which a RUNNING workflow whose process died may be resumed.
+    agent_max_attempts: int = Field(default=2, ge=1, le=5)
+    agent_retry_backoff_seconds: float = Field(default=0.5, ge=0, le=30)
+    workflow_lease_seconds: int = Field(default=900, ge=30, le=86400)
 
     # Knowledge documents and retrieval (docs/AGENTS.md, docs/DATABASE.md).
     document_max_bytes: int = 25 * 1024 * 1024
@@ -57,6 +62,21 @@ class Settings(BaseSettings):
     # PDF and DOCX are parsed in a child process with these limits (hostile files must not stall the API).
     parser_timeout_seconds: int = Field(default=60, ge=5, le=600)
     parser_memory_mb: int = Field(default=1024, ge=256, le=8192)
+
+    # Vision (docs/AGENTS.md#vision). "baseline" runs image-quality checks only; no detection model is chosen yet.
+    vision_provider: Literal["baseline", "anthropic"] = "baseline"
+    vision_max_pixels: int = Field(default=40_000_000, ge=1_000_000, le=200_000_000)
+    vision_max_side: int = Field(default=1568, ge=256, le=4096)
+    vision_timeout_seconds: int = Field(default=30, ge=5, le=300)
+    vision_memory_mb: int = Field(default=1024, ge=256, le=8192)
+    vision_rate_limit_per_minute: int = Field(default=30, ge=1, le=1000)  # analyses per user
+
+    # Knowledge graph (docs/ARCHITECTURE.md#knowledge-graph): a projection of PostgreSQL rebuilt by `graph-sync`.
+    # "memory" keeps it in the API process (tests, single-process demos); "neo4j" uses a Neo4j server.
+    graph_backend: Literal["disabled", "memory", "neo4j"] = "disabled"
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: SecretStr = SecretStr("")
 
     @model_validator(mode="after")
     def _resolve_seed_default(self) -> "Settings":

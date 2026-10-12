@@ -95,9 +95,15 @@ test("report, investigate, review, work, verify and close an incident in the bro
     await expect(page.getByRole("button", { name: "Verify", exact: true })).toHaveCount(before - 1);
   }
 
-  // Project manager closes it.
+  // Project manager records a decision on every AI conflict, then closes it.
   await loginAs(page, "pm");
   await open(page, url, title);
+  while ((await page.getByRole("button", { name: "Record decision" }).count()) > 0) {
+    const before = await page.getByRole("button", { name: "Record decision" }).count();
+    await page.getByLabel("Decision (recorded in the audit trail)").first().fill("Reviewed both sides; the reported severity stands.");
+    await page.getByRole("button", { name: "Record decision" }).first().click();
+    await expect(page.getByRole("button", { name: "Record decision" })).toHaveCount(before - 1);
+  }
   await page.getByLabel("Closure note").fill("All actions verified effective; lessons shared.");
   await page.getByRole("button", { name: "Close incident" }).click();
   await expect(page.getByText(/Closed .* after every approved action was verified effective/)).toBeVisible();
@@ -138,6 +144,96 @@ test("dashboard, incident list, action queue, knowledge and audit render", async
   await page.getByRole("link", { name: "Audit", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Audit trail" })).toBeVisible();
   await expect(page.locator("tbody tr").first()).toBeVisible();
+});
+
+test("upload a document, see its passages and get a cited answer", async ({ page }) => {
+  await loginAs(page, "qa");
+  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  const title = "Hoarding inspection procedure (E2E)";
+  const text = [
+    "# Hoarding inspection",
+    "",
+    "## Inspection frequency",
+    "",
+    "Site hoarding panels must be inspected every 14 days and after winds above 40 mph.",
+    "",
+    "## Records",
+    "",
+    "The site engineer records each hoarding inspection in the site diary.",
+  ].join("\n");
+  await page.getByLabel("File").setInputFiles({ name: "hoarding.md", mimeType: "text/markdown", buffer: Buffer.from(text) });
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel(/^Source/).fill("E2E test");
+  await page.getByRole("button", { name: "Upload" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Indexed: \d+ passage|already in the knowledge base/ })).toBeVisible();
+  await expect(page.getByText("Inspection frequency").first()).toBeVisible(); // the document's passages, with sections
+
+  await page.getByLabel("Question").fill("How often must site hoarding panels be inspected?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByTestId("answer-status")).toContainText("Answered");
+  await expect(page.getByRole("button", { name: new RegExp(`${title.replace(/[()]/g, "\\$&")} v1, Inspection frequency`) }).first()).toBeVisible();
+  await shot(page, "07-grounded-answer");
+
+  await page.getByLabel("Question").fill("What is the crane operator's lunch break policy on Mars?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByTestId("answer-status")).toContainText("Insufficient evidence");
+});
+
+test("pause and resume the AI investigation, review a photo, and see the knowledge graph state", async ({ page }) => {
+  const title = "Worker without hard hat under scaffold loading bay";
+  await loginAs(page, "site");
+  await page.getByRole("link", { name: "Report incident" }).first().click();
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel("What happened").fill("A worker was seen without a hard hat under the scaffold loading bay while materials were being lifted.");
+  await page.getByLabel("Severity (your assessment)").selectOption("MEDIUM");
+  await page.getByRole("button", { name: "Report incident" }).click();
+  await page.waitForURL(/\/incident\/\?id=/);
+  const url = page.url();
+  // Synthetic test image (e2e/fixtures/site-photo.jpg), not a site photo.
+  await page.getByLabel("Evidence file").setInputFiles("e2e/fixtures/site-photo.jpg");
+  await page.getByLabel("Evidence description").fill("Photo of the loading bay");
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(page.getByText("site-photo.jpg").first()).toBeVisible();
+
+  await loginAs(page, "safety");
+  await open(page, url, title);
+  await page.getByLabel("Pause after triage for my review").check();
+  await page.getByRole("button", { name: "Run AI investigation" }).click();
+  await expect(page.getByText("Paused at triage")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Run AI investigation/ })).toHaveCount(0); // one active workflow
+  await page.getByRole("button", { name: "Resume investigation" }).click();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pending approval").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Check PPE and hazards" }).click();
+  await expect(page.getByText(/PPE hazard analysis/)).toBeVisible();
+  await expect(page.getByText(/No detection model is configured/)).toBeVisible(); // says what it could not do
+  await expect(page.getByAltText("Photo evidence: site-photo.jpg")).toBeVisible();
+  await shot(page, "08-photo-review-and-workflow");
+
+  await page.getByRole("button", { name: "Show related records" }).click();
+  await expect(page.getByText("The knowledge graph is not enabled on this server.")).toBeVisible();
+});
+
+test("email outbox: auditors see deliveries, admins run delivery and retry", async ({ page }) => {
+  await loginAs(page, "auditor");
+  await page.getByRole("link", { name: "Email outbox", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Email outbox" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send due emails now" })).toHaveCount(0); // view only
+  await expect(page.locator("tbody tr").first()).toBeVisible();
+  await expect(page.getByText("@demo.siteguard.local")).toHaveCount(0); // names, never addresses
+
+  await loginAs(page, "admin");
+  await page.getByRole("link", { name: "Email outbox", exact: true }).click();
+  await page.getByRole("button", { name: "Send due emails now" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Delivery run: \d+ sent/ })).toBeVisible();
+  await page.getByRole("tab", { name: "Skipped" }).click(); // email is turned off in this environment
+  await page.getByRole("button", { name: "Retry" }).first().click();
+  await expect(page.getByRole("status").filter({ hasText: "Queued again" })).toBeVisible();
+  await shot(page, "09-email-outbox");
+
+  await loginAs(page, "site");
+  await expect(page.getByRole("link", { name: "Email outbox", exact: true })).toHaveCount(0);
 });
 
 test("a user from another tenant cannot open this tenant's incidents", async ({ page }) => {
