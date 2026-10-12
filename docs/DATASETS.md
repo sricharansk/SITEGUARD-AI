@@ -2,6 +2,28 @@
 
 **Verified:** 09 October 2026
 
+## What is implemented (0.2.0)
+
+- `data/dataset_registry.yaml`: every dataset below with source, licence, commercial-use status, purpose,
+  locations, extraction method, limitations, pipeline status and whether published results used it. A test keeps
+  the registry complete (`tests/test_datasets.py`).
+- **OSHA Severe Injury Reports pipeline** (`backend/app/datasets/osha_sir.py`): download the CSV from
+  https://www.osha.gov/severeinjury into `data/raw/government/osha/` (git-ignored), then
+
+  ```bash
+  cd backend
+  python -m app.datasets.osha_sir --input ../data/raw/government/osha/<file>.csv --since 2024-01-01 \
+      --out ../docs/OSHA_SIR_EVALUATION.md --processed ../data/processed/government/osha_sir
+  ```
+
+  It records a SHA-256 manifest, validates the columns, keeps construction (NAICS 23) only, removes duplicates,
+  never reads employer or address fields, runs the triage agent on every narrative and scores it against OSHA's
+  own OIICS event coding (agreement on hazard class, and whether every severe injury is triaged HIGH or CRITICAL).
+  It is tested on a synthetic fixture in the official column layout.
+- **Not yet acquired.** On 12 October 2026 the network policy of the sandbox that built 0.2.0 blocked osha.gov,
+  bls.gov, hse.gov.uk and huggingface.co, so no public dataset was downloaded and **every published result uses
+  synthetic data**. Running the command above on a machine with internet access produces the real-data report.
+
 
 ## Current Construction Dataset and Resource Register — verified 09 October 2026
 

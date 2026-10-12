@@ -27,3 +27,14 @@ Validate extension, MIME, size, checksum and content before processing.
 ## Logging
 
 Do not log passwords, tokens, API keys or raw sensitive evidence by default.
+
+## Implemented in 0.2.0
+
+- Injection detection scans the incident title, description, immediate actions and evidence descriptions as well as
+  retrieved documents; detection flags the run for review, and containment does not depend on it (agents cannot
+  approve, close or write anything but typed output). See the red-team results in EVALUATION.md.
+- Web app: the pilot keeps the bearer token in `sessionStorage` (cleared when the tab closes) and the API enforces
+  every permission; the UI only hides controls. Production should move to OIDC (Entra ID) with httpOnly cookies.
+- Notifications are only readable by their recipient; `/projects/{id}/people` returns names and roles, not emails.
+- Dataset pipelines never read employer or address fields and never rank employers (DATASETS.md).
+- Frontend dependencies are pinned and `npm audit --omit=dev --audit-level=high` runs in CI.

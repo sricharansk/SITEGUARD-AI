@@ -27,7 +27,7 @@ from app.models import (
     RiskAssessment,
     utcnow,
 )
-from app.services import audit, lifecycle, rag, risk
+from app.services import audit, lifecycle, notifications, rag, risk
 
 RUNNABLE_FROM = {
     IncidentStatus.REPORTED,
@@ -263,6 +263,8 @@ def run_investigation(db: Session, inc: Incident, user_id: str, provider: Provid
             db.add(action)
             created.append(action)
     db.flush()
+    if created:
+        notifications.review_required(db, inc, len(created), created[0].critical)
     if inc.status != IncidentStatus.PENDING_APPROVAL:
         lifecycle.transition(
             db,

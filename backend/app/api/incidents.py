@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,7 @@ from app.models import (
     Site,
     VerificationRecord,
 )
-from app.services import audit, capa, evidence, incidents, lifecycle, risk
+from app.services import audit, capa, evidence, incidents, lifecycle, report, risk
 
 router = APIRouter(tags=["incidents"])
 
@@ -268,3 +268,23 @@ def assess_risk(
     )
     db.commit()
     return ok(ser.risk(row))
+
+
+@router.get("/incidents/{incident_id}/report", response_class=PlainTextResponse)
+def incident_report(incident_id: str, p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+    """Investigation report as Markdown, with AI sections labelled and human decisions named."""
+    inc = load_incident(db, p, incident_id)
+    audit.record(
+        db,
+        organization_id=inc.organization_id,
+        actor_id=p.id,
+        action="incident.report",
+        entity_type="incident",
+        entity_id=inc.id,
+    )
+    db.commit()
+    return PlainTextResponse(
+        report.build(db, inc),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{inc.reference}-report.md"'},
+    )

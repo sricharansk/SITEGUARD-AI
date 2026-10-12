@@ -17,7 +17,7 @@ from app.models import (
     VerificationRecord,
     WorkStatus,
 )
-from app.services import audit, lifecycle
+from app.services import audit, lifecycle, notifications
 
 ACTIVE = (ApprovalStatus.APPROVED, ApprovalStatus.MODIFIED)
 EDITABLE_FIELDS = (
@@ -98,6 +98,8 @@ def review(
         },
     )
     db.flush()
+    if decision in ("APPROVE", "MODIFY"):
+        notifications.action_assigned(db, inc, action)
     _sync_incident(db, inc, p.id)
     return action
 
@@ -124,8 +126,10 @@ def update_progress(
         if work_status not in allowed.get(before, set()):
             raise Conflict(f"Invalid work status change {before.value} -> {work_status.value}", "INVALID_TRANSITION")
         action.work_status = work_status
-    if assignee_id is not None:
+    if assignee_id is not None and assignee_id != action.assignee_id:
         action.assignee_id = assignee_id
+        if assignee_id != p.id:
+            notifications.action_assigned(db, inc, action)
     audit.record(
         db,
         organization_id=inc.organization_id,
@@ -166,6 +170,8 @@ def verify(
     )
     db.add(rec)
     action.work_status = WorkStatus.VERIFIED if effective else WorkStatus.VERIFICATION_FAILED
+    if not effective:
+        notifications.verification_failed(db, inc, action, notes)
     audit.record(
         db,
         organization_id=inc.organization_id,

@@ -40,6 +40,11 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "lost footing",
         "lost his footing",
         "lost her footing",
+        "fell through",
+        "fell off",
+        "fragile",
+        "rooflight",
+        "skylight",
     ],
     "Struck by falling or moving object": [
         "dropped",
@@ -48,15 +53,31 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "hit by",
         "landed near",
     ],
-    "Excavation collapse / caught-in": ["trench", "excavation", "collapse", "cave-in", "cave in", "shoring"],
+    "Excavation collapse / caught-in": [
+        "trench",
+        "excavation",
+        "collapse",
+        "cave-in",
+        "cave in",
+        "caved in",
+        "shoring",
+    ],
     "Electrical contact": [
-        "electric",
+        "electric shock",
+        "electrical shock",
+        "electrical burn",
+        "electrocut",
+        "exposure to electricity",
         "shock",
         "live cable",
         "energised",
         "energized",
         "arc flash",
         "lockout",
+        "power cable",
+        "underground cable",
+        "kv",
+        "high voltage",
     ],
     "Lifting operation / crane": [
         "crane lift",
@@ -78,7 +99,22 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "mobile plant",
         "banksman",
     ],
-    "Fire / hot work": ["fire", "hot work", "welding spark", "flammable", "gas cylinder"],
+    "Fire / hot work": [
+        "caught fire",
+        "on fire",
+        "small fire",
+        "a fire",
+        "the fire",
+        "fire service",
+        "fire watch",
+        "smoulder",
+        "ignit",
+        "flame",
+        "hot work",
+        "welding spark",
+        "flammable",
+        "gas cylinder",
+    ],
     "Missing or incorrect PPE": [
         "helmet",
         "hard hat",
@@ -90,9 +126,16 @@ SAFETY_HAZARDS: dict[str, list[str]] = {
         "safety boots",
         "eye protection",
     ],
-    "Confined space": ["confined space", "manhole", "tank entry", "oxygen"],
+    "Confined space": ["confined space", "manhole", "tank entry", "oxygen", "sewer", "chamber", "gas monitor", "fumes"],
     "Cuts / sharp objects": ["cut his", "cut her", "cut their", "laceration", "stitches", "sharp edge"],
-    "Manual handling / musculoskeletal": ["manual handling", "back injury", "strain", "lifting by hand"],
+    "Manual handling / musculoskeletal": [
+        "manual handling",
+        "back injury",
+        "strain",
+        "lifting by hand",
+        "by hand",
+        "lower back",
+    ],
 }
 
 QUALITY_DEFECTS: dict[str, list[str]] = {
@@ -109,7 +152,9 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
     ],
     "Concrete strength / mix nonconformance": [
         "cube",
-        "cylinder",
+        "cylinder result",
+        "cylinder strength",
+        "test cylinder",
         "compressive strength",
         "slump",
         "mix design",
@@ -123,6 +168,9 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "form failure",
         "grout loss",
         "blowout",
+        "shutter",
+        "formwork moved",
+        "push-pull prop",
     ],
     "Dimensional / alignment tolerance": [
         "misalign",
@@ -131,13 +179,58 @@ QUALITY_DEFECTS: dict[str, list[str]] = {
         "dimensional",
         "out of tolerance",
         "setting-out error",
+        "out of line",
+        "out of position",
     ],
-    "Water ingress / waterproofing": ["leak", "seepage", "damp", "moisture", "waterproof", "ingress"],
-    "Welding / steelwork defect": ["weld", "porosity", "undercut", "bolt torque", "steel connection"],
-    "Material nonconformance": ["wrong material", "substitut", "non-conforming material", "expired", "batch"],
+    "Water ingress / waterproofing": [
+        "leaking",
+        "water leak",
+        "leaked into",
+        "seepage",
+        "damp",
+        "moisture",
+        "waterproof",
+        "ingress",
+    ],
+    "Welding / steelwork defect": [
+        "welds",
+        "site weld",
+        "fillet weld",
+        "butt weld",
+        "weld defect",
+        "porosity",
+        "undercut",
+        "torque",
+        "finger tight",
+        "splice",
+        "steel connection",
+    ],
+    "Material nonconformance": [
+        "wrong material",
+        "substitut",
+        "non-conforming material",
+        "expired",
+        "batch",
+        "submittal",
+        "different product",
+        "unapproved",
+    ],
 }
 
-CRITICAL_WORDS = ["fatal", "fatality", "death", "died", "amputation", "collapse", "unconscious", "crushed"]
+CRITICAL_WORDS = [
+    "fatal",
+    "fatality",
+    "death",
+    "died",
+    "amputat",
+    "collapse",
+    "caved in",
+    "buried",
+    "unconscious",
+    "crushed",
+    "high voltage",
+    "kv",
+]
 HIGH_WORDS = [
     "hospital",
     "fracture",
@@ -147,6 +240,10 @@ HIGH_WORDS = [
     "structural",
     "load-bearing",
     "failed",
+    "off work",
+    "fire service",
+    "fire brigade",
+    "evacuat",
 ]
 NEAR_MISS_WORDS = ["near miss", "near-miss", "narrowly", "could have"]
 NEGATION_CUES = [
@@ -220,9 +317,35 @@ def _consequence(text: str, people: int, hazards: list[str] | None = None) -> in
         c = 3
     else:
         c = 2
+    high_energy = bool(set(hazards or []) & HIGH_ENERGY)
     if any(_has(text, w) for w in NEAR_MISS_WORDS) or _has(text, "not struck") or _has(text, "no one was"):
-        c = max(c, 4 if set(hazards or []) & HIGH_ENERGY else 3)
+        c = max(c, 4 if high_energy else 3)
+    elif high_energy and people > 0:
+        c = max(c, 4)  # a person was exposed to a high-energy hazard: rate the credible outcome
     return c
+
+
+STRUCTURAL_WORDS = [
+    "structural",
+    "load-bearing",
+    "column",
+    "beam",
+    "slab",
+    "transfer",
+    "truss",
+    "retaining wall",
+    "core wall",
+    "shear wall",
+    "foundation",
+    "raft",
+]
+
+
+def _quality_consequence(text: str) -> int:
+    """A defect in a structural element is Major (4); other defects are Moderate (3)."""
+    if any(_has(text, w) for w in CRITICAL_WORDS):
+        return 5
+    return 4 if any(_has(text, w) for w in STRUCTURAL_WORDS) else 3
 
 
 def _severity_for(consequence: int) -> Severity:
@@ -246,6 +369,8 @@ def triage(pack: dict) -> TriageOutput:
     else:
         domain = Domain(inc["domain"])
     consequence = _consequence(text, inc.get("people_involved", 0), hazards)
+    if defects:
+        consequence = max(consequence, _quality_consequence(text))
     severity = _severity_for(consequence)
     priorities: dict[Severity, Priority] = {
         Severity.CRITICAL: "P1",
@@ -478,10 +603,8 @@ def quality(pack: dict) -> QualityInvestigationOutput:
             reqs.append(f"{d}: requirement - {det['req']} Observed - see incident description.")
             tests += det["tests"]
             stages.append(det["stage"])
-    structural = any(_has(text, w) for w in ["structural", "load-bearing", "column", "beam", "slab", "transfer"])
-    consequence = 4 if structural else 3
-    if any(_has(text, w) for w in CRITICAL_WORDS):
-        consequence = 5
+    structural = any(_has(text, w) for w in STRUCTURAL_WORDS)
+    consequence = _quality_consequence(text)
     return QualityInvestigationOutput(
         defects=defects,
         requirement_vs_observed=reqs or ["Specification requirement to be identified"],
@@ -516,6 +639,13 @@ _CAUSE_MAP: dict[str, tuple[str, str]] = {
     "cover": ("PROCESS", "Pre-pour reinforcement check was missed or not effective."),
     "mix": ("MATERIALS", "Concrete supplied did not match the approved mix design."),
     "drawing": ("PROCESS", "Work was done against a superseded or unclear drawing."),
+    "lockout": ("PROCESS", "Isolation and lockout were not applied before work near electrical systems."),
+    "gas test": ("PROCESS", "The atmosphere was not tested before entry."),
+    "fire watch": ("PROCESS", "Hot work controls (permit, fire watch, extinguisher) were not applied."),
+    "certificat": ("MATERIALS", "Material or qualification certificates were not checked against requirements."),
+    "qualification": ("PEOPLE", "The worker's qualification for the task was not checked before work started."),
+    "setting-out": ("PROCESS", "Setting-out was not independently checked before the next stage of work."),
+    "out of service": ("EQUIPMENT", "Equipment needed for the safe method was out of service with no alternative."),
 }
 
 
@@ -713,6 +843,14 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
             0,
             "LOTO record signed by an authorised person.",
         ),
+        (
+            "PREVENTIVE",
+            "Weekly inspection of temporary electrical supplies",
+            "Inspect temporary leads and boards weekly, check RCD protection and remove damaged cables from use.",
+            "SITE_ENGINEER",
+            7,
+            "Inspection register and RCD trip-test records for four consecutive weeks.",
+        ),
     ],
     "Lifting operation / crane": [
         (
@@ -799,6 +937,14 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
             7,
             "Test results reviewed by structural engineer and disposition recorded.",
         ),
+        (
+            "PREVENTIVE",
+            "Control water added to concrete on site",
+            "Ban water addition on site without the QA/QC engineer's approval and record slump for every truck.",
+            "QA_QC_ENGINEER",
+            14,
+            "Delivery tickets and slump records for the next five pours show no unapproved water.",
+        ),
     ],
     "Cracking": [
         (
@@ -822,12 +968,120 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
     ],
     "Formwork defect": [
         (
+            "CORRECTIVE",
+            "Inspect and make good the failed formwork section",
+            "Stop pours on the element, inspect ties and walers, and get a temporary works decision before reuse.",
+            "SITE_ENGINEER",
+            2,
+            "Temporary works coordinator inspection record for the repaired formwork.",
+        ),
+        (
             "PREVENTIVE",
             "Formwork sign-off before pours",
             "Formwork inspection signed by the temporary works coordinator before each pour.",
             "SITE_ENGINEER",
             7,
             "Signed checklists for the next three pours.",
+        ),
+    ],
+    "Fire / hot work": [
+        (
+            "CORRECTIVE",
+            "Stop hot work until permit and fire watch are in place",
+            "Suspend hot work in the area, remove combustibles and restart only under a hot work permit.",
+            "SITE_ENGINEER",
+            0,
+            "Hot work permit with fire watch and extinguisher check signed for each task.",
+        ),
+        (
+            "PREVENTIVE",
+            "Weekly hot work permit audit",
+            "Audit hot work permits weekly against the tasks done, including the fire watch after work stops.",
+            "HSE_MANAGER",
+            14,
+            "Two weekly audits show every hot work task had a permit and a fire watch.",
+        ),
+    ],
+    "Confined space": [
+        (
+            "CORRECTIVE",
+            "Suspend entry until permit, gas test and standby are in place",
+            "No entry to the space without a confined space permit, continuous gas monitoring and a standby person.",
+            "HSE_MANAGER",
+            0,
+            "Signed confined space permit with gas readings, standby person and rescue plan.",
+        ),
+        (
+            "PREVENTIVE",
+            "Confined space register and entrant training",
+            "List every confined space on site, sign them, and train entrants and standby persons.",
+            "SAFETY_ENGINEER",
+            14,
+            "Register complete, signs in place and training records for all entrants.",
+        ),
+    ],
+    "Manual handling / musculoskeletal": [
+        (
+            "PREVENTIVE",
+            "Manual handling assessment and lifting aids",
+            "Assess the task, provide mechanical aids or a working goods lift, and brief the crew on safe loads.",
+            "SAFETY_ENGINEER",
+            10,
+            "Assessment issued and aids in use on a follow-up inspection.",
+        ),
+    ],
+    "Dimensional / alignment tolerance": [
+        (
+            "CORRECTIVE",
+            "Survey and engineer disposition of the out-of-tolerance element",
+            "Survey the element as built and get a structural engineer decision to accept, repair or replace.",
+            "QA_QC_ENGINEER",
+            5,
+            "As-built survey and engineer disposition recorded on the NCR.",
+        ),
+        (
+            "PREVENTIVE",
+            "Independent check survey before pours",
+            "Add an independent check survey of setting-out as a hold point before each pour or erection.",
+            "SITE_ENGINEER",
+            7,
+            "Signed check-survey records for the next three elements.",
+        ),
+    ],
+    "Welding / steelwork defect": [
+        (
+            "CORRECTIVE",
+            "NDT and repair of the defective welds",
+            "Test the affected welds by NDT, repair by a qualified welder and re-test.",
+            "QA_QC_ENGINEER",
+            7,
+            "NDT reports show the repaired welds accepted.",
+        ),
+        (
+            "PREVENTIVE",
+            "Check welder qualifications before welding",
+            "Check every welder's qualification against the welding procedure before they start work.",
+            "QA_QC_ENGINEER",
+            7,
+            "Welder register checked against everyone welding on site.",
+        ),
+    ],
+    "Material nonconformance": [
+        (
+            "CORRECTIVE",
+            "Quarantine and replace the non-conforming material",
+            "Tag and quarantine the material, raise an NCR and replace it with approved material.",
+            "QA_QC_ENGINEER",
+            2,
+            "Material quarantined and tagged; NCR shows replacement with approved material.",
+        ),
+        (
+            "PREVENTIVE",
+            "Receiving inspection against approved submittals",
+            "Check every delivery's certificates against the approved submittal before it is unloaded.",
+            "QA_QC_ENGINEER",
+            14,
+            "Two weeks of delivery checks with certificates matched to submittals.",
         ),
     ],
 }

@@ -148,6 +148,8 @@ def _seed_incidents(db: Session, project: Project) -> None:
         )
         for a in actions:
             a.assignee_id = site_eng.id
+            # Backfilled history: due dates run from when the incident happened, not from seeding time.
+            a.due_date = occurred.date() + timedelta(days=(a.original_ai_output or {}).get("due_in_days", 7))
             capa.review(db, hse, inc, a, "APPROVE", "Reviewed against site conditions; proportionate.", None)
         if stage == "in_progress":
             if actions:

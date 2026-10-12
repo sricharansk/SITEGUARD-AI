@@ -200,3 +200,17 @@ def test_anthropic_refusal_falls_back():
     fake = SimpleNamespace(messages=_FakeMessages(None, stop_reason="refusal"))
     result = run_agent(AGENTS["triage"], _tools(pack), AnthropicProvider(client=fake))
     assert result.provider == "rules (fallback from anthropic)"
+
+
+# --- Coverage of the hazard/defect taxonomy -------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("label", sorted(rules.SAFETY_HAZARDS | rules.QUALITY_DEFECTS))
+def test_every_taxonomy_class_has_capa_proposals(label):
+    out = rules.capa({**_pack("t", "d"), "prior": {"triage": {"hazards": [label]}}})
+    assert any(a.addresses == label for a in out.actions), f"no CAPA proposal for {label}"
+
+
+def test_structural_quality_defect_is_not_rated_low():
+    out = rules.triage(_pack("Column out of plumb", "Column C-12 is out of plumb by 25 mm against a 10 mm tolerance."))
+    assert out.domain == Domain.QUALITY and out.severity_candidate == Severity.HIGH

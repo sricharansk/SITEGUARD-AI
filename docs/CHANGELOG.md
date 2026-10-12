@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.2.0 — Web app, full incident coverage, evaluation
+
+### Added
+
+- Web app (`frontend/`, Next.js 16 + TypeScript + Tailwind 4) served by the API at `/app`: dashboard with KPI tiles
+  and accessible charts, incident list with filters, report incident with evidence, incident workspace (AI panels
+  marked as AI-generated, deterministic risk, cited requirements, approve/modify/reject with reasons, work,
+  independent verification, closure blockers, evidence, lifecycle, report download), action queue, knowledge
+  search, audit trail, notifications. Playwright browser tests.
+- Notifications (review required, assignment, failed verification) and idempotent two-level escalation of overdue
+  actions: `POST /capa/escalate-overdue`, `python -m app.jobs escalate-overdue`.
+- `GET /incidents/{id}/report` (Markdown investigation report), `GET /capa`, `GET /projects/{id}/people`.
+- CAPA proposals and root-cause cues for every taxonomy class; 11 more synthetic incidents and 2 synthetic
+  procedures so every class appears in the demo.
+- Evaluation framework and red-team suite (`python -m app.evaluation`, `docs/EVALUATION.md`) with a held-out split
+  and CI gates.
+- Alembic migrations (initial revision `0001`), run by the container on start.
+- Dataset registry (`data/dataset_registry.yaml`) and OSHA Severe Injury Reports pipeline (`app/datasets/osha_sir.py`).
+- `scripts/resolve_all.py`: resolves every open incident over HTTP and writes `docs/RESULTS.md` and `docs/reports/`.
+
+### Changed
+
+- Triage rates structural quality defects by consequence (no longer LOW); high-energy hazards with a person exposed
+  are rated by credible outcome; keyword fixes from dev-split errors and from browser testing (`fire`, `leak`,
+  `cylinder`, `electric`, `amputat`).
+- Injection detection also scans incident and evidence text.
+- Backfilled seed actions are due relative to the incident date, so overdue actions exist in the demo.
+- Docker image is two-stage (web build + API); CI adds frontend, browser and full-resolution jobs.
+
+### Fixed
+
+- Action queue could show a stale empty list when switching tabs quickly (found by the browser tests).
+
 ## 0.1.0 — Backend pilot
 
 ### Added

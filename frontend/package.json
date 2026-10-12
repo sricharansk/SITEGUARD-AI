@@ -1,0 +1,26 @@
+{
+  "name": "siteguard-ai-web",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Site Guard AI web app (Next.js static export, served by the API at /app)",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "16.3.8",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.18.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.2"
+  }
+}

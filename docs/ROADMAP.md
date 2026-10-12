@@ -5,14 +5,24 @@
 Incident management; evidence; retrieval; triage; safety/quality investigation; risk; RCA; compliance mapping;
 CAPA; human approval; workflow; dashboard API; audit; Docker; CI.
 
+## DONE (0.2.0)
+
+Next.js web app (dashboard, incident list, report incident, incident workspace, action queue, knowledge, audit);
+notifications and two-level escalation of overdue actions; investigation reports; Alembic migrations; full
+taxonomy coverage (11 safety + 9 quality classes); evaluation set with held-out split and red-team suite; dataset
+registry and OSHA Severe Injury Reports pipeline; browser E2E tests; single image serving API + web app.
+
 ## NOW
 
-Next.js web app (dashboard, incident list, incident workspace, review queue); Alembic migrations; Azure staging.
+Run the OSHA SIR pipeline on the real 2024-2026 file and publish the report; score the Claude provider on the gold
+set; raise held-out class/domain accuracy to the 85% / 90% targets; Azure staging (Container Apps, PostgreSQL
+Flexible Server, Blob Storage for evidence, Key Vault).
 
 ## NEXT
 
-pgvector hybrid retrieval; vision (PPE and defect detection); Neo4j knowledge graph; reports; notifications and
-escalation of overdue actions; retrieval/LLM evaluation sets and red-team suite; OIDC (Entra ID).
+pgvector hybrid retrieval; vision (PPE and defect detection, licensed datasets only); Neo4j knowledge graph;
+email/Teams notification adapters; OIDC (Entra ID) with httpOnly cookies; BLS CFOI and HSE benchmarks on the
+dashboard; load tests.
 
 ## LATER
 

@@ -15,3 +15,9 @@ API latency; error rate; retrieval latency; agent latency; token/cost metadata w
 ## Correlation
 
 Every request/agent workflow should expose correlation ID / run ID.
+
+## Implemented
+
+JSON request logs with correlation ID, method, path, status and latency (no bodies); correlation ID on every
+response, error envelope and audit event; agent runs store provider, trace, tool timings and review reasons;
+dashboard exposes overdue/escalated actions and agent success/fallback counts.
