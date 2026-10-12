@@ -181,16 +181,24 @@ def _lease_expired(wf: WorkflowRun) -> bool:
 
 def active_workflow(db: Session, incident_id: str) -> WorkflowRun | None:
     return db.scalar(
-        select(WorkflowRun).where(
+        select(WorkflowRun)
+        .where(
             WorkflowRun.incident_id == incident_id,
             WorkflowRun.status.in_([WorkflowStatus.RUNNING, WorkflowStatus.PAUSED]),
         )
+        .execution_options(populate_existing=True)  # current values, not the session's cached copy
     )
 
 
-def _lock_incident(db: Session, inc: Incident) -> None:
-    """Serialize workflow starts per incident (row lock on PostgreSQL; SQLite serializes writers anyway)."""
+def _lock_incident(db: Session, inc: Incident, wf: WorkflowRun | None = None) -> None:
+    """Serialize workflow changes per incident (row lock on PostgreSQL; SQLite serializes writers anyway), then
+    reload the incident and workflow: values read before the lock may be stale (sessions keep loaded values), and a
+    second resume or cancel must see what the first one committed."""
+    db.flush()  # sessions do not autoflush: keep the caller's pending changes before reloading
     db.execute(select(Incident.id).where(Incident.id == inc.id).with_for_update())
+    db.refresh(inc)
+    if wf is not None:
+        db.refresh(wf)
 
 
 def _check_runnable(db: Session, inc: Incident) -> None:
@@ -309,7 +317,7 @@ def resume(
     checkpoint: Checkpoint | None = None,
 ) -> WorkflowRun:
     """Continue a PAUSED or FAILED workflow, or a RUNNING one whose process died (lease expired)."""
-    _lock_incident(db, inc)
+    _lock_incident(db, inc, wf)
     if wf.kind != "INVESTIGATION":
         raise Conflict("Only investigation workflows can be resumed", "INVALID_STATE")
     resumable = wf.status in (WorkflowStatus.PAUSED, WorkflowStatus.FAILED) or (
@@ -335,6 +343,7 @@ def resume(
 
 def request_pause(db: Session, wf: WorkflowRun, inc: Incident, user_id: str) -> WorkflowRun:
     """Ask a RUNNING workflow to stop before its next stage. The stage in progress finishes first."""
+    _lock_incident(db, inc, wf)
     if wf.status != WorkflowStatus.RUNNING:
         raise Conflict(f"Workflow is {wf.status.value}; only a RUNNING workflow can be paused", "INVALID_STATE")
     wf.pause_requested = True
@@ -344,6 +353,7 @@ def request_pause(db: Session, wf: WorkflowRun, inc: Incident, user_id: str) -> 
 
 def cancel(db: Session, wf: WorkflowRun, inc: Incident, user_id: str, reason: str) -> WorkflowRun:
     """Stop a workflow for good. Everything it produced (runs, risk, proposals, conflicts) is kept."""
+    _lock_incident(db, inc, wf)
     stoppable = wf.status in (WorkflowStatus.PAUSED, WorkflowStatus.FAILED) or (
         wf.status == WorkflowStatus.RUNNING and _lease_expired(wf)
     )

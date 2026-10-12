@@ -115,6 +115,35 @@ def test_human_interrupt_then_resume_uses_the_corrected_record(client, project_i
     assert again.status_code == 409
 
 
+def test_a_second_resume_or_cancel_with_stale_data_is_refused(client, project_id):
+    """Two requests that loaded a PAUSED workflow before either committed (a double submit) must not both run it."""
+    from app.core.db import SessionLocal
+    from app.core.errors import Conflict as ConflictError
+    from app.models import Incident, User, WorkflowRun
+
+    inc = _new_incident(client, project_id, title="Worker hurt on level 2", severity="MEDIUM")
+    wf_id = _investigate(client, inc["id"], pause_after="triage").json()["data"]["workflow"]["id"]
+    with SessionLocal() as late, SessionLocal() as other:
+        user = late.scalars(select(User).where(User.email == "safety@demo.siteguard.local")).one()
+        stale_wf, stale_inc = late.get(WorkflowRun, wf_id), late.get(Incident, inc["id"])
+        assert stale_wf.status == WorkflowStatus.PAUSED  # loaded before the first resume
+
+        first = client.post(f"/workflows/{wf_id}/resume", headers=auth(client, "safety")).json()["data"]
+        assert first["workflow"]["status"] == "COMPLETED"
+        proposed = _actions(other, inc["id"])
+        assert proposed > 0
+
+        with pytest.raises(ConflictError, match="COMPLETED"):
+            orchestrator.resume(late, stale_wf, stale_inc, user.id, checkpoint=late.commit)
+        late.rollback()
+        with pytest.raises(ConflictError, match="COMPLETED"):
+            orchestrator.cancel(late, stale_wf, stale_inc, user.id, "double submit")
+        late.rollback()
+        other.expire_all()
+        assert _actions(other, inc["id"]) == proposed  # no second set of AI actions
+        assert other.get(WorkflowRun, wf_id).status == WorkflowStatus.COMPLETED
+
+
 def test_pause_requested_during_a_stage_stops_before_the_next(client, project_id, db, monkeypatch):
     original = orchestrator._agent_stage
 

@@ -167,7 +167,7 @@ function IncidentWorkspace() {
         </div>
 
         <div className="space-y-4">
-          <Conflicts conflicts={ws.conflicts} act={act} canDecide={perms.has("APPROVE_CAPA") && inc.status !== "CLOSED"} />
+          <Conflicts conflicts={ws.conflicts} act={act} busy={busy} canDecide={perms.has("APPROVE_CAPA") && inc.status !== "CLOSED"} />
           <Closure ws={ws} act={act} can={(p) => perms.has(p)} />
           <Evidence ws={ws} act={act} canUpload={perms.has("EDIT_INCIDENT") && inc.status !== "CLOSED"} />
           <Card title="Lifecycle">
@@ -534,7 +534,7 @@ function NewAction({ incidentId, act, done }: { incidentId: string; act: Act; do
   );
 }
 
-function Conflicts({ conflicts, act, canDecide }: { conflicts: Conflict[]; act: Act; canDecide: boolean }) {
+function Conflicts({ conflicts, act, busy, canDecide }: { conflicts: Conflict[]; act: Act; busy: string | null; canDecide: boolean }) {
   const shown = conflicts.filter((c) => c.status !== "SUPERSEDED");
   if (shown.length === 0) return null;
   const open = shown.filter((c) => c.status === "OPEN").length;
@@ -545,14 +545,14 @@ function Conflicts({ conflicts, act, canDecide }: { conflicts: Conflict[]; act: 
       </p>
       <ul className="space-y-3">
         {shown.map((c) => (
-          <ConflictItem key={c.id} c={c} act={act} canDecide={canDecide} />
+          <ConflictItem key={c.id} c={c} act={act} busy={busy} canDecide={canDecide} />
         ))}
       </ul>
     </Card>
   );
 }
 
-function ConflictItem({ c, act, canDecide }: { c: Conflict; act: Act; canDecide: boolean }) {
+function ConflictItem({ c, act, busy, canDecide }: { c: Conflict; act: Act; busy: string | null; canDecide: boolean }) {
   const [decision, setDecision] = useState("");
   return (
     <li className="rounded-md border border-line p-2 text-sm">
@@ -571,7 +571,7 @@ function ConflictItem({ c, act, canDecide }: { c: Conflict; act: Act; canDecide:
           <Field label="Decision (recorded in the audit trail)">
             <textarea className={inputCls} value={decision} onChange={(e) => setDecision(e.target.value)} required minLength={3} />
           </Field>
-          <Button type="submit" variant="secondary" disabled={decision.trim().length < 3}>
+          <Button type="submit" variant="secondary" disabled={busy === "conflict" || decision.trim().length < 3}>
             Record decision
           </Button>
         </form>
