@@ -1,11 +1,16 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.models import Incident, IncidentEvent, IncidentStatus, utcnow
 from app.services import audit
 
+REFERENCE_LOCK = 0x5347524546  # "SGREF": serialises reference numbering until the reporting transaction ends
+
 
 def next_reference(db: Session) -> str:
+    # Two reports submitted together would otherwise count the same rows and collide on the unique reference.
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("select pg_advisory_xact_lock(:key)"), {"key": REFERENCE_LOCK})
     year = utcnow().year
     prefix = f"SG-{year}-"
     count = db.scalar(select(func.count()).select_from(Incident).where(Incident.reference.like(f"{prefix}%"))) or 0

@@ -20,7 +20,8 @@ and recorded conflicts; E web screens for documents, grounded answers, photo rev
 email outbox. With this, every feature of PR #2 is rebuilt on main.
 
 Done: held-out accuracy targets met by the rules provider on a new held-out set (class 89%, domain 93%, retrieval
-hit@3 93%; Decision 025).
+hit@3 93%; Decision 025). Load test and capacity report (LOAD_TEST.md); concurrent incident reports no longer
+collide on the reference.
 
 ## NOW
 
@@ -32,7 +33,8 @@ Flexible Server, Blob Storage for evidence, Key Vault).
 
 A semantic embedding model (owner decision: data residency, cost); vision (PPE and defect detection, licensed
 datasets only); graph-aware retrieval for agents; Teams notification adapter and per-user email preferences; OIDC (Entra ID) with httpOnly cookies;
-BLS CFOI and HSE benchmarks on the dashboard; load tests.
+BLS CFOI and HSE benchmarks on the dashboard; SQL aggregates and pagination for the dashboard, action queue and
+incident list (LOAD_TEST.md finding 4).
 
 ## LATER
 

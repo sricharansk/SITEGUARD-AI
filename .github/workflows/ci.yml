@@ -204,3 +204,7 @@ jobs:
         run: |
           python scripts/resolve_all.py --base-url http://localhost:8000 --out /tmp/RESULTS.md --reports-dir /tmp/reports
           docker logs api 2>&1 | tail -5
+      - name: Load test (readers plus concurrent incident reports; docs/LOAD_TEST.md)
+        run: |
+          python scripts/load_test.py --base-url http://localhost:8000 --users 10 --writers 4 --duration 20 \
+            --max-error-rate 0 --max-p95-ms 5000

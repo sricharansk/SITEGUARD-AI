@@ -38,6 +38,22 @@ def test_bad_login(client):
     assert r.status_code == 401
 
 
+def test_report_retries_a_reference_taken_by_a_concurrent_report(client, project_id, monkeypatch):
+    from app.services import incidents
+
+    taken = _new_incident(client, project_id)["reference"]
+    real = incidents.next_reference
+    calls = []
+
+    def first_collides(db):
+        calls.append(1)
+        return taken if len(calls) == 1 else real(db)
+
+    monkeypatch.setattr(incidents, "next_reference", first_collides)
+    second = _new_incident(client, project_id)
+    assert len(calls) == 2 and second["reference"] != taken
+
+
 def test_validation_error_envelope(client, project_id):
     r = client.post(f"/projects/{project_id}/incidents", json={"title": "x"}, headers=auth(client, "site"))
     assert r.status_code == 400 and r.json()["error"]["code"] == "INVALID_REQUEST"

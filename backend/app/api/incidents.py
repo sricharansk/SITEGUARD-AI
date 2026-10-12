@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import desc, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api import serializers as ser
@@ -28,6 +29,7 @@ from app.models import (
 from app.services import audit, capa, evidence, incidents, lifecycle, report, report_render, risk
 
 router = APIRouter(tags=["incidents"])
+REFERENCE_ATTEMPTS = 5
 
 
 @router.get("/projects/{project_id}/incidents")
@@ -69,14 +71,22 @@ def create_incident(
         site = db.get(Site, body.site_id)
         if site is None or site.project_id != project.id:
             raise AppError("site_id does not belong to this project")
-    inc = incidents.create(
-        db,
-        organization_id=project.organization_id,
-        project_id=project.id,
-        reporter_id=p.id,
-        data=body.model_dump(),
-    )
-    db.commit()
+    for attempt in range(1, REFERENCE_ATTEMPTS + 1):
+        try:
+            inc = incidents.create(
+                db,
+                organization_id=project.organization_id,
+                project_id=project.id,
+                reporter_id=p.id,
+                data=body.model_dump(),
+            )
+            db.commit()
+            break
+        except IntegrityError as exc:
+            # Another report took the same reference first (SQLite has no advisory lock); number it again.
+            db.rollback()
+            if attempt == REFERENCE_ATTEMPTS or "reference" not in str(exc.orig):
+                raise
     return ok(ser.incident(inc))
 
 

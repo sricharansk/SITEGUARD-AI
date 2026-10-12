@@ -49,6 +49,16 @@ must never be used for tuning (Decision 025). Its per-case results are now publi
 needs a new held-out set written and committed before tuning starts. `tests/test_evaluation.py` fails CI if the
 held-out scores drop below floors just under the measured values or any safety gate breaks.
 
+## Load test
+
+`scripts/load_test.py` drives a running stack with signed-in readers (dashboard, incident list and workspace, action
+queue, notifications, search) and optional writers that report and investigate incidents, then prints latency
+percentiles and the error rate per endpoint. Results, findings and capacity guidance: [LOAD_TEST.md](LOAD_TEST.md).
+CI runs a 20 s check in the `docker` job (10 readers, 4 concurrent writers; any error fails the build).
+`tests/test_postgres.py::test_concurrent_incident_reports_get_unique_references` and
+`tests/test_api.py::test_report_retries_a_reference_taken_by_a_concurrent_report` cover the concurrent-report bug it
+found.
+
 ## Browser tests
 
 ```bash
