@@ -72,6 +72,21 @@ def test_triage_mixed_safety_and_quality():
     assert set(out.recommended_next_agents) == {"safety", "quality"}
 
 
+def test_one_ambiguous_word_adds_no_label_or_actions_but_still_counts_for_severity():
+    pack = _pack(
+        "Worker fell from mobile scaffold tower",
+        "A worker fell about 2 m from a mobile scaffold tower with no guardrail and went to hospital with a fracture.",
+        people_involved=1,
+        immediate_actions="First aid, tower quarantined, area barricaded.",
+    )
+    out = rules.triage(pack)
+    # "quarantined" is a weak material-defect cue: it no longer becomes a label (or CAPA actions) on a fall.
+    assert out.hazards == ["Fall from height"] and out.domain == Domain.SAFETY
+    assert out.severity_candidate in (Severity.HIGH, Severity.CRITICAL)
+    actions = rules.capa({**pack, "prior": {"triage": out.model_dump()}}).actions
+    assert actions and all(a.addresses != "Material nonconformance" for a in actions)
+
+
 def test_triage_insufficient_evidence_is_visible():
     out = rules.triage(_pack("Something happened", "An event occurred on site today."))
     assert out.hazards[0].startswith("No known")

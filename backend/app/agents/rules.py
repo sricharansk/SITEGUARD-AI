@@ -779,7 +779,7 @@ def _match(text: str, taxonomy: dict[str, list[str]], title: str = "") -> list[s
     return _ranked(_scores(text, taxonomy, title), taxonomy)
 
 
-def classify(pack: dict) -> tuple[list[str], list[str], Domain | None]:
+def classify(pack: dict, min_score: float = 1.0) -> tuple[list[str], list[str], Domain | None]:
     """Safety labels, quality labels and the domain the evidence supports (None when nothing matched).
 
     BOTH needs real evidence on both sides; a single incidental word ("stair void", "waterproofing operative")
@@ -787,7 +787,10 @@ def classify(pack: dict) -> tuple[list[str], list[str], Domain | None]:
     text, title = _text(pack), pack["incident"]["title"].lower()
     s, q = _scores(text, SAFETY_HAZARDS, title), _scores(text, QUALITY_DEFECTS, title)
     top_s, top_q = max(s.values(), default=0.0), max(q.values(), default=0.0)
-    hazards, defects = _ranked(s, SAFETY_HAZARDS), _ranked(q, QUALITY_DEFECTS)
+    # A label needs more than one ambiguous word behind it: "tower quarantined" alone should not add a material
+    # defect and its actions to a fall from height. The strongest label always clears this (see below).
+    hazards = [n for n in _ranked(s, SAFETY_HAZARDS) if s[n] >= min_score]
+    defects = [n for n in _ranked(q, QUALITY_DEFECTS) if q[n] >= min_score]
     if max(top_s, top_q) < 1.0:  # one ambiguous word is not enough to classify
         return [], [], None
     if min(top_s, top_q) >= 1.5 and min(top_s, top_q) >= max(top_s, top_q) / 3:
@@ -889,10 +892,12 @@ def triage(pack: dict) -> TriageOutput:
     text = _text(pack)
     hazards, defects, found = classify(pack)
     domain = found or Domain(inc["domain"])
-    if inc["domain"] == Domain.BOTH and hazards and defects:
+    # Severity weighs every cue, weak ones included, so dropping a weak label never lowers it.
+    all_hazards, all_defects, _ = classify(pack, min_score=0.0)
+    if inc["domain"] == Domain.BOTH and all_hazards and all_defects:
         domain = Domain.BOTH  # never narrow a reported BOTH while both sides have some evidence
-    consequence = _consequence(text, inc.get("people_involved", 0), hazards)
-    if defects:
+    consequence = _consequence(text, inc.get("people_involved", 0), all_hazards)
+    if all_defects:
         consequence = max(consequence, _quality_consequence(text))
     severity = _severity_for(consequence)
     priorities: dict[Severity, Priority] = {

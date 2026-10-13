@@ -10,12 +10,42 @@ Requires the API running with demo seed data (SITEGUARD_SEED_DEMO_DATA=true).
 
 import argparse
 import os
+import struct
+import zlib
 from datetime import UTC, datetime
 
 import httpx
 
 PASSWORD = os.environ.get("SITEGUARD_DEMO_PASSWORD", "siteguard-demo")
-PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 128  # placeholder image bytes for the demo upload
+
+
+def _demo_png(w: int = 160, h: int = 120) -> bytes:
+    """A small, valid, synthetic drawing for the demo upload: a scaffold tower with no guardrail on one side."""
+    sky, floor, steel, deck = (186, 214, 235), (150, 150, 150), (230, 120, 20), (120, 80, 40)
+
+    def pixel(x: int, y: int) -> tuple[int, int, int]:
+        if y >= 100:
+            return floor
+        if 40 <= x <= 120 and 50 <= y <= 54:
+            return deck  # platform
+        if (x in range(40, 44) or x in range(116, 120)) and y >= 20:
+            return steel  # uprights
+        if 40 <= x <= 80 and y in range(20, 23):
+            return steel  # guardrail on the left half only: the open side is the hazard
+        if 40 <= x <= 120 and y in range(76, 79):
+            return steel  # lower brace
+        return sky
+
+    rows = b"".join(b"\x00" + bytes(c for x in range(w) for c in pixel(x, y)) for y in range(h))
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    header = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(rows, 9)) + chunk(b"IEND", b"")
+
+
+PNG = _demo_png()  # synthetic image for the demo upload
 
 
 class Api:
