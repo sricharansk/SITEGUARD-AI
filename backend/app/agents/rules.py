@@ -729,11 +729,14 @@ _OBJECT_FELL = re.compile(
 )
 # "12 mm off line", "40mm low", "15 mm out": a measured deviation is a tolerance problem.
 _DEVIATION = re.compile(r"\b\d+(?:\.\d+)? ?mm\b[^.]{0,25}?\b(off|out|low|high|short|over|proud|too|outside|beyond)\b")
-# A person hit by something: "striking a labourer on the leg", "hit the fixer".
+_PEOPLE = (
+    r"(he|she|him|her|them|they|worker|operative|man|labourer|laborer|fixer|fitter|carpenter|joiner|electrician|"
+    r"apprentice|engineer|banksman|slinger|driver|operator|colleague|hose man|lad)"
+)
+# A person hit by something: "striking a labourer on the leg", "hit the fixer", "a worker was struck by a prop".
 _PERSON_STRUCK = re.compile(
-    r"\b(struck|striking|hit|hitting|knocked)\b (?:a |the |his |her |their |one |another )?"
-    r"(he|she|him|her|them|worker|operative|man|labourer|laborer|fixer|fitter|carpenter|joiner|electrician|"
-    r"apprentice|engineer|banksman|slinger|driver|operator|colleague|hose man|lad)\b"
+    r"\b(struck|striking|hit|hitting|knocked)\b (?:a |the |his |her |their |one |another )?" + _PEOPLE + r"\b"
+    r"|\b" + _PEOPLE + r"\b (?:was |were |got |is |had been )(?:struck|hit|knocked down|knocked over)\b"
 )
 # A person falling or nearly falling.
 _PERSON_FELL = re.compile(
@@ -744,13 +747,27 @@ _PERSON_FELL = re.compile(
 )
 
 
+def _spans(text: str, word: str) -> list[tuple[int, int]]:
+    """Where a keyword matches (word-prefix match, as in _has)."""
+    return [(m.start(), m.start() + len(word)) for m in re.finditer(r"\b" + re.escape(word), text)]
+
+
+def _covered(span: tuple[int, int], word: str, spans: dict[str, list[tuple[int, int]]]) -> bool:
+    return any(
+        len(other) > len(word) and o[0] <= span[0] and span[1] <= o[1] for other, found in spans.items() for o in found
+    )
+
+
 def _scores(text: str, taxonomy: dict[str, list[str]], title: str = "") -> dict[str, float]:
     """Weighted keyword evidence per label: title matches count double, ambiguous words count half."""
     out: dict[str, float] = {}
     for name, words in taxonomy.items():
+        spans = {w: _spans(text, w) for w in words}
         s = 0.0
-        for w in words:
-            if _has(text, w):
+        for w, found in spans.items():
+            # A keyword inside a longer one of the same label ("spec" in "specification") is the same word, not
+            # more evidence: it counts only where no longer keyword of this label covers it.
+            if any(not _covered(span, w, spans) for span in found):
                 s += (0.5 if w in WEAK_WORDS else 1.0) * (2.0 if title and _has(title, w) else 1.0)
         if s:
             out[name] = s
@@ -775,8 +792,9 @@ def _ranked(scores: dict[str, float], taxonomy: dict[str, list[str]]) -> list[st
 
 
 def _match(text: str, taxonomy: dict[str, list[str]], title: str = "") -> list[str]:
-    """Labels ordered by weighted keyword evidence (ties keep taxonomy order)."""
-    return _ranked(_scores(text, taxonomy, title), taxonomy)
+    """Labels ordered by weighted keyword evidence (ties keep taxonomy order); one ambiguous word is not enough."""
+    scores = _scores(text, taxonomy, title)
+    return [n for n in _ranked(scores, taxonomy) if scores[n] >= 1.0]
 
 
 def classify(pack: dict, min_score: float = 1.0) -> tuple[list[str], list[str], Domain | None]:
@@ -1406,6 +1424,15 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
     ],
     "Mobile plant / vehicle": [
         (
+            "CORRECTIVE",
+            "Stop the plant and separate it from people",
+            "Stop the machine at the location, fence the work area off from walkways and put a trained banksman in "
+            "place before it moves again.",
+            "SITE_ENGINEER",
+            1,
+            "Barriers and banksman in place at the location; checked by the supervisor before restart.",
+        ),
+        (
             "PREVENTIVE",
             "Segregate pedestrians from plant",
             "Update the traffic management plan with physical barriers and marked walkways.",
@@ -1415,6 +1442,15 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
         ),
     ],
     "Cuts / sharp objects": [
+        (
+            "CORRECTIVE",
+            "Remove the sharp-edge hazard at the location",
+            "Withdraw open or unsafe blades, cap or cover exposed rebar and sharp edges, and issue cut-resistant "
+            "gloves for the task.",
+            "SITE_ENGINEER",
+            2,
+            "Unsafe blades withdrawn, edges capped or covered and gloves in use; checked on site.",
+        ),
         (
             "PREVENTIVE",
             "Cut-resistant gloves and rebar caps for cutting work",
@@ -1563,6 +1599,14 @@ _CAPA_LIBRARY: dict[str, list[tuple[ActionType, str, str, str, int, str]]] = {
         ),
     ],
     "Manual handling / musculoskeletal": [
+        (
+            "CORRECTIVE",
+            "Stop the manual lift and provide a lifting aid",
+            "Stop carrying the load by hand; provide a hoist, trolley or team lift for the task until it is assessed.",
+            "SITE_ENGINEER",
+            2,
+            "Lifting aid or team lift in use for the task; checked by the supervisor.",
+        ),
         (
             "PREVENTIVE",
             "Manual handling assessment and lifting aids",

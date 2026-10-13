@@ -2,6 +2,20 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### One word counts once; every class has a corrective action
+
+- Triage scoring counts a keyword only where no longer keyword of the same label covers it, so "specification" no
+  longer counts as both "spec" and "specification" (it had added Material nonconformance, and quarantine actions,
+  to a cracking incident).
+- The safety and quality investigation agents apply the same evidence bar as triage (a label needs more than one
+  ambiguous word); their labels feed CAPA, so one incidental word no longer adds unrelated actions.
+- A person struck in the passive voice ("a worker was struck by a falling prop") is recognised as struck-by.
+- Mobile plant, cuts / sharp objects and manual handling now have a corrective action of their own; before, their
+  corrective actions only appeared when an unrelated label added one. A test keeps every class covered.
+- Evaluation: held-out class 89.1%, domain 93.5%, severity within one 97.7%, retrieval 93.5% unchanged; cases with a
+  corrective action 84.8% → 91.3% (held-out) and 90.0% → 95.8% (dev); dev compliance citing the expected procedure
+  85.8% → 85.0% (one case). Resolve-all: 21/21 closed, 80 decisions (65 approved, 15 rejected).
+
 ### Review III presentation
 
 - `docs/presentation/SiteGuardAI_Review3_S.K.Sricharan_T9984.pptx`: 16-slide Review III deck on the programme

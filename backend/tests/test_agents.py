@@ -87,6 +87,27 @@ def test_one_ambiguous_word_adds_no_label_or_actions_but_still_counts_for_severi
     assert actions and all(a.addresses != "Material nonconformance" for a in actions)
 
 
+def test_a_word_inside_a_longer_keyword_is_counted_once():
+    pack = _pack(
+        "Cracks above the limit in level 3 slab soffit after early prop removal",
+        "Cracking up to 0.4 mm wide was found after the props were removed early. The crack width is above the "
+        "0.3 mm limit in the specification.",
+    )
+    out = rules.triage(pack)
+    # "specification" also matches the shorter keyword "spec"; one word must not add Material nonconformance.
+    assert out.incident_class == "Cracking" and "Material nonconformance" not in out.hazards
+    # The quality investigation (whose defects feed CAPA) applies the same evidence bar.
+    assert "Material nonconformance" not in rules.quality(pack).defects
+    assert rules._scores("the specification", rules.QUALITY_DEFECTS) == {"Material nonconformance": 0.5}
+
+
+def test_every_class_has_a_corrective_action():
+    # Corrective actions must come from the incident's own class, never from an incidental extra label.
+    classes = set(rules.SAFETY_HAZARDS) | set(rules.QUALITY_DEFECTS)
+    missing = [c for c in classes if not any(a[0] == "CORRECTIVE" for a in rules._CAPA_LIBRARY.get(c, []))]
+    assert missing == []
+
+
 def test_triage_insufficient_evidence_is_visible():
     out = rules.triage(_pack("Something happened", "An event occurred on site today."))
     assert out.hazards[0].startswith("No known")
