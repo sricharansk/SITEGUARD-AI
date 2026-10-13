@@ -2,6 +2,13 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Review III presentation
+
+- `docs/presentation/SiteGuardAI_Review3_S.K.Sricharan_T9984.pptx`: 16-slide Review III deck on the programme
+  template (introduction, objectives, modules, problem statement, methodology with the system architecture and the
+  incident resolution workflow, approach and tools, findings, conclusion, acknowledgement, references). Every figure
+  comes from docs/EVALUATION.md, docs/RESULTS.md and docs/LOAD_TEST.md.
+
 ### Fewer off-topic actions; a real demo photo
 
 - Triage keeps a hazard or defect label only when more than one ambiguous word supports it, so "tower quarantined"
