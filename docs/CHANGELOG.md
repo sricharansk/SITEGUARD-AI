@@ -2,6 +2,15 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Fewer off-topic actions; a real demo photo
+
+- Triage keeps a hazard or defect label only when more than one ambiguous word supports it, so "tower quarantined"
+  no longer adds a material defect, and its quarantine actions, to a fall from height. Severity still weighs every
+  cue, so it is unchanged. Held-out scores unchanged (class 89%, domain 93%, severity within one 98%, retrieval
+  93%); reviewers now see 90 proposals in the resolve-all run instead of 99.
+- `scripts/demo_walkthrough.py` uploads a small, valid, synthetic PNG (a scaffold tower with one open side) instead
+  of placeholder bytes, so the photo review shows an image.
+
 ### Load test and capacity
 
 - `scripts/load_test.py`: signed-in readers and optional incident reporters against a running stack; per-endpoint

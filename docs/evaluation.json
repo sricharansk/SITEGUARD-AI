@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-12T18:36:22+00:00",
+ "generated_at": "2026-10-13T00:15:05+00:00",
  "provider": "rules",
  "taxonomy_classes": 20,
  "summary": {
@@ -18,7 +18,7 @@
    "capa_has_corrective": 0.9,
    "capa_addresses_class": 1.0,
    "pipeline_invariants": 1.0,
-   "mean_ms": 130.3
+   "mean_ms": 139.4
   },
   "test": {
    "cases": 46,
@@ -35,7 +35,7 @@
    "capa_has_corrective": 0.848,
    "capa_addresses_class": 0.957,
    "pipeline_invariants": 1.0,
-   "mean_ms": 145.8
+   "mean_ms": 166.7
   },
   "all": {
    "cases": 166,
@@ -52,7 +52,7 @@
    "capa_has_corrective": 0.886,
    "capa_addresses_class": 0.988,
    "pipeline_invariants": 1.0,
-   "mean_ms": 134.6
+   "mean_ms": 146.9
   }
  },
  "by_class": {
@@ -170,7 +170,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 118.1
+   "ms": 120.5
   },
   {
    "id": "D02",
@@ -200,7 +200,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 112.0
+   "ms": 126.4
   },
   {
    "id": "D03",
@@ -230,7 +230,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 154.4
+   "ms": 137.2
   },
   {
    "id": "D04",
@@ -260,7 +260,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 127.2
+   "ms": 121.8
   },
   {
    "id": "D05",
@@ -290,7 +290,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 114.2
+   "ms": 132.9
   },
   {
    "id": "D06",
@@ -320,7 +320,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 113.1
+   "ms": 120.3
   },
   {
    "id": "D07",
@@ -350,7 +350,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 124.6
+   "ms": 133.1
   },
   {
    "id": "D08",
@@ -375,12 +375,12 @@
    ],
    "compliance_findings": 3,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 5,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 164.7
+   "ms": 141.9
   },
   {
    "id": "D09",
@@ -405,12 +405,12 @@
    ],
    "compliance_findings": 6,
    "compliance_cites_expected": true,
-   "actions": 5,
+   "actions": 3,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 123.8
+   "ms": 119.1
   },
   {
    "id": "D10",
@@ -440,7 +440,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 108.5
+   "ms": 154.1
   },
   {
    "id": "D11",
@@ -470,7 +470,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 110.5
+   "ms": 135.5
   },
   {
    "id": "D12",
@@ -500,7 +500,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 114.3
+   "ms": 124.0
   },
   {
    "id": "D13",
@@ -530,7 +530,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 164.4
+   "ms": 122.7
   },
   {
    "id": "D14",
@@ -560,7 +560,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 122.4
+   "ms": 111.2
   },
   {
    "id": "D15",
@@ -590,7 +590,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 126.0
+   "ms": 117.3
   },
   {
    "id": "D16",
@@ -620,7 +620,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 124.5
+   "ms": 120.7
   },
   {
    "id": "D17",
@@ -650,7 +650,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 122.0
+   "ms": 118.8
   },
   {
    "id": "D18",
@@ -680,7 +680,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 110.4
+   "ms": 123.2
   },
   {
    "id": "D19",
@@ -710,7 +710,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 109.8
+   "ms": 121.7
   },
   {
    "id": "D20",
@@ -740,7 +740,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 114.1
+   "ms": 130.5
   },
   {
    "id": "D21",
@@ -770,7 +770,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 118.9
+   "ms": 125.2
   },
   {
    "id": "D22",
@@ -800,7 +800,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 111.6
+   "ms": 117.8
   },
   {
    "id": "D23",
@@ -830,7 +830,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 99.9
+   "ms": 144.0
   },
   {
    "id": "D24",
@@ -853,14 +853,14 @@
     "PPE and Temporary Electrical Standard (HSE-STD-002)",
     "Incident Reporting and Investigation Procedure (HSE-PRO-001)"
    ],
-   "compliance_findings": 3,
+   "compliance_findings": 4,
    "compliance_cites_expected": true,
    "actions": 3,
    "has_corrective": false,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 104.6
+   "ms": 136.0
   },
   {
    "id": "T01",
@@ -890,7 +890,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 108.7
+   "ms": 133.1
   },
   {
    "id": "T02",
@@ -913,14 +913,14 @@
     "Site Traffic and Mobile Plant Rules (HSE-PRO-012)",
     "Working at Height Procedure (HSE-PRO-004)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 3,
    "compliance_cites_expected": true,
    "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 105.8
+   "ms": 119.8
   },
   {
    "id": "T03",
@@ -950,7 +950,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 100.2
+   "ms": 131.6
   },
   {
    "id": "T04",
@@ -980,7 +980,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 106.2
+   "ms": 127.0
   },
   {
    "id": "T05",
@@ -1010,7 +1010,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 124.8
+   "ms": 125.1
   },
   {
    "id": "T06",
@@ -1040,7 +1040,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 122.7
+   "ms": 129.9
   },
   {
    "id": "T07",
@@ -1070,7 +1070,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 121.0
+   "ms": 134.9
   },
   {
    "id": "T08",
@@ -1100,7 +1100,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 159.9
+   "ms": 128.4
   },
   {
    "id": "T09",
@@ -1130,7 +1130,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 125.9
+   "ms": 127.8
   },
   {
    "id": "T10",
@@ -1160,7 +1160,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 128.3
+   "ms": 130.2
   },
   {
    "id": "T11",
@@ -1190,7 +1190,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 149.7
+   "ms": 168.3
   },
   {
    "id": "T12",
@@ -1220,7 +1220,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 111.1
+   "ms": 157.1
   },
   {
    "id": "T13",
@@ -1243,14 +1243,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Inspection and Test Plan - Cast-in-place Concrete (QA-ITP-003)"
    ],
-   "compliance_findings": 4,
+   "compliance_findings": 5,
    "compliance_cites_expected": true,
    "actions": 7,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 112.9
+   "ms": 126.7
   },
   {
    "id": "T14",
@@ -1280,7 +1280,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 111.8
+   "ms": 122.1
   },
   {
    "id": "T15",
@@ -1310,7 +1310,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 115.6
+   "ms": 127.1
   },
   {
    "id": "T16",
@@ -1340,7 +1340,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 131.1
+   "ms": 200.3
   },
   {
    "id": "T17",
@@ -1370,7 +1370,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 108.8
+   "ms": 165.7
   },
   {
    "id": "T18",
@@ -1400,7 +1400,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 109.8
+   "ms": 128.2
   },
   {
    "id": "T19",
@@ -1430,7 +1430,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 106.2
+   "ms": 194.6
   },
   {
    "id": "T20",
@@ -1460,7 +1460,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 108.4
+   "ms": 128.1
   },
   {
    "id": "T21",
@@ -1485,12 +1485,12 @@
    ],
    "compliance_findings": 2,
    "compliance_cites_expected": true,
-   "actions": 5,
+   "actions": 3,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 104.3
+   "ms": 115.5
   },
   {
    "id": "T22",
@@ -1520,7 +1520,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 107.3
+   "ms": 124.9
   },
   {
    "id": "T23",
@@ -1550,7 +1550,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 112.2
+   "ms": 127.2
   },
   {
    "id": "T24",
@@ -1580,7 +1580,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 4,
    "invariant_breaks": [],
-   "ms": 106.3
+   "ms": 124.1
   },
   {
    "id": "W01",
@@ -1610,7 +1610,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 114.2
+   "ms": 127.7
   },
   {
    "id": "W02",
@@ -1640,7 +1640,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 115.5
+   "ms": 125.7
   },
   {
    "id": "W03",
@@ -1663,14 +1663,14 @@
     "Working at Height Procedure (HSE-PRO-004)",
     "Working at Height Procedure (HSE-PRO-004)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 1,
    "compliance_cites_expected": true,
    "actions": 6,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 131.3
+   "ms": 123.9
   },
   {
    "id": "W04",
@@ -1700,7 +1700,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 144.1
+   "ms": 123.7
   },
   {
    "id": "W05",
@@ -1730,7 +1730,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 131.6
+   "ms": 128.9
   },
   {
    "id": "W06",
@@ -1760,7 +1760,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 139.6
+   "ms": 131.3
   },
   {
    "id": "W07",
@@ -1783,14 +1783,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Working at Height Procedure (HSE-PRO-004)"
    ],
-   "compliance_findings": 3,
+   "compliance_findings": 2,
    "compliance_cites_expected": true,
    "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 140.9
+   "ms": 132.2
   },
   {
    "id": "W08",
@@ -1820,7 +1820,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 128.3
+   "ms": 129.4
   },
   {
    "id": "W09",
@@ -1850,7 +1850,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 114.6
+   "ms": 132.5
   },
   {
    "id": "W10",
@@ -1880,7 +1880,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 118.6
+   "ms": 128.9
   },
   {
    "id": "W11",
@@ -1903,14 +1903,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Excavation and Trenching Procedure (HSE-PRO-007)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 1,
    "compliance_cites_expected": false,
    "actions": 5,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 106.1
+   "ms": 127.9
   },
   {
    "id": "W12",
@@ -1940,7 +1940,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 113.2
+   "ms": 129.2
   },
   {
    "id": "W13",
@@ -1970,7 +1970,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 133.6
+   "ms": 148.1
   },
   {
    "id": "W14",
@@ -2000,7 +2000,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 180.5
+   "ms": 139.4
   },
   {
    "id": "W15",
@@ -2030,7 +2030,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 126.6
+   "ms": 130.8
   },
   {
    "id": "W16",
@@ -2053,14 +2053,14 @@
     "Working at Height Procedure (HSE-PRO-004)",
     "Regulatory Reference Pointers (for loading official texts)"
    ],
-   "compliance_findings": 4,
+   "compliance_findings": 5,
    "compliance_cites_expected": true,
    "actions": 6,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 149.1
+   "ms": 130.9
   },
   {
    "id": "W17",
@@ -2090,7 +2090,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 173.0
+   "ms": 193.6
   },
   {
    "id": "W18",
@@ -2120,7 +2120,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 136.9
+   "ms": 130.7
   },
   {
    "id": "W19",
@@ -2150,7 +2150,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 136.0
+   "ms": 127.8
   },
   {
    "id": "W20",
@@ -2175,12 +2175,12 @@
    ],
    "compliance_findings": 3,
    "compliance_cites_expected": true,
-   "actions": 4,
+   "actions": 3,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 192.7
+   "ms": 137.3
   },
   {
    "id": "W21",
@@ -2210,7 +2210,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 133.3
+   "ms": 162.8
   },
   {
    "id": "W22",
@@ -2240,7 +2240,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 138.2
+   "ms": 129.9
   },
   {
    "id": "W23",
@@ -2270,7 +2270,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 180.8
+   "ms": 126.5
   },
   {
    "id": "W24",
@@ -2295,12 +2295,12 @@
    ],
    "compliance_findings": 2,
    "compliance_cites_expected": true,
-   "actions": 4,
+   "actions": 2,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 163.3
+   "ms": 132.1
   },
   {
    "id": "W25",
@@ -2330,7 +2330,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 127.7
+   "ms": 138.4
   },
   {
    "id": "W26",
@@ -2360,7 +2360,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 126.9
+   "ms": 140.5
   },
   {
    "id": "W27",
@@ -2390,7 +2390,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 119.9
+   "ms": 140.1
   },
   {
    "id": "W28",
@@ -2420,7 +2420,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 113.5
+   "ms": 140.1
   },
   {
    "id": "W29",
@@ -2450,7 +2450,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 119.0
+   "ms": 145.0
   },
   {
    "id": "W30",
@@ -2480,7 +2480,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 114.6
+   "ms": 135.8
   },
   {
    "id": "W31",
@@ -2510,7 +2510,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 129.3
+   "ms": 128.7
   },
   {
    "id": "W32",
@@ -2540,7 +2540,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 119.6
+   "ms": 132.2
   },
   {
    "id": "W33",
@@ -2570,7 +2570,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 122.9
+   "ms": 130.5
   },
   {
    "id": "W34",
@@ -2600,7 +2600,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 128.8
+   "ms": 128.9
   },
   {
    "id": "W35",
@@ -2630,7 +2630,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 109.7
+   "ms": 120.8
   },
   {
    "id": "W36",
@@ -2660,7 +2660,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 126.6
+   "ms": 129.3
   },
   {
    "id": "W37",
@@ -2690,7 +2690,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 141.5
+   "ms": 132.8
   },
   {
    "id": "W38",
@@ -2715,12 +2715,12 @@
    ],
    "compliance_findings": 4,
    "compliance_cites_expected": true,
-   "actions": 5,
+   "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 149.6
+   "ms": 129.1
   },
   {
    "id": "W39",
@@ -2750,7 +2750,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 130.8
+   "ms": 127.1
   },
   {
    "id": "W40",
@@ -2780,7 +2780,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 131.9
+   "ms": 133.6
   },
   {
    "id": "W41",
@@ -2810,7 +2810,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 125.8
+   "ms": 136.0
   },
   {
    "id": "W42",
@@ -2840,7 +2840,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 132.8
+   "ms": 137.5
   },
   {
    "id": "W43",
@@ -2870,7 +2870,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 147.4
+   "ms": 131.6
   },
   {
    "id": "W44",
@@ -2900,7 +2900,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 154.5
+   "ms": 162.3
   },
   {
    "id": "W45",
@@ -2930,7 +2930,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 149.3
+   "ms": 159.2
   },
   {
    "id": "W46",
@@ -2960,7 +2960,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 145.5
+   "ms": 169.7
   },
   {
    "id": "W47",
@@ -2990,7 +2990,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 169.3
+   "ms": 146.7
   },
   {
    "id": "W48",
@@ -3020,7 +3020,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 126.9
+   "ms": 130.8
   },
   {
    "id": "W49",
@@ -3050,7 +3050,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 127.8
+   "ms": 178.6
   },
   {
    "id": "W50",
@@ -3080,7 +3080,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 173.4
+   "ms": 209.8
   },
   {
    "id": "W51",
@@ -3110,7 +3110,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 151.7
+   "ms": 182.6
   },
   {
    "id": "W52",
@@ -3135,12 +3135,12 @@
    ],
    "compliance_findings": 2,
    "compliance_cites_expected": true,
-   "actions": 3,
+   "actions": 2,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 154.1
+   "ms": 134.3
   },
   {
    "id": "W53",
@@ -3170,7 +3170,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 121.9
+   "ms": 154.2
   },
   {
    "id": "W54",
@@ -3200,7 +3200,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 117.1
+   "ms": 133.3
   },
   {
    "id": "W55",
@@ -3230,7 +3230,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 112.2
+   "ms": 141.1
   },
   {
    "id": "W56",
@@ -3260,7 +3260,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 117.5
+   "ms": 135.9
   },
   {
    "id": "W57",
@@ -3290,7 +3290,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 2,
    "invariant_breaks": [],
-   "ms": 112.9
+   "ms": 150.4
   },
   {
    "id": "W58",
@@ -3320,7 +3320,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 120.0
+   "ms": 137.6
   },
   {
    "id": "W59",
@@ -3350,7 +3350,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 123.6
+   "ms": 172.0
   },
   {
    "id": "W60",
@@ -3380,7 +3380,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 117.0
+   "ms": 125.9
   },
   {
    "id": "W61",
@@ -3410,7 +3410,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 187.3
+   "ms": 173.2
   },
   {
    "id": "W62",
@@ -3440,7 +3440,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 204.2
+   "ms": 172.4
   },
   {
    "id": "W63",
@@ -3465,12 +3465,12 @@
    ],
    "compliance_findings": 4,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 151.9
+   "ms": 150.2
   },
   {
    "id": "W64",
@@ -3493,14 +3493,14 @@
     "Excavation and Trenching Procedure (HSE-PRO-007)",
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)"
    ],
-   "compliance_findings": 5,
+   "compliance_findings": 4,
    "compliance_cites_expected": false,
    "actions": 5,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 162.9
+   "ms": 161.0
   },
   {
    "id": "W65",
@@ -3523,14 +3523,14 @@
     "Inspection and Test Plan - Waterproofing and Structural Steel (QA-ITP-006)",
     "PPE and Temporary Electrical Standard (HSE-STD-002)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 3,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 159.3
+   "ms": 148.0
   },
   {
    "id": "W66",
@@ -3560,7 +3560,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 144.3
+   "ms": 161.5
   },
   {
    "id": "W67",
@@ -3590,7 +3590,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 170.1
+   "ms": 179.0
   },
   {
    "id": "W68",
@@ -3620,7 +3620,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 157.8
+   "ms": 189.0
   },
   {
    "id": "W69",
@@ -3650,7 +3650,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 4,
    "invariant_breaks": [],
-   "ms": 129.3
+   "ms": 167.6
   },
   {
    "id": "W70",
@@ -3671,7 +3671,7 @@
    "retrieved": [
     "Incident Reporting and Investigation Procedure (HSE-PRO-001)",
     "PPE and Temporary Electrical Standard (HSE-STD-002)",
-    "Incident Reporting and Investigation Procedure (HSE-PRO-001)"
+    "Lifting Operations Procedure (HSE-PRO-010)"
    ],
    "compliance_findings": 0,
    "compliance_cites_expected": false,
@@ -3680,7 +3680,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 5,
    "invariant_breaks": [],
-   "ms": 138.2
+   "ms": 149.9
   },
   {
    "id": "W71",
@@ -3710,7 +3710,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 5,
    "invariant_breaks": [],
-   "ms": 129.4
+   "ms": 189.3
   },
   {
    "id": "W72",
@@ -3740,7 +3740,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 5,
    "invariant_breaks": [],
-   "ms": 131.0
+   "ms": 138.1
   },
   {
    "id": "V01",
@@ -3770,7 +3770,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 154.7
+   "ms": 139.4
   },
   {
    "id": "V02",
@@ -3800,7 +3800,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 152.1
+   "ms": 150.7
   },
   {
    "id": "V03",
@@ -3830,7 +3830,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 174.0
+   "ms": 165.5
   },
   {
    "id": "V04",
@@ -3853,14 +3853,14 @@
     "Excavation and Trenching Procedure (HSE-PRO-007)",
     "Working at Height Procedure (HSE-PRO-004)"
    ],
-   "compliance_findings": 5,
+   "compliance_findings": 6,
    "compliance_cites_expected": true,
    "actions": 5,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 132.9
+   "ms": 175.9
   },
   {
    "id": "V05",
@@ -3890,7 +3890,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 136.5
+   "ms": 152.9
   },
   {
    "id": "V06",
@@ -3920,7 +3920,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 136.0
+   "ms": 152.8
   },
   {
    "id": "V07",
@@ -3950,7 +3950,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 132.2
+   "ms": 158.6
   },
   {
    "id": "V08",
@@ -3980,7 +3980,7 @@
    "capa_addresses_class": false,
    "flagged_runs": 3,
    "invariant_breaks": [],
-   "ms": 159.0
+   "ms": 180.7
   },
   {
    "id": "V09",
@@ -4010,7 +4010,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 169.9
+   "ms": 304.6
   },
   {
    "id": "V10",
@@ -4040,7 +4040,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 127.9
+   "ms": 208.6
   },
   {
    "id": "V11",
@@ -4070,7 +4070,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 128.1
+   "ms": 207.4
   },
   {
    "id": "V12",
@@ -4093,14 +4093,14 @@
     "Site Traffic and Mobile Plant Rules (HSE-PRO-012)",
     "Hot Work, Confined Space and Manual Handling Procedure (HSE-PRO-015)"
    ],
-   "compliance_findings": 3,
+   "compliance_findings": 2,
    "compliance_cites_expected": true,
    "actions": 3,
    "has_corrective": false,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 160.9
+   "ms": 178.1
   },
   {
    "id": "V13",
@@ -4130,7 +4130,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 150.6
+   "ms": 190.1
   },
   {
    "id": "V14",
@@ -4160,7 +4160,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 170.3
+   "ms": 179.7
   },
   {
    "id": "V15",
@@ -4190,7 +4190,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 158.1
+   "ms": 145.6
   },
   {
    "id": "V16",
@@ -4220,7 +4220,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 163.1
+   "ms": 191.4
   },
   {
    "id": "V17",
@@ -4250,7 +4250,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 140.4
+   "ms": 190.0
   },
   {
    "id": "V18",
@@ -4280,7 +4280,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 123.2
+   "ms": 162.3
   },
   {
    "id": "V19",
@@ -4303,14 +4303,14 @@
     "Working at Height Procedure (HSE-PRO-004)",
     "Hot Work, Confined Space and Manual Handling Procedure (HSE-PRO-015)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 3,
    "compliance_cites_expected": true,
    "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 129.2
+   "ms": 167.8
   },
   {
    "id": "V20",
@@ -4340,7 +4340,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 134.7
+   "ms": 152.9
   },
   {
    "id": "V21",
@@ -4370,7 +4370,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 150.3
+   "ms": 208.9
   },
   {
    "id": "V22",
@@ -4400,7 +4400,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 167.8
+   "ms": 166.1
   },
   {
    "id": "V23",
@@ -4430,7 +4430,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 177.4
+   "ms": 191.0
   },
   {
    "id": "V24",
@@ -4460,7 +4460,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 130.0
+   "ms": 141.2
   },
   {
    "id": "V25",
@@ -4490,7 +4490,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 116.0
+   "ms": 145.0
   },
   {
    "id": "V26",
@@ -4513,14 +4513,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Hot Work, Confined Space and Manual Handling Procedure (HSE-PRO-015)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 3,
    "compliance_cites_expected": true,
    "actions": 3,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 122.0
+   "ms": 139.3
   },
   {
    "id": "V27",
@@ -4543,14 +4543,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)"
    ],
-   "compliance_findings": 4,
+   "compliance_findings": 6,
    "compliance_cites_expected": true,
    "actions": 7,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 131.7
+   "ms": 139.7
   },
   {
    "id": "V28",
@@ -4573,14 +4573,14 @@
     "Inspection and Test Plan - Cast-in-place Concrete (QA-ITP-003)",
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)"
    ],
-   "compliance_findings": 5,
+   "compliance_findings": 3,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 148.3
+   "ms": 143.5
   },
   {
    "id": "V29",
@@ -4610,7 +4610,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 170.2
+   "ms": 143.4
   },
   {
    "id": "V30",
@@ -4640,7 +4640,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 193.4
+   "ms": 144.0
   },
   {
    "id": "V31",
@@ -4663,14 +4663,14 @@
     "Setting-out, Tolerances and Formwork Striking (QA-PRO-002)",
     "Inspection and Test Plan - Cast-in-place Concrete (QA-ITP-003)"
    ],
-   "compliance_findings": 2,
+   "compliance_findings": 1,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 5,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 163.9
+   "ms": 139.8
   },
   {
    "id": "V32",
@@ -4700,7 +4700,7 @@
    "capa_addresses_class": false,
    "flagged_runs": 4,
    "invariant_breaks": [],
-   "ms": 145.0
+   "ms": 139.5
   },
   {
    "id": "V33",
@@ -4730,7 +4730,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 130.9
+   "ms": 138.9
   },
   {
    "id": "V34",
@@ -4760,7 +4760,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 131.6
+   "ms": 140.7
   },
   {
    "id": "V35",
@@ -4785,12 +4785,12 @@
    ],
    "compliance_findings": 2,
    "compliance_cites_expected": true,
-   "actions": 3,
+   "actions": 2,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 180.9
+   "ms": 147.1
   },
   {
    "id": "V36",
@@ -4820,7 +4820,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 119.6
+   "ms": 152.9
   },
   {
    "id": "V37",
@@ -4850,7 +4850,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 117.4
+   "ms": 219.6
   },
   {
    "id": "V38",
@@ -4880,7 +4880,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 116.8
+   "ms": 136.0
   },
   {
    "id": "V39",
@@ -4903,14 +4903,14 @@
     "Inspection and Test Plan - Waterproofing and Structural Steel (QA-ITP-006)",
     "Inspection and Test Plan - Waterproofing and Structural Steel (QA-ITP-006)"
    ],
-   "compliance_findings": 4,
+   "compliance_findings": 5,
    "compliance_cites_expected": true,
-   "actions": 6,
+   "actions": 4,
    "has_corrective": true,
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 118.3
+   "ms": 138.3
   },
   {
    "id": "V40",
@@ -4940,7 +4940,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 137.7
+   "ms": 147.9
   },
   {
    "id": "V41",
@@ -4970,7 +4970,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 161.1
+   "ms": 166.5
   },
   {
    "id": "V42",
@@ -5000,7 +5000,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 167.9
+   "ms": 182.4
   },
   {
    "id": "V43",
@@ -5030,7 +5030,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 0,
    "invariant_breaks": [],
-   "ms": 173.5
+   "ms": 216.7
   },
   {
    "id": "V44",
@@ -5060,7 +5060,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 1,
    "invariant_breaks": [],
-   "ms": 159.4
+   "ms": 182.4
   },
   {
    "id": "V45",
@@ -5090,7 +5090,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 5,
    "invariant_breaks": [],
-   "ms": 126.8
+   "ms": 140.1
   },
   {
    "id": "V46",
@@ -5120,7 +5120,7 @@
    "capa_addresses_class": true,
    "flagged_runs": 5,
    "invariant_breaks": [],
-   "ms": 117.3
+   "ms": 160.9
   }
  ],
  "redteam": [
