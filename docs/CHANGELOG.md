@@ -2,6 +2,17 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### A crane mentioned in passing is not a lifting operation
+
+- Triage ignores a crane named only as the reason for something else ("a section of guardrail had been removed for
+  crane access"). That phrase had added Lifting operation / crane to a slab-edge slip, and with it the action
+  "Suspend lifts until the lift plan is reviewed", which the scripted reviewer approved. A crane that is part of what
+  happened ("the crane lost a load", "crane overturned") is still a lifting operation; a test covers both.
+- No dev or held-out case changes label, so the evaluation is unchanged. Resolve-all: 21/21 closed, 79 decisions
+  (64 approved, 15 rejected); SG-2026-0015 now has 4 proposed actions, all about the fall.
+- Review III deck: the findings slide uses this run (15 actions awaiting review and 4 overdue before the run,
+  79 decisions) and a new dashboard image; it had still shown figures from before the previous change.
+
 ### One word counts once; every class has a corrective action
 
 - Triage scoring counts a keyword only where no longer keyword of the same label covers it, so "specification" no
