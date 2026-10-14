@@ -101,6 +101,26 @@ def test_a_word_inside_a_longer_keyword_is_counted_once():
     assert rules._scores("the specification", rules.QUALITY_DEFECTS) == {"Material nonconformance": 0.5}
 
 
+def test_a_crane_mentioned_in_passing_is_not_a_lifting_hazard():
+    pack = _pack(
+        "Worker slipped at unprotected slab edge on level 7",
+        "A carpenter stepped back towards the slab edge where a section of guardrail had been removed for crane "
+        "access and not reinstated. He lost footing and was caught by a colleague. He was not wearing a harness.",
+        people_involved=1,
+    )
+    out = rules.triage(pack)
+    assert out.hazards == ["Fall from height"] and out.severity_candidate == Severity.HIGH
+    actions = rules.capa({**pack, "prior": {"triage": out.model_dump()}}).actions
+    assert actions and all(a.addresses != "Lifting operation / crane" for a in actions)
+    # A crane that is part of what happened is still a lifting operation.
+    lift = rules.triage(_pack("Crane overturned on soft ground", "The mobile crane overturned during setup."))
+    assert lift.incident_class == "Lifting operation / crane"
+    load = rules.triage(_pack("Load dropped near pedestrians", "The crane lost a load when a sling failed."))
+    assert "Lifting operation / crane" in load.hazards
+    slinger = rules.triage(_pack("Near miss during lift", "The slinger for the crane lift stood under the load."))
+    assert slinger.incident_class == "Lifting operation / crane"
+
+
 def test_every_class_has_a_corrective_action():
     # Corrective actions must come from the incident's own class, never from an incidental extra label.
     classes = set(rules.SAFETY_HAZARDS) | set(rules.QUALITY_DEFECTS)
