@@ -2,6 +2,15 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Fresh screenshots; Review III deck with the product screens
+
+- `docs/screenshots/` recaptured by the browser end-to-end run on main (after the crane-access fix: the action queue
+  no longer shows a lift-plan action for the slab-edge slip).
+- Review III deck, now 18 slides: two new findings slides show the product in use (AI investigation, action queue,
+  verified closure; grounded answer, photo review, audit trail) from the same run. Backend test count 255 → 267 on
+  the performance slide (and 249 → 267 in the README quick start). Every other figure re-checked against
+  EVALUATION.md, RESULTS.md and LOAD_TEST.md.
+
 ### A crane mentioned in passing is not a lifting operation
 
 - Triage ignores a crane named only as the reason for something else ("a section of guardrail had been removed for
