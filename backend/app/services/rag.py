@@ -15,6 +15,7 @@ import logging
 import math
 import re
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 
@@ -302,7 +303,9 @@ def _vector(db: Session, stmt, query: str, candidates: int) -> dict[str, float]:
 
         distance = ChunkEmbedding.vector.op("<=>", return_type=Float())(cast(literal(str(qvec)), Vector()))
         rows = db.execute(
-            vstmt.with_only_columns(DocumentChunk.id, distance.label("d")).order_by(distance).limit(candidates)
+            vstmt.with_only_columns(DocumentChunk.id, distance.label("d"))
+            .order_by(distance, Document.title, Document.version, DocumentChunk.ordinal, DocumentChunk.id)
+            .limit(candidates)
         ).all()
         sims = {cid: 1.0 - float(d) for cid, d in rows}
     else:
@@ -311,8 +314,8 @@ def _vector(db: Session, stmt, query: str, candidates: int) -> dict[str, float]:
     return {cid: s for cid, s in sims.items() if s >= MIN_VECTOR_SIMILARITY}
 
 
-def _rank(scores: dict[str, float]) -> dict[str, int]:
-    ordered = sorted(scores, key=lambda cid: (-scores[cid], cid))
+def _rank(scores: dict[str, float], tiebreak: Callable[[str], tuple]) -> dict[str, int]:
+    ordered = sorted(scores, key=lambda cid: (-scores[cid], tiebreak(cid)))
     return {cid: i + 1 for i, cid in enumerate(ordered)}
 
 
@@ -349,15 +352,22 @@ def search(
     if not rows or not tokenize(query):
         return []
     by_id = {c.id: (c, d) for c, d in rows}
+
+    def tiebreak(cid: str) -> tuple:
+        # Equal scores are ordered by what the passage is (document, version, position), not by its random id,
+        # so the same query over the same documents ranks the same way in every database.
+        chunk, doc = by_id[cid]
+        return (doc.title, doc.version, chunk.ordinal, cid)
+
     lexical = _bm25(rows, query)
     vector = _vector(db, stmt, query, candidates=max(limit * 8, 40)) if mode == "hybrid" else {}
-    lex_rank, vec_rank = _rank(lexical), _rank(vector)
+    lex_rank, vec_rank = _rank(lexical, tiebreak), _rank(vector, tiebreak)
     fused = {
         cid: sum(1.0 / (RRF_K + r[cid]) for r in (lex_rank, vec_rank) if cid in r) for cid in set(lexical) | set(vector)
     }
     if not fused:
         return []
-    top = sorted(fused, key=lambda cid: (-fused[cid], cid))[: max(limit * 4, 20)]
+    top = sorted(fused, key=lambda cid: (-fused[cid], tiebreak(cid)))[: max(limit * 4, 20)]
     best = max(fused.values())
     hits: list[Hit] = []
     for cid in top:
@@ -389,5 +399,5 @@ def search(
                 },
             )
         )
-    hits.sort(key=lambda h: (-h.score, h.chunk_id))
+    hits.sort(key=lambda h: (-h.score, tiebreak(h.chunk_id)))
     return hits[:limit]

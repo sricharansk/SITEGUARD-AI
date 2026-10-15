@@ -2,6 +2,18 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Retrieval ranks the same way in every database
+
+- Equal retrieval scores were ordered by chunk id, a random UUID created when a document is loaded, so the same
+  query could return its top passages in a different order on another database. Measured on the 166 evaluation
+  queries: 8 differed between five freshly seeded SQLite databases and 4 between two fresh PostgreSQL databases.
+- Ties are now broken by document title, version and the passage's position in the document (the chunk id only as
+  a last resort), in BM25 and vector ranking, fusion, the final sort and the pgvector candidate query. After the
+  fix, 0 queries differ on SQLite (five databases) and on PostgreSQL (two). A test with tied passages fails without
+  the fix.
+- Re-running with the fix leaves every evaluation metric, the committed per-case retrieval lists, RESULTS.md and
+  all 21 incident reports unchanged (apart from timings, ids and dates), so they are not regenerated. Backend tests 269 → 270 in the README and the Review III deck.
+
 ### A worker is not evidence about how work is done
 
 - The compliance agent no longer reads "worker" in a report as the requirement word "work". "Worker without hard hat
