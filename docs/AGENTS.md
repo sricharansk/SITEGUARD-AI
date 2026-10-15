@@ -91,7 +91,9 @@ Every output carries `confidence`, `evidence_refs` and `open_questions`.
   words that name a place or a reason rather than the hazard: crane access ("guardrail removed for crane access") is
   not a lift, and someone under a scaffold ("no hard hat under the scaffold loading bay") is not working at height. It
   reports BOTH only with real evidence on both sides, never narrows a reported BOTH while both sides have evidence,
-  and leaves a report unclassified (for a person to classify) when only one ambiguous word matched.
+  and leaves a report unclassified (for a person to classify) when only one ambiguous word matched. The compliance
+  agent cites a requirement only when it shares two words with the report (or one hazard term), and marks it likely
+  not met only when the report negates one of them; "worker" does not count as the requirement word "work".
 - `anthropic`: Claude (`SITEGUARD_ANTHROPIC_MODEL`, default `claude-opus-5-5`) reads the evidence pack and returns
   the agent's schema through structured outputs. The model gets no tools and no write access.
 

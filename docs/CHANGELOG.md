@@ -2,6 +2,17 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### A worker is not evidence about how work is done
+
+- The compliance agent no longer reads "worker" in a report as the requirement word "work". "Worker without hard hat
+  under scaffold loading bay ... materials were being lifted" had cited "Loads must not exceed the safe working load
+  (SWL)" as likely not met: "worker" matched "working" and "without" made it look negated, and "loading bay" matched
+  "loads". Other forms still match ("working at height", "spacers" for spacing, "kerb lifter" for lifting); a test
+  covers both.
+- Across all 166 evaluation cases and the browser-test report, that SWL finding is the only compliance finding that
+  changes; every evaluation metric is unchanged, so EVALUATION.md and RESULTS.md are not regenerated. Screenshot 08
+  is recaptured. Backend tests 268 → 269 in the README and the Review III deck.
+
 ### Someone under a scaffold is not working at height
 
 - Triage no longer counts "scaffold" as fall-from-height evidence when the person is under, below or beneath it.

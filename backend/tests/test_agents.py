@@ -241,6 +241,33 @@ def test_injected_document_is_flagged_and_not_cited():
     assert any("instruction-like" in r for r in result.review_reasons)
 
 
+def test_a_worker_is_not_evidence_about_how_work_is_done():
+    def hit(ref, title, text):
+        return {"ref": ref, "document_title": title, "section": "s", "domain": "SAFETY", "text": text}
+
+    swl = hit("chunk:swl", "Lifting Operations Procedure", "Loads must not exceed the safe working load (SWL).")
+    ppe = hit(
+        "chunk:ppe",
+        "PPE Standard",
+        "Hard hats must be worn wherever there is overhead work, including on decks below crane lifts, scaffolds and "
+        "other trades.",
+    )
+    pack = _pack(
+        "Worker without hard hat under scaffold loading bay",
+        "A worker was seen without a hard hat under the scaffold loading bay while materials were being lifted.",
+        knowledge=[swl, ppe],
+    )
+    out = rules.compliance(pack)
+    # "worker" no longer counts as the requirement word "work" (and "loading bay" alone is one weak word), so the
+    # safe-working-load rule is not cited; the hard hat rule still is, as likely not met.
+    assert [f.source_ref for f in out.findings] == ["chunk:ppe"]
+    assert out.findings[0].status == "LIKELY_NOT_MET"
+    # Other forms of "work" still match: someone working at height without a harness.
+    wah = hit("chunk:wah", "Working at Height Procedure", "Work at height must use a harness clipped to an anchor.")
+    pack = _pack("Roofer unclipped", "A roofer was working at height on the roof without a harness.", knowledge=[wah])
+    assert [f.status for f in rules.compliance(pack).findings] == ["LIKELY_NOT_MET"]
+
+
 class _CitingPoisonProvider(Provider):
     """A model that followed the poisoned chunk and cites it."""
 
