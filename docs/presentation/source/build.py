@@ -1565,7 +1565,7 @@ text(
     ],
 )
 gates = [
-    ("270", "backend tests (unit, API, migrations, evaluation, red-team)"),
+    ("271", "backend tests (unit, API, migrations, evaluation, red-team)"),
     ("6", "browser end-to-end tests"),
     ("7", "CI jobs green on every pull request"),
     ("0", "open dependency-audit findings (Python + npm)"),

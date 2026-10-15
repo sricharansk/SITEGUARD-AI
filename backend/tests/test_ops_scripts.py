@@ -386,3 +386,15 @@ def test_load_test_percentiles():
     assert load_test.pct([5.0], 99) == 5.0
     values = [float(v) for v in range(1, 101)]
     assert load_test.pct(values, 50) == 50.0 and load_test.pct(values, 95) == 95.0 and load_test.pct(values, 99) == 99.0
+
+
+# -- label_snapshot.py -------------------------------------------------------------------------------------------
+
+
+def test_label_snapshot_lists_every_case_and_is_deterministic():
+    label_snapshot = load_script("label_snapshot")
+    first, second = label_snapshot.snapshot(), label_snapshot.snapshot()
+    assert first == second
+    assert len(first) == 186  # 120 dev + 46 held-out + 20 seeded incidents
+    assert any(line.startswith("heldout_v2.yaml V01 ") for line in first)
+    assert any("Worker slipped at unprotected slab edge" in line and "Lifting" not in line for line in first)

@@ -193,7 +193,7 @@ escalations, mean 6.1 days to close.
 requests/s with read p95 0.80 s and 0 errors; 113 concurrent report-and-investigate cycles without a reference
 collision.
 
-**Tests**: 270 backend tests (unit, API, migrations, evaluation and red-team gates; 9 need PostgreSQL or Neo4j and
+**Tests**: 271 backend tests (unit, API, migrations, evaluation and red-team gates; 9 need PostgreSQL or Neo4j and
 run in their own CI jobs) and 6 browser end-to-end tests.
 
 ## Timeline of work (merged pull requests)
@@ -254,7 +254,8 @@ conclusion, acknowledgement, references. To change a figure or refresh screensho
 ## How to make common changes
 
 - **Agent behaviour** (`backend/app/agents/rules.py`): before and after a change, compare the labels of every dev,
-  held-out and seed case and run `make eval`. Narrow fixes this week (crane access, under a scaffold, worker ≠
+  held-out and seed case (`cd backend && python ../scripts/label_snapshot.py --out before.txt`, change, write
+  `after.txt`, then diff) and run `make eval`. Narrow fixes this week (crane access, under a scaffold, worker ≠
   work) each changed one case; broader versions moved 5–15 cases and were dropped. Add a test for both directions.
 - **Retrieval** (`backend/app/services/rag.py`): run `make eval` and the PostgreSQL tests
   (`SITEGUARD_TEST_POSTGRES_URL=... pytest tests/test_postgres.py`).

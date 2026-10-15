@@ -28,7 +28,7 @@ update the figure in `build.py` from its source and rebuild:
 | 12 Findings: end-to-end | before/after table, agent runs, decisions, incidents closed | `docs/RESULTS.md` |
 | 15 Findings: performance and quality | load-test table, backend test count, CI jobs | `docs/LOAD_TEST.md`, `pytest --collect-only -q` |
 
-Search `build.py` for the old value (for example `"270", "backend tests`) to find where it is set.
+Search `build.py` for the old value (for example `("271", "backend tests`) to find where it is set.
 
 ## Refresh the screenshots
 
