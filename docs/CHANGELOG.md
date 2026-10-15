@@ -2,6 +2,15 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Someone under a scaffold is not working at height
+
+- Triage no longer counts "scaffold" as fall-from-height evidence when the person is under, below or beneath it.
+  "Worker without hard hat under scaffold loading bay" had been labelled Fall from height as well as PPE, and was
+  given edge-protection and work-at-height permit actions. Someone on a scaffold, or falling from one, is still a
+  fall from height; a test covers both.
+- No dev, held-out or seed case changes label, so EVALUATION.md and RESULTS.md are unchanged. Screenshot 08 is
+  recaptured (2 proposed actions, both about PPE). Backend tests 267 → 268 in the README and the Review III deck.
+
 ### Fresh screenshots; Review III deck with the product screens
 
 - `docs/screenshots/` recaptured by the browser end-to-end run on main (after the crane-access fix: the action queue
