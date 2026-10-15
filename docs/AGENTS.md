@@ -121,7 +121,8 @@ and escapes `<` and `>` in the pack so its content cannot close the tag.
 and embedded. Access filters (organization, then organization-wide or this project's documents, `READY` only) are
 applied in the database query before any scoring. BM25 and vector similarity rank the allowed chunks, reciprocal
 rank fusion combines them, and a deterministic reranker (query coverage, heading match, phrase match) orders the
-top candidates. The embedder is offline and deterministic (`hashing-bow` v1, Decision 017); a semantic model plugs
+top candidates. Equal scores are ordered by document title, version and position in the document, never by the
+random chunk id, so the same query over the same documents ranks the same way in every database. The embedder is offline and deterministic (`hashing-bow` v1, Decision 017); a semantic model plugs
 in behind the `Embedder` interface. `SITEGUARD_RETRIEVAL_MODE=lexical` uses BM25 only.
 
 ## Vision
