@@ -2,6 +2,11 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Handover kept current
+
+- `CLAUDE.md`: PRs #2 and #3 are recorded as closed (superseded by #4–#6), and the handover's own pull request (#16)
+  is in the timeline.
+
 ### Handover for continuing on another machine; deck build kit in the repository
 
 - `CLAUDE.md` gains a handover section: how to continue on a laptop step by step, status, what the product is,

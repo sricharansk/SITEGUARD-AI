@@ -135,7 +135,7 @@ an Azure subscription and approval, expert-labelled data). There is no live depl
 
 | What | Where |
 |---|---|
-| Repository | https://github.com/sricharansk/SITEGUARD-AI (branch `main`; every pull request from #4 on is merged) |
+| Repository | https://github.com/sricharansk/SITEGUARD-AI (branch `main`; no open pull requests) |
 | Review III presentation | `docs/presentation/SiteGuardAI_Review3_S.K.Sricharan_T9984.pptx` (18 slides); build kit in `docs/presentation/source/` |
 | Results of a full run | `docs/RESULTS.md`, one report per incident in `docs/reports/` |
 | Agent accuracy | `docs/EVALUATION.md`, `docs/evaluation.json` |
@@ -213,10 +213,10 @@ run in their own CI jobs) and 6 browser end-to-end tests.
 | #13 | 2026-10-15 | Someone under a scaffold is not working at height |
 | #14 | 2026-10-15 | "Worker" no longer counts as the requirement word "work" (wrong SWL citation) |
 | #15 | 2026-10-15 | Retrieval ties broken by document and position, so ranking is the same in every database |
-| this | 2026-10-15 | This handover and the deck build kit |
+| #16 | 2026-10-15 | This handover, the deck build kit and the label snapshot script |
 
-PRs #2 (hardening and Prompt 00 baseline) and #3 (an earlier Next.js web app) are still **open** but superseded:
-#2's features were rebuilt on `main` in #5 and #6 (Decision 015) and #4 replaced #3's web app. They can be closed.
+PRs #2 (hardening and Prompt 00 baseline) and #3 (an earlier Next.js web app) were closed without merging on
+2026-10-15: #2's features were rebuilt on `main` in #5 and #6 (Decision 015) and #4 replaced #3's web app.
 
 ## Run it on your laptop
 
