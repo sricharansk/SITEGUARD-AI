@@ -738,9 +738,11 @@ _PERSON_STRUCK = re.compile(
     r"\b(struck|striking|hit|hitting|knocked)\b (?:a |the |his |her |their |one |another )?" + _PEOPLE + r"\b"
     r"|\b" + _PEOPLE + r"\b (?:was |were |got |is |had been )(?:struck|hit|knocked down|knocked over)\b"
 )
-# Crane access ("guardrail removed for crane access") is a reason for something else, not a lift; "for the crane"
-# alone is not excluded, since "the slinger for the crane lift" is a lift.
-_CRANE_IN_PASSING = re.compile(r"\bcrane access\b")
+# Words that name a place or a reason, not the hazard, so they are not evidence for it:
+# - crane access ("guardrail removed for crane access") is not a lift; "for the crane" alone is not excluded, since
+#   "the slinger for the crane lift" is a lift;
+# - someone under a scaffold ("no hard hat under the scaffold loading bay") is below it, not working at height on it.
+_IN_PASSING = re.compile(r"\bcrane access\b|\b(?:under|underneath|below|beneath) (?:the |a )?scaffold(?:ing)?\b")
 # A person falling or nearly falling.
 _PERSON_FELL = re.compile(
     r"\b(he|she|they|worker|operative|man|labourer|laborer|roofer|scaffolder|carpenter|joiner|electrician|painter|"
@@ -765,8 +767,8 @@ def _scores(text: str, taxonomy: dict[str, list[str]], title: str = "") -> dict[
     """Weighted keyword evidence per label: title matches count double, ambiguous words count half."""
     out: dict[str, float] = {}
     if taxonomy is SAFETY_HAZARDS:
-        text = _CRANE_IN_PASSING.sub(lambda m: " " * len(m.group()), text)
-        title = _CRANE_IN_PASSING.sub(lambda m: " " * len(m.group()), title)
+        text = _IN_PASSING.sub(lambda m: " " * len(m.group()), text)
+        title = _IN_PASSING.sub(lambda m: " " * len(m.group()), title)
     for name, words in taxonomy.items():
         spans = {w: _spans(text, w) for w in words}
         s = 0.0

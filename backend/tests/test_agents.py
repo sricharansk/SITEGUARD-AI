@@ -121,6 +121,22 @@ def test_a_crane_mentioned_in_passing_is_not_a_lifting_hazard():
     assert slinger.incident_class == "Lifting operation / crane"
 
 
+def test_a_worker_under_a_scaffold_is_not_working_at_height():
+    pack = _pack(
+        "Worker without hard hat under scaffold loading bay",
+        "A worker was seen without a hard hat under the scaffold loading bay while materials were being lifted.",
+    )
+    out = rules.triage(pack)
+    assert out.hazards == ["Missing or incorrect PPE"]
+    actions = rules.capa({**pack, "prior": {"triage": out.model_dump()}}).actions
+    assert actions and all(a.addresses != "Fall from height" for a in actions)
+    # Someone on the scaffold, or falling from it, is still a fall from height.
+    on = rules.triage(_pack("Scaffold edge left open", "A worker on the scaffold had no guardrail at the open edge."))
+    assert on.incident_class == "Fall from height"
+    fell = rules.triage(_pack("Worker fell under scaffold", "He slipped and fell 3 m from the deck under the scaffold"))
+    assert fell.incident_class == "Fall from height"
+
+
 def test_every_class_has_a_corrective_action():
     # Corrective actions must come from the incident's own class, never from an incidental extra label.
     classes = set(rules.SAFETY_HAZARDS) | set(rules.QUALITY_DEFECTS)
