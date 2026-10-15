@@ -2,6 +2,18 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Handover for continuing on another machine; deck build kit in the repository
+
+- `CLAUDE.md` gains a handover section: how to continue on a laptop step by step, status, what the product is,
+  results, the timeline of pull requests, how to run it, the presentation, how to make common changes, gotchas and
+  the open items that need the owner. Claude Code reads it on start, so no old conversation needs to be copied.
+- `docs/presentation/source/`: the script, staged template and images that build the Review III deck, plus scripts
+  to capture and crop fresh screenshots. `python docs/presentation/source/build.py` rebuilds the deck (now giving
+  271 backend tests on slide 15).
+- `scripts/label_snapshot.py` writes the rules provider's labels for all 186 dev, held-out and seeded cases, so a
+  change to `rules.py` can be diffed before and after (the check behind PRs #11, #13 and #14). README and deck: 271
+  backend tests.
+
 ### Retrieval ranks the same way in every database
 
 - Equal retrieval scores were ordered by chunk id, a random UUID created when a document is loaded, so the same
