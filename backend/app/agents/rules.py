@@ -1261,9 +1261,16 @@ def rca(pack: dict) -> RcaOutput:
 # --- Compliance ---------------------------------------------------------------------------------
 
 
+def _mentions(word: str) -> re.Pattern[str]:
+    """Where the report uses a requirement word (word-prefix match, as in _has). Almost every report names a
+    'worker', which is not evidence about how work is done, so 'work' does not match it; other longer forms still
+    match ('spacing' / 'spacers', 'lift' / 'kerb lifter')."""
+    return re.compile(r"\b" + re.escape(word) + (r"(?!ers?\b)" if word == "work" else ""))
+
+
 def _negated_near(text: str, word: str, window: int = 30) -> bool:
     """True if a negation cue appears in the same sentence shortly before (or right after) a mention of word."""
-    for m in re.finditer(r"\b" + re.escape(word), text):
+    for m in _mentions(word).finditer(text):
         before = text[max(0, m.start() - window) : m.start()].rsplit(".", 1)[-1]
         after = text[m.end() : m.end() + 15].split(".", 1)[0]
         if any(_has(f"{before} {after}", c.strip()) for c in NEGATION_CUES):
@@ -1322,7 +1329,7 @@ def compliance(pack: dict) -> ComplianceOutput:
         for m in _REQ_SENTENCE.finditer(" ".join(hit["text"].split())):
             sentence = m.group(0).strip(" -*\n")
             words = [_stem(w) for w in re.findall(r"[a-z]{5,}", sentence.lower()) if w not in _GENERIC]
-            overlap = [w for w in words if _has(text, w)]
+            overlap = [w for w in words if _mentions(w).search(text)]
             if len(set(overlap)) < 2 and not set(overlap) & hazard_terms:
                 continue  # one shared word is too weak to call a requirement relevant
             negated = any(_negated_near(text, w) for w in overlap)
