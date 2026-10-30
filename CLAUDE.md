@@ -216,7 +216,7 @@ run in their own CI jobs) and 6 browser end-to-end tests.
 | #15 | 2026-10-15 | Retrieval ties broken by document and position, so ranking is the same in every database |
 | #16 | 2026-10-15 | This handover, the deck build kit and the label snapshot script |
 | #17 | 2026-10-15 | PRs #2 and #3 recorded as closed in the handover |
-| next | 2026-10-30 | Append-only audit trail (migration 0006), `GET /ready`, `docs/LOCAL_SETUP.md`, results rerun on PostgreSQL (same figures) |
+| #18 | 2026-10-30 | Append-only audit trail (migration 0006), `GET /ready`, `docs/LOCAL_SETUP.md`, results rerun on PostgreSQL (same figures) |
 
 PRs #2 (hardening and Prompt 00 baseline) and #3 (an earlier Next.js web app) were closed without merging on
 2026-10-15: #2's features were rebuilt on `main` in #5 and #6 (Decision 015) and #4 replaced #3's web app.
