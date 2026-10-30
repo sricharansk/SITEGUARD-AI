@@ -70,7 +70,7 @@ Do not use permission-bypass or destructive shortcuts to avoid an engineering ga
 # Project context and progress (handover)
 
 This section records everything built for Site Guard AI, so work can continue on any machine without the old
-conversations. Last updated **2026-10-15**. Site Guard AI is the second of two projects; the first, Claim Sense, is
+conversations. Last updated **2026-10-30**. Site Guard AI is the second of two projects; the first, Claim Sense, is
 in https://github.com/sricharansk/CLAIM-SENSE with its own `CLAUDE.md`.
 
 ## Continue on your own laptop (step by step)
@@ -141,7 +141,8 @@ an Azure subscription and approval, expert-labelled data). There is no live depl
 | Agent accuracy | `docs/EVALUATION.md`, `docs/evaluation.json` |
 | Load test | `docs/LOAD_TEST.md` |
 | Screenshots | `docs/screenshots/01`–`09` (shown in the README) |
-| Changes, decisions, plan | `docs/CHANGELOG.md`, `docs/DECISIONS.md` (Decisions 001–025), `docs/ROADMAP.md` |
+| Changes, decisions, plan | `docs/CHANGELOG.md`, `docs/DECISIONS.md` (Decisions 001–026), `docs/ROADMAP.md` |
+| Running it locally, step by step | `docs/LOCAL_SETUP.md` |
 
 ## What the product is
 
@@ -163,7 +164,7 @@ incident with evidence; bounded agents investigate; people approve every action 
 - **Also built**: Word/PDF investigation reports, an email outbox (off by default), photo evidence review with
   engineer validation (no detection model configured), an optional Neo4j knowledge graph, resumable workflows,
   nine roles with server-side RBAC, tenant isolation, SHA-256 evidence provenance, audit trail with correlation IDs.
-- **Stack**: Python 3.12, FastAPI, SQLAlchemy, Alembic (migrations 0001–0005), PostgreSQL 16 + pgvector, optional
+- **Stack**: Python 3.12, FastAPI, SQLAlchemy, Alembic (migrations 0001–0006), PostgreSQL 16 + pgvector, optional
   Neo4j; Next.js 16 static export served by the API at `/app`; Playwright; one Docker image; GitHub Actions;
   Azure Bicep.
 
@@ -193,7 +194,7 @@ escalations, mean 6.1 days to close.
 requests/s with read p95 0.80 s and 0 errors; 113 concurrent report-and-investigate cycles without a reference
 collision.
 
-**Tests**: 271 backend tests (unit, API, migrations, evaluation and red-team gates; 9 need PostgreSQL or Neo4j and
+**Tests**: 275 backend tests (unit, API, migrations, evaluation and red-team gates; 10 need PostgreSQL or Neo4j and
 run in their own CI jobs) and 6 browser end-to-end tests.
 
 ## Timeline of work (merged pull requests)
@@ -214,6 +215,8 @@ run in their own CI jobs) and 6 browser end-to-end tests.
 | #14 | 2026-10-15 | "Worker" no longer counts as the requirement word "work" (wrong SWL citation) |
 | #15 | 2026-10-15 | Retrieval ties broken by document and position, so ranking is the same in every database |
 | #16 | 2026-10-15 | This handover, the deck build kit and the label snapshot script |
+| #17 | 2026-10-15 | PRs #2 and #3 recorded as closed in the handover |
+| next | 2026-10-30 | Append-only audit trail (migration 0006), `GET /ready`, `docs/LOCAL_SETUP.md`, results rerun on PostgreSQL (same figures) |
 
 PRs #2 (hardening and Prompt 00 baseline) and #3 (an earlier Next.js web app) were closed without merging on
 2026-10-15: #2's features were rebuilt on `main` in #5 and #6 (Decision 015) and #4 replaced #3's web app.
@@ -274,6 +277,12 @@ conclusion, acknowledgement, references. To change a figure or refresh screensho
 - **`resolve_all.py` needs a fresh database**: it resolves whatever is open.
 - **Browser tests** need a fresh database too; set `CHROMIUM_PATH` to use an already installed Chromium.
 - **Never commit** `.env`, databases, evidence files or certificates.
+- **Audit events cannot be edited or deleted** on a migrated database (triggers from 0006). To reset demo data,
+  drop and recreate the database (`docker compose down -v`), do not delete rows.
+- **Unmerged earlier work**: the first build-out thread left a git bundle (in the project files,
+  `siteguard-handoff/`) with project-scoped audit, `/metrics`, agent provenance and a 26-test prompt-injection
+  suite, built on an old base. Only the append-only triggers and `/ready` were rebuilt on `main`; the rest needs
+  porting and review if wanted.
 - **Network**: the cloud sessions used to build this could not reach osha.gov (proxy 403), so the OSHA pipeline has
   never run on the real file; run it on your laptop.
 

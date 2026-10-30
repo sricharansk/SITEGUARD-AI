@@ -2,6 +2,22 @@
 
 ## Unreleased — rebuilding PR #2 on main
 
+### Append-only audit trail, readiness check, local setup guide and refreshed results
+
+- Migration `0006`: triggers refuse `UPDATE`, `DELETE` and (PostgreSQL) `TRUNCATE` on `audit_events`, so the audit
+  trail stays append-only for every database client (Decision 026). Tested on a migrated SQLite database and on
+  PostgreSQL; the full demo run and the browser tests pass on the migrated PostgreSQL database.
+- `GET /ready`: readiness (database answers, schema at the latest migration; 503 `NOT_READY` otherwise). The Azure
+  readiness probe now uses it; `/health` stays the liveness check.
+- `docs/LOCAL_SETUP.md`: running on a laptop step by step (SQLite, Docker or a local PostgreSQL), running every test
+  suite and refreshing the results, with the numbers each step should show and a troubleshooting table.
+- Results refreshed on 30 October 2026: `scripts/resolve_all.py` on a fresh PostgreSQL database and
+  `python -m app.evaluation`. The figures are the same as the 13 October run (21 of 21 closed, 107 agent runs with
+  0 failures, 64 approved and 15 rejected; held-out class 89.1%, domain 93.5%, severity within one 97.7%,
+  retrieval 93.5%, red team 10/10); only dates, due dates and timings changed.
+- Tests: 275 backend tests (265 pass and 10 skip on SQLite; 274 pass with PostgreSQL, 1 needs Neo4j); deck slide 15
+  updated to 275.
+
 ### Handover kept current
 
 - `CLAUDE.md`: PRs #2 and #3 are recorded as closed (superseded by #4–#6), and the handover's own pull request (#16)

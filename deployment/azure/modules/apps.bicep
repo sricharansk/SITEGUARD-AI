@@ -134,7 +134,7 @@ resource api 'Microsoft.App/containerApps@2024-03-01' = {
             }
             {
               type: 'Readiness'
-              httpGet: { path: '/health', port: 8000 }
+              httpGet: { path: '/ready', port: 8000 }
               periodSeconds: 10
               timeoutSeconds: 5
               failureThreshold: 3

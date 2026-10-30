@@ -24,6 +24,20 @@ def _new_incident(client, project_id, who="site", **over):
     return r.json()["data"]
 
 
+def test_ready_checks_the_database(client):
+    r = client.get("/ready")
+    assert r.status_code == 200
+    assert r.json()["data"]["checks"]["database"]["ok"] is True
+
+
+def test_ready_is_503_when_the_schema_is_behind(client, monkeypatch):
+    from app.core import config
+
+    monkeypatch.setattr(config.get_settings(), "auto_create_schema", False)
+    r = client.get("/ready")  # the test database has no alembic_version table
+    assert r.status_code == 503 and r.json()["error"]["code"] == "NOT_READY"
+
+
 def test_health_and_error_envelope(client):
     assert client.get("/health").json()["data"]["status"] == "ok"
     r = client.get("/projects")
