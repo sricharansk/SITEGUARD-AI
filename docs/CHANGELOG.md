@@ -17,6 +17,9 @@
   retrieval 93.5%, red team 10/10); only dates, due dates and timings changed.
 - Dependencies: pillow 12.3.0 → 13.0.0 and pypdf 6.20.1 → 6.21.2 in `requirements.lock`, for advisories published
   after 15 October that failed the dependency-audit job (46 findings, now 0). Tests and the vision checks pass on them.
+- Web app: Next.js 16.3.8 → 16.4.3 for three advisories affecting 16.0.0–16.4.0 (two rated critical). The app is
+  a static export, so the affected server features are not used, but the audit gate stays strict. Build, type check
+  and all 6 browser tests pass.
 - CI: the `postgres` job runs on `ubuntu-24.04`; `ubuntu-latest` moved to 26.04, whose archive has no
   `postgresql-client-16`, so the backup drill's client tools could not be installed.
 - Tests: 275 backend tests (265 pass and 10 skip on SQLite; 274 pass with PostgreSQL, 1 needs Neo4j); deck slide 15
