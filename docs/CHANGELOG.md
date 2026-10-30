@@ -15,6 +15,8 @@
   `python -m app.evaluation`. The figures are the same as the 13 October run (21 of 21 closed, 107 agent runs with
   0 failures, 64 approved and 15 rejected; held-out class 89.1%, domain 93.5%, severity within one 97.7%,
   retrieval 93.5%, red team 10/10); only dates, due dates and timings changed.
+- Dependencies: pillow 12.3.0 → 13.0.0 and pypdf 6.20.1 → 6.21.2 in `requirements.lock`, for advisories published
+  after 15 October that failed the dependency-audit job (46 findings, now 0). Tests and the vision checks pass on them.
 - Tests: 275 backend tests (265 pass and 10 skip on SQLite; 274 pass with PostgreSQL, 1 needs Neo4j); deck slide 15
   updated to 275.
 
