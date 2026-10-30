@@ -5,7 +5,7 @@
 PostgreSQL (`pgvector/pgvector:pg16` image) for deployed environments; SQLite for local runs and tests. Models in
 `backend/app/models.py`. Schema changes go through Alembic (`backend/migrations/`, revisions `0001` initial schema,
 `0002` knowledge documents and embeddings, `0003` notification email outbox, `0004` vision analyses, `0005` workflow
-runs and agent conflicts). The Docker image runs `alembic upgrade head` before starting and sets
+runs and agent conflicts, `0006` append-only audit trail). The Docker image runs `alembic upgrade head` before starting and sets
 `SITEGUARD_AUTO_CREATE_SCHEMA=false`; local runs and tests still use `create_all`. `tests/test_migrations.py` fails
 if a model change has no migration.
 
@@ -45,6 +45,16 @@ SQLite. A chunk is re-embedded when its text checksum changes; switching to a ne
 and leaves the old ones until they are deleted. The API embeds missing chunks at startup and on
 `POST /documents/reindex`. No ANN index yet: exact distance is fine at pilot scale; add HNSW when a semantic model
 is chosen (DECISIONS 017).
+
+## Append-only audit trail (revision 0006)
+
+Triggers refuse `UPDATE` and `DELETE` on `audit_events`, and `TRUNCATE` on PostgreSQL, with the message
+`audit_events is append-only`. The application only ever inserts audit events; the triggers make the same true for
+every other database client (a console session, a script, a compromised service account without the owner role).
+Dropping the table or the trigger still needs the table owner, so the database owner role must stay separate from
+the role the API runs as in deployed environments. Local runs and tests that build the schema with `create_all` do
+not have the triggers; `tests/test_migrations.py` (SQLite) and `tests/test_postgres.py` check them on migrated
+databases. Downgrading to `0005` removes them.
 
 ## Workflows and conflicts (revision 0005)
 

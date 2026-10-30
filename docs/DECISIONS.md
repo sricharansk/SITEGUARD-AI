@@ -179,3 +179,13 @@ whether or not they meet the targets. One gap is disclosed: before tuning, the h
 the topics of its four BOTH cases and two unclassifiable cases; no rule was written for them. Because the held-out
 per-case results are now published, the next tuning round needs a new held-out set.
 
+## Decision 026 — The audit trail is append-only in the database; readiness is separate from liveness
+
+Reason: the application only inserts audit events, but a console session or a script could still edit or delete
+them, which would make the trail worthless as evidence. Migration `0006` adds triggers that refuse `UPDATE` and
+`DELETE` (and `TRUNCATE` on PostgreSQL) on `audit_events`. Only the table owner can drop the triggers, so deployed
+environments keep the owner role apart from the API's role. `GET /ready` checks that the database answers and the
+schema is at the latest migration (503 `NOT_READY` otherwise) and is the readiness probe; `GET /health` stays a
+liveness check that touches nothing, so a database outage takes a container out of rotation instead of restarting
+it. Both come from the unmerged first build-out branch (Playbook Prompt 36), rebuilt on main without that branch's
+other changes (project-scoped audit, `/metrics`, provenance column), which need their own review.

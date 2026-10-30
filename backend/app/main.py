@@ -1,12 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
+from sqlalchemy.orm import Session
 
 from app.api import (
     agents,
@@ -23,7 +24,7 @@ from app.api import (
 )
 from app.core import db as dbmod
 from app.core.config import Settings, get_settings
-from app.core.errors import install_error_handlers
+from app.core.errors import AppError, install_error_handlers
 from app.core.hardening import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.observability import CorrelationMiddleware, configure_logging
 from app.services import graph as graph_service
@@ -171,7 +172,17 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["ops"])
     def health():
+        """Liveness: the process answers. Checks nothing else, so a database outage does not restart the container."""
         return {"data": {"status": "ok", "ai_provider": s.ai_provider, "env": s.env}, "error": None}
+
+    @app.get("/ready", tags=["ops"])
+    def ready(db: Session = Depends(dbmod.get_db)):
+        """Readiness: the database answers and its schema is at the latest migration; 503 `NOT_READY` otherwise."""
+        checks = dbmod.readiness(db)
+        if not all(c["ok"] for c in checks.values()):
+            failed = ", ".join(name for name, c in checks.items() if not c["ok"])
+            raise AppError(f"Not ready: {failed}", "NOT_READY", 503)
+        return {"data": {"status": "ready", "checks": checks}, "error": None}
 
     return app
 

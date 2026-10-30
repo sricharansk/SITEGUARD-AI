@@ -98,13 +98,16 @@ More screens: [incident list](docs/screenshots/04-incident-list.png),
 
 ## Quick start
 
+Step-by-step instructions for Windows, Mac and Linux, running the tests and refreshing the results:
+[docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md).
+
 ```bash
 git clone https://github.com/sricharansk/SITEGUARD-AI.git
 cd SITEGUARD-AI
 
 # Option A: Python + Node, SQLite
 make install
-make test            # 271 backend tests (incl. evaluation and red-team gates)
+make test            # 275 backend tests (incl. evaluation and red-team gates)
 make run             # web app http://localhost:8000/app/  ·  API docs http://localhost:8000/docs
 
 # Option B: PostgreSQL + API + web app in Docker

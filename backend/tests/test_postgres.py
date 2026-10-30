@@ -100,3 +100,19 @@ def test_concurrent_incident_reports_get_unique_references(pg_engine):
     assert len(set(refs)) == workers
     with Session(pg_engine) as db:
         assert db.query(Incident).filter(Incident.project_id == ids[1]).count() == workers
+
+
+def test_audit_trail_is_append_only(pg_engine):
+    from sqlalchemy.exc import DBAPIError
+
+    from app.models import AuditEvent
+
+    with Session(pg_engine) as db:
+        org = Organization(name="Audit Org")
+        db.add(org)
+        db.flush()
+        db.add(AuditEvent(organization_id=org.id, action="auth.login", entity_type="user", entity_id="u1"))
+        db.commit()
+    for stmt in ("UPDATE audit_events SET action = 'x'", "DELETE FROM audit_events", "TRUNCATE audit_events"):
+        with pytest.raises(DBAPIError, match="append-only"), pg_engine.begin() as conn:
+            conn.execute(text(stmt))

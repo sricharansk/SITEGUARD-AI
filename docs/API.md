@@ -78,7 +78,8 @@ Error codes: `INVALID_REQUEST` 400, `UNSUPPORTED_FILE` 400, `UNAUTHENTICATED` 40
 | GET | /projects/{id}/people | READ | Names and roles on the project (no emails) |
 | GET | /app/ | - | The web app (static build served by the API) |
 | GET | /audit | VIEW_AUDIT | Filter by entity_id |
-| GET | /health | - | |
+| GET | /health | - | Liveness: the process answers; checks nothing else |
+| GET | /ready | - | Readiness: the database answers and the schema is at the latest Alembic revision (always true for the migrations check when `SITEGUARD_AUTO_CREATE_SCHEMA` builds the schema from the models); `checks` holds booleans only; 503 `NOT_READY` otherwise |
 
 ## Notifications
 

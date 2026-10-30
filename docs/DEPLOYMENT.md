@@ -142,7 +142,7 @@ python scripts/backup.py verify --evidence-dir /srv/evidence [--manifest /backup
 | Managed identity | One user-assigned identity: AcrPull on the registry, Key Vault Secrets User on the vault. No registry passwords or secret values in app configuration |
 | Container Registry | Basic, admin user disabled |
 | Container Apps environment | In the VNet, logs to Log Analytics |
-| App (`<prefix>-api`) | API + web app in one container, external HTTPS-only ingress, one replica (in-process login throttle), startup/liveness/readiness probes on `/health` |
+| App (`<prefix>-api`) | API + web app in one container, external HTTPS-only ingress, one replica (in-process login throttle), startup and liveness probes on `/health`, readiness probe on `/ready` (database answers, schema at the latest migration) |
 | Scheduled job | `python -m app.jobs escalate-overdue deliver-notifications` on `jobsCron` (default hourly); email settings from `emailAdapter`, `smtpHost`, `smtpPort`, `smtpUsername`, `smtpFrom` |
 | Migration job | Manual trigger, no retries, `alembic upgrade head`; the deploy workflow runs it with the new image before the rollout |
 | Log Analytics, Application Insights | Container logs; availability test of `/health` from three regions with TLS certificate checks |

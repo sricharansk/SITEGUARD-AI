@@ -94,6 +94,8 @@ Do not log passwords, tokens, API keys or raw sensitive evidence by default.
 - Notifications are only readable by their recipient; `/projects/{id}/people` returns names and roles, not emails.
 - Dataset pipelines never read employer or address fields and never rank employers (DATASETS.md).
 - Frontend dependencies are pinned and `npm audit --omit=dev --audit-level=high` runs in CI.
+- The audit trail is append-only in the database itself: migration `0006` adds triggers that refuse `UPDATE`,
+  `DELETE` and (PostgreSQL) `TRUNCATE` on `audit_events` for every client (DATABASE.md, Decision 026).
 
 ## Hardening (ported from PR #2)
 
