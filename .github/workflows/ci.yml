@@ -34,7 +34,8 @@ jobs:
   postgres:
     # Migrations and pgvector search on the same image as docker-compose, and the backup and restore drill
     # (scripts/backup.py into a fresh database; docs/DEPLOYMENT.md#backup-and-restore).
-    runs-on: ubuntu-latest
+    # Pinned to 24.04: its archive has postgresql-client-16, which ubuntu-latest (26.04) no longer ships.
+    runs-on: ubuntu-24.04
     services:
       db:
         image: pgvector/pgvector:pg16
